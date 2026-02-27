@@ -8,6 +8,7 @@ import { KanbanCard } from "@/components/board/kanban-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTapes } from "@/lib/hooks/use-api";
 import { pipelineStages } from "@/lib/schema";
+import { stageLabel } from "@/lib/stage-label";
 
 function acquisitionTime(tape: { acquisitionAt?: string }) {
   if (!tape.acquisitionAt) return 0;
@@ -64,7 +65,7 @@ export default function BoardPage() {
           {pipelineStages.map((stage) => (
             <div key={stage} className="rounded-lg border bg-white p-2">
               <div className="mb-2 border-b pb-2">
-                <p className="text-sm font-semibold">{stage}</p>
+                <p className="text-sm font-semibold">{stageLabel(stage)}</p>
                 <p className="text-xs text-muted-foreground">{grouped[stage]?.length ?? 0} tapes</p>
               </div>
               <div className="space-y-2">

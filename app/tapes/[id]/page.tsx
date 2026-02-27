@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { StageTimeline } from "@/components/detail/stage-timeline";
 import { ActionPanel } from "@/components/detail/action-panel";
 import { getTapes } from "@/lib/data";
+import { stageLabel } from "@/lib/stage-label";
 
 export default async function TapeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,9 +37,9 @@ export default async function TapeDetailPage({ params }: { params: Promise<{ id:
           <CardHeader>
             <CardTitle>Metadata</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+            <CardContent className="space-y-2 text-sm">
             <p>
-              Stage: <Badge className="ml-2">{tape.stage}</Badge>
+              Stage: <Badge className="ml-2">{stageLabel(tape.stage)}</Badge>
             </p>
             <p>Received: {tape.receivedDate ? new Date(tape.receivedDate).toLocaleDateString() : "n/a"}</p>
             <p>Label Runtime: {tape.labelRuntimeMinutes ?? "n/a"} min</p>

@@ -8,10 +8,14 @@ import { Input } from "@/components/ui/input";
 import { SimpleSelect } from "@/components/ui/select";
 import type { Stage } from "@/lib/types";
 
-const stageOptions = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"].map((s) => ({
-  value: s,
-  label: s,
-}));
+const stageOptions = [
+  { value: "Intake", label: "Awaiting Capture" },
+  { value: "Capture", label: "Capture" },
+  { value: "Trim", label: "Trim" },
+  { value: "Combine", label: "Combine" },
+  { value: "Transfer", label: "Transfer" },
+  { value: "Archived", label: "Archived" },
+];
 
 export function ActionPanel({ tapeId, defaultStage }: { tapeId: string; defaultStage: Stage }) {
   const router = useRouter();

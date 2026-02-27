@@ -9,6 +9,7 @@ import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
 import { useOpsSummary } from "@/lib/hooks/use-api";
+import { stageLabel } from "@/lib/stage-label";
 
 function formatDateTime(value?: string) {
   if (!value) return "n/a";
@@ -53,7 +54,9 @@ export default function HomePage() {
                 <CardTitle>Workflow Stage Counts</CardTitle>
               </CardHeader>
               <CardContent>
-                <PipelineFlowChart data={data.stageCounts} />
+                <PipelineFlowChart
+                  data={data.stageCounts.map((s) => ({ stage: stageLabel(s.stage), count: s.count }))}
+                />
               </CardContent>
             </Card>
 

@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Topbar } from "@/components/layout/topbar";
 import { HistogramChart } from "@/components/charts/histogram-chart";
-import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 
 export default function AnalyticsPage() {
@@ -50,10 +49,27 @@ export default function AnalyticsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Current Workflow Distribution</CardTitle>
+              <CardTitle>Workflow Progress Counts</CardTitle>
             </CardHeader>
             <CardContent>
-              <PipelineFlowChart data={data.stageCounts} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border bg-white p-3">
+                  <p className="text-xs text-muted-foreground">Captured</p>
+                  <p className="text-2xl font-semibold">{data.kpis.capturedCount}</p>
+                </div>
+                <div className="rounded-md border bg-white p-3">
+                  <p className="text-xs text-muted-foreground">Trimmed</p>
+                  <p className="text-2xl font-semibold">{data.kpis.trimmedCount}</p>
+                </div>
+                <div className="rounded-md border bg-white p-3">
+                  <p className="text-xs text-muted-foreground">Combined</p>
+                  <p className="text-2xl font-semibold">{data.kpis.combinedCount}</p>
+                </div>
+                <div className="rounded-md border bg-white p-3">
+                  <p className="text-xs text-muted-foreground">Transferred</p>
+                  <p className="text-2xl font-semibold">{data.kpis.transferredCount}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
