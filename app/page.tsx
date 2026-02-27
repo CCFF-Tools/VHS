@@ -9,6 +9,7 @@ import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { BacklogAreaChart } from "@/components/charts/backlog-area-chart";
 import { BottleneckCallouts } from "@/components/dashboard/bottleneck-callouts";
 import { MemeAlert } from "@/components/dashboard/meme-alert";
+import { MetricLegend } from "@/components/dashboard/metric-legend";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 
 function queueMood(args: { blockedQueue: number; intakeQueue: number; captureQueue: number; processingQueue: number; transferQueue: number; oldestDays: number }) {
@@ -85,7 +86,13 @@ export default function HomePage() {
               <CardTitle>Backlog Pressure (30d)</CardTitle>
             </CardHeader>
             <CardContent>
-              <BacklogAreaChart data={data.backlogTrend} />
+              {data.backlogTrend.length > 0 ? (
+                <BacklogAreaChart data={data.backlogTrend} />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Backlog trend needs a real completion date field in Airtable to avoid fake time-series.
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -120,6 +127,11 @@ export default function HomePage() {
               </div>
             </CardContent>
           </Card>
+
+          <MetricLegend
+            runtimeDriftCoveragePercent={data.dataReadiness.runtimeDriftCoveragePercent}
+            hasCompletionDates={data.dataReadiness.hasCompletionDates}
+          />
         </div>
       )}
     </div>

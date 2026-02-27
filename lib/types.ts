@@ -44,7 +44,7 @@ export interface DashboardKpis {
   transferQueue: number;
   blockedQueue: number;
   archivedTotal: number;
-  archivedToday: number;
+  receivedToday: number;
   avgQueueAgeDays: number;
   avgRuntimeDriftMinutes: number;
   archiveCompletionRate: number;
@@ -67,5 +67,10 @@ export interface OpsSummaryResponse {
   }>;
   oldestWaiting?: TapeRecord;
   largestQueueStage?: { stage: Stage; count: number };
+  dataReadiness: {
+    hasCompletionDates: boolean;
+    runtimeDriftCoveragePercent: number;
+    issueSignalsAreInferred: boolean;
+  };
   tapes: TapeRecord[];
 }

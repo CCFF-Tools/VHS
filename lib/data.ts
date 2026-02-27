@@ -102,6 +102,10 @@ export async function getTapes(): Promise<TapeRecord[]> {
     const receivedDate = toDate(fields[fieldMap.receivedDate]);
     const createdTime = toDate(record._rawJson.createdTime);
     const baselineDate = receivedDate ?? createdTime;
+    const completedDate =
+      fieldMap.completedDate && fields[fieldMap.completedDate]
+        ? toDate(fields[fieldMap.completedDate])
+        : undefined;
 
     const parsed: Partial<TapeRecord> = {
       id: record.id,
@@ -149,7 +153,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       updatedTime: parsed.updatedTime,
       priority: inferPriority(parsed.ageInStageDays ?? 0),
       ageInStageDays: parsed.ageInStageDays ?? 0,
-      completedDate: stage === "Archived" ? parsed.updatedTime : undefined,
+      completedDate,
     };
 
     result.issueTags = inferIssues(result);
@@ -265,6 +269,7 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
 
   const inProgress = tapes.filter((t) => t.stage !== "Archived");
   const archived = tapes.filter((t) => t.stage === "Archived");
+  const hasCompletionDates = tapes.some((t) => Boolean(t.completedDate));
 
   const issueTagMap = new Map<string, number>();
   for (const tape of tapes) {
@@ -293,6 +298,9 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
     ? Number((drifts.reduce((sum, v) => sum + v, 0) / drifts.length).toFixed(1))
     : 0;
 
+  const transferredTotal = tapes.filter((t) => Boolean(t.transferredToNas)).length;
+  const runtimeDriftCoveragePercent = tapes.length ? Number(((drifts.length / tapes.length) * 100).toFixed(1)) : 0;
+
   return {
     kpis: {
       totalTapes: tapes.length,
@@ -302,14 +310,14 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       transferQueue: tapes.filter((t) => t.stage === "Transfer").length,
       blockedQueue: tapes.filter((t) => t.stage !== "Archived" && t.issueTags.length > 0).length,
       archivedTotal: archived.length,
-      archivedToday: archived.filter((t) => t.completedDate && isToday(parseISO(t.completedDate))).length,
+      receivedToday: tapes.filter((t) => t.receivedDate && isToday(parseISO(t.receivedDate))).length,
       avgQueueAgeDays,
       avgRuntimeDriftMinutes,
-      archiveCompletionRate: tapes.length ? Number(((archived.length / tapes.length) * 100).toFixed(1)) : 0,
+      archiveCompletionRate: tapes.length ? Number(((transferredTotal / tapes.length) * 100).toFixed(1)) : 0,
     },
     stageCounts,
     throughputDaily: buildThroughput(tapes),
-    backlogTrend: buildBacklogTrend(tapes),
+    backlogTrend: hasCompletionDates ? buildBacklogTrend(tapes) : [],
     runtimeDriftHistogram: buildRuntimeDriftHistogram(tapes),
     issueTagCounts: Array.from(issueTagMap.entries())
       .map(([tag, count]) => ({ tag, count }))
@@ -318,6 +326,11 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
     sequenceProgress: buildSequenceProgress(tapes),
     oldestWaiting,
     largestQueueStage,
+    dataReadiness: {
+      hasCompletionDates,
+      runtimeDriftCoveragePercent,
+      issueSignalsAreInferred: true,
+    },
     tapes,
   };
 }

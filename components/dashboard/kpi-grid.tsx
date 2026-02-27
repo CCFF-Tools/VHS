@@ -7,12 +7,12 @@ const items = [
   { key: "captureQueue", label: "Capture Queue" },
   { key: "processingQueue", label: "Trim + Combine Queue" },
   { key: "transferQueue", label: "Transfer Queue" },
-  { key: "blockedQueue", label: "Blocked (Issues)" },
+  { key: "blockedQueue", label: "Needs Review (Inferred)" },
   { key: "archivedTotal", label: "Archived Total" },
-  { key: "archivedToday", label: "Archived Today" },
+  { key: "receivedToday", label: "Received Today" },
   { key: "avgQueueAgeDays", label: "Avg Queue Age (days)" },
   { key: "avgRuntimeDriftMinutes", label: "Avg Runtime Drift (min)" },
-  { key: "archiveCompletionRate", label: "Archive Completion (%)" },
+  { key: "archiveCompletionRate", label: "Transferred to NAS (%)" },
 ] as const;
 
 export function KpiGrid({ kpis }: { kpis: DashboardKpis }) {

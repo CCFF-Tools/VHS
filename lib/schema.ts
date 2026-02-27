@@ -15,6 +15,7 @@ export const fieldMap = {
   transferredToNas: process.env.AIRTABLE_TRANSFERRED_FIELD ?? "Transferred to NAS",
   archivalFilename: process.env.AIRTABLE_ARCHIVAL_FILENAME_FIELD ?? "Archival Filename",
   finalClipDuration: process.env.AIRTABLE_FINAL_DURATION_FIELD ?? "Final Clip Duration",
+  completedDate: process.env.AIRTABLE_COMPLETED_DATE_FIELD ?? "",
 } as const;
 
 export const pipelineStages: Stage[] = (
