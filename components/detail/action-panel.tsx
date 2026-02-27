@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getStoredPassword } from "@/components/layout/topbar";
+import { getStoredPassword, setStoredPassword } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SimpleSelect } from "@/components/ui/select";
@@ -17,6 +17,7 @@ export function ActionPanel({ tapeId, defaultStage }: { tapeId: string; defaultS
   const router = useRouter();
   const [stage, setStage] = useState(defaultStage);
   const [note, setNote] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -65,6 +66,29 @@ export function ActionPanel({ tapeId, defaultStage }: { tapeId: string; defaultS
 
   return (
     <div className="space-y-3">
+      <div>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Action Password</p>
+        <div className="flex gap-2">
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter internal action password"
+          />
+          <Button
+            onClick={() => {
+              if (!password.trim()) return;
+              setStoredPassword(password.trim());
+              setPassword("");
+              setMessage("Password saved for this browser");
+            }}
+            variant="secondary"
+          >
+            Save
+          </Button>
+        </div>
+      </div>
+
       <div>
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Update Stage</p>
         <div className="flex gap-2">

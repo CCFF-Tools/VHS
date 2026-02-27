@@ -3,32 +3,26 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { SimpleSelect } from "@/components/ui/select";
 import { Topbar } from "@/components/layout/topbar";
 import { KanbanCard } from "@/components/board/kanban-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTapes } from "@/lib/hooks/use-api";
 import { pipelineStages } from "@/lib/schema";
-import { MemeAlert } from "@/components/dashboard/meme-alert";
 
-function scoreForBoard(tape: { issueTags: string[]; ageInStageDays: number; priority: string }) {
-  const priorityScore =
-    tape.priority === "rush" ? 40 : tape.priority === "high" ? 25 : tape.priority === "normal" ? 12 : 0;
-  return tape.issueTags.length * 60 + tape.ageInStageDays + priorityScore;
+function acquisitionTime(tape: { acquisitionAt?: string }) {
+  if (!tape.acquisitionAt) return 0;
+  const ms = new Date(tape.acquisitionAt).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
 }
 
 export default function BoardPage() {
   const [search, setSearch] = useState("");
-  const [priority, setPriority] = useState("all");
-  const [hasIssues, setHasIssues] = useState("all");
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
-    if (priority !== "all") params.set("priority", priority);
-    if (hasIssues !== "all") params.set("hasIssues", String(hasIssues === "yes"));
     return params.toString();
-  }, [search, priority, hasIssues]);
+  }, [search]);
 
   const { data, isLoading, error } = useTapes(query);
 
@@ -37,68 +31,27 @@ export default function BoardPage() {
     return pipelineStages.reduce<Record<string, typeof list>>((acc, stage) => {
       acc[stage] = list
         .filter((t) => t.stage === stage)
-        .sort((a, b) => scoreForBoard(b) - scoreForBoard(a));
+        .sort((a, b) => acquisitionTime(b) - acquisitionTime(a));
       return acc;
     }, {});
-  }, [data?.items]);
-
-  const mood = useMemo(() => {
-    const list = data?.items ?? [];
-    if (!list.length) return "fine" as const;
-
-    const blocked = list.filter((t) => t.issueTags.length > 0).length;
-    const blockedRate = blocked / list.length;
-    const oldest = Math.max(...list.map((t) => t.ageInStageDays));
-
-    if (blockedRate >= 0.28 || oldest >= 18) return "flames" as const;
-    if (blockedRate >= 0.14 || oldest >= 10) return "watch" as const;
-    return "fine" as const;
   }, [data?.items]);
 
   return (
     <div>
       <Topbar
         title="Production Board"
-        subtitle="Sorted by urgency: issue-heavy and aging tapes float to the top in each stage."
+        subtitle="Grouped by stage and sorted by newest acquisition first."
       />
-
-      {data && (
-        <MemeAlert
-          mode={mood}
-          title="Board temperature"
-          description="Use this signal before standup: calm days show This is fine; overloaded days switch to Elmo with flames."
-          right={<p>Total visible tapes: {data.total}</p>}
-        />
-      )}
 
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Filters (search first, then narrow)</CardTitle>
+          <CardTitle>Search</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-2 md:grid-cols-3">
+        <CardContent>
           <Input
-            placeholder="Search Tape ID or name"
+            placeholder="Search by 📼 sticker or tape name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-          />
-          <SimpleSelect
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            options={[
-              { label: "All priorities", value: "all" },
-              { label: "Rush", value: "rush" },
-              { label: "High", value: "high" },
-              { label: "Normal", value: "normal" },
-              { label: "Low", value: "low" },
-            ]}
-          />
-          <SimpleSelect
-            value={hasIssues}
-            onChange={(e) => setHasIssues(e.target.value)}
-            options={[
-              { label: "Issues: Any", value: "all" },
-              { label: "Issues: Yes", value: "yes" },
-            ]}
           />
         </CardContent>
       </Card>
@@ -119,7 +72,7 @@ export default function BoardPage() {
                   <KanbanCard key={tape.id} tape={tape} />
                 ))}
                 {(grouped[stage] || []).length === 0 && (
-                  <p className="p-2 text-xs text-muted-foreground">No tapes here. This is fine.</p>
+                  <p className="p-2 text-xs text-muted-foreground">No tapes in this stage.</p>
                 )}
               </div>
             </div>

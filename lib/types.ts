@@ -29,6 +29,7 @@ export interface TapeRecord {
   issueTags: string[];
   notes?: string;
   updatedTime?: string;
+  acquisitionAt?: string;
   dueDate?: string;
   assignedTech?: string;
   priority: Priority;
@@ -38,39 +39,30 @@ export interface TapeRecord {
 
 export interface DashboardKpis {
   totalTapes: number;
-  intakeQueue: number;
-  captureQueue: number;
-  processingQueue: number;
-  transferQueue: number;
-  blockedQueue: number;
-  archivedTotal: number;
+  capturedCount: number;
+  trimmedCount: number;
+  combinedCount: number;
+  transferredCount: number;
   receivedToday: number;
-  avgQueueAgeDays: number;
-  avgRuntimeDriftMinutes: number;
-  archiveCompletionRate: number;
+}
+
+export interface RuntimeStats {
+  labelAverage: number;
+  qtAverage: number;
+  finalAverage: number;
+  driftAverage: number;
 }
 
 export interface OpsSummaryResponse {
   kpis: DashboardKpis;
   stageCounts: Array<{ stage: Stage; count: number }>;
-  throughputDaily: Array<{ date: string; completed: number; received: number }>;
-  backlogTrend: Array<{ date: string; backlog: number }>;
-  runtimeDriftHistogram: Array<{ bucket: string; count: number }>;
-  issueTagCounts: Array<{ tag: string; count: number }>;
-  sequenceProgress: Array<{
-    sequence: string;
-    expected: number;
-    total: number;
-    captured: number;
-    archived: number;
-    completionRate: number;
-  }>;
-  oldestWaiting?: TapeRecord;
-  largestQueueStage?: { stage: Stage; count: number };
-  dataReadiness: {
-    hasCompletionDates: boolean;
-    runtimeDriftCoveragePercent: number;
-    issueSignalsAreInferred: boolean;
+  acquisitionDaily: Array<{ date: string; count: number }>;
+  runtimeHistograms: {
+    labelRuntime: Array<{ bucket: string; count: number }>;
+    qtRuntime: Array<{ bucket: string; count: number }>;
+    finalRuntime: Array<{ bucket: string; count: number }>;
   };
+  runtimeStats: RuntimeStats;
+  recentAcquisitions: TapeRecord[];
   tapes: TapeRecord[];
 }

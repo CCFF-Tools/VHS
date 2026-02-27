@@ -18,8 +18,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="mx-auto grid min-h-screen w-full max-w-[1400px] grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-[220px_1fr] lg:px-8">
       <aside className="rounded-xl border panel-gradient p-4 shadow-panel">
         <div className="mb-6">
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">VHS Pipeline</p>
-          <h1 className="mt-2 text-xl font-bold">Data Is Beautiful</h1>
+          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">Internal Dashboard</p>
+          <h1 className="mt-2 text-xl font-bold">VHS Operations</h1>
         </div>
 
         <nav className="space-y-2">
@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="mb-1 flex items-center gap-2 font-semibold text-foreground">
             <ShieldCheck className="h-3.5 w-3.5" /> Internal-only
           </div>
-          Airtable keys stay server-side. Optional writes require the internal password.
+          Airtable keys stay server-side. Status and notes can be updated from tape detail pages.
         </div>
       </aside>
 

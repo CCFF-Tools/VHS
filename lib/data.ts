@@ -1,13 +1,4 @@
-import {
-  eachDayOfInterval,
-  endOfDay,
-  format,
-  isAfter,
-  isToday,
-  parseISO,
-  startOfDay,
-  subDays,
-} from "date-fns";
+import { eachDayOfInterval, endOfDay, format, isToday, parseISO, startOfDay, subDays } from "date-fns";
 import { listRecords } from "@/lib/airtable";
 import { fieldMap, pipelineStages } from "@/lib/schema";
 import type { OpsSummaryResponse, Stage, TapeRecord } from "@/lib/types";
@@ -74,24 +65,46 @@ function inferIssues(record: Partial<TapeRecord>): string[] {
 
   if (record.transferredToNas && !record.archivalFilename) issues.push("pending-archival-filename");
 
-  if (record.captured && !record.trimmed && (record.ageInStageDays ?? 0) > 5) issues.push("stuck-post-capture");
-  if (record.trimmed && !record.combined && (record.ageInStageDays ?? 0) > 5) issues.push("stuck-post-trim");
-  if (record.combined && !record.transferredToNas && (record.ageInStageDays ?? 0) > 5) {
-    issues.push("stuck-pre-transfer");
-  }
-
   return issues;
 }
 
-function runtimeDrift(record: TapeRecord): number | null {
-  const source = record.labelRuntimeMinutes ?? record.qtRuntimeMinutes;
-  const output = record.finalClipDurationMinutes ?? record.qtRuntimeMinutes;
-  if (source == null || output == null) return null;
-  return Math.abs(output - source);
+function buildAcquisitionDaily(tapes: TapeRecord[]) {
+  const start = subDays(startOfDay(new Date()), 29);
+  const end = endOfDay(new Date());
+  const days = eachDayOfInterval({ start, end });
+
+  return days.map((d) => {
+    const key = format(d, "yyyy-MM-dd");
+    const count = tapes.filter(
+      (t) => t.acquisitionAt && format(parseISO(t.acquisitionAt), "yyyy-MM-dd") === key
+    ).length;
+    return { date: key, count };
+  });
 }
 
-function dayKey(dateIso: string) {
-  return format(parseISO(dateIso), "yyyy-MM-dd");
+function bucketRuntime(minutes: number): string {
+  if (minutes <= 30) return "0-30";
+  if (minutes <= 60) return "31-60";
+  if (minutes <= 90) return "61-90";
+  if (minutes <= 120) return "91-120";
+  return "121+";
+}
+
+function buildRuntimeHistogram(values: number[]) {
+  const buckets = ["0-30", "31-60", "61-90", "91-120", "121+"];
+  const counts = new Map<string, number>(buckets.map((b) => [b, 0]));
+
+  for (const value of values) {
+    const bucket = bucketRuntime(value);
+    counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+  }
+
+  return buckets.map((bucket) => ({ bucket, count: counts.get(bucket) ?? 0 }));
+}
+
+function average(values: number[]) {
+  if (!values.length) return 0;
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1));
 }
 
 export async function getTapes(): Promise<TapeRecord[]> {
@@ -101,6 +114,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
     const fields = record.fields as Record<string, unknown>;
     const receivedDate = toDate(fields[fieldMap.receivedDate]);
     const createdTime = toDate(record._rawJson.createdTime);
+    const acquisitionAt = createdTime ?? receivedDate;
     const baselineDate = receivedDate ?? createdTime;
     const completedDate =
       fieldMap.completedDate && fields[fieldMap.completedDate]
@@ -126,6 +140,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
         : undefined,
       finalClipDurationMinutes: toNumber(fields[fieldMap.finalClipDuration]),
       updatedTime: createdTime,
+      acquisitionAt,
       ageInStageDays: calcAgeInDays(baselineDate),
     };
 
@@ -151,6 +166,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       issueTags: [],
       notes: undefined,
       updatedTime: parsed.updatedTime,
+      acquisitionAt: parsed.acquisitionAt,
       priority: inferPriority(parsed.ageInStageDays ?? 0),
       ageInStageDays: parsed.ageInStageDays ?? 0,
       completedDate,
@@ -161,176 +177,61 @@ export async function getTapes(): Promise<TapeRecord[]> {
   });
 }
 
-function buildThroughput(tapes: TapeRecord[]) {
-  const start = subDays(startOfDay(new Date()), 29);
-  const end = endOfDay(new Date());
-  const days = eachDayOfInterval({ start, end });
-
-  return days.map((d) => {
-    const dateLabel = format(d, "yyyy-MM-dd");
-
-    const received = tapes.filter((t) => t.receivedDate && dayKey(t.receivedDate) === dateLabel).length;
-
-    // No archival timestamp field in this schema; this uses record created/update surrogate.
-    const completed = tapes.filter(
-      (t) => t.stage === "Archived" && t.completedDate && dayKey(t.completedDate) === dateLabel
-    ).length;
-
-    return { date: dateLabel, completed, received };
-  });
-}
-
-function buildBacklogTrend(tapes: TapeRecord[]) {
-  const start = subDays(startOfDay(new Date()), 29);
-  const end = endOfDay(new Date());
-  const days = eachDayOfInterval({ start, end });
-
-  return days.map((d) => {
-    const date = endOfDay(d);
-    const backlog = tapes.filter((t) => {
-      if (!t.receivedDate) return false;
-      const rec = parseISO(t.receivedDate);
-      if (isAfter(rec, date)) return false;
-      if (!t.completedDate) return true;
-      return isAfter(parseISO(t.completedDate), date);
-    }).length;
-    return { date: format(d, "yyyy-MM-dd"), backlog };
-  });
-}
-
-function buildRuntimeDriftHistogram(tapes: TapeRecord[]) {
-  const buckets = [
-    { label: "0-2m", min: 0, max: 2 },
-    { label: "3-5m", min: 3, max: 5 },
-    { label: "6-10m", min: 6, max: 10 },
-    { label: "11m+", min: 11, max: Number.POSITIVE_INFINITY },
-  ];
-
-  return buckets.map((bucket) => {
-    const count = tapes.filter((t) => {
-      const drift = runtimeDrift(t);
-      if (drift == null) return false;
-      return drift >= bucket.min && drift <= bucket.max;
-    }).length;
-    return { bucket: bucket.label, count };
-  });
-}
-
-function buildSequenceProgress(tapes: TapeRecord[]) {
-  const bySequence = new Map<string, TapeRecord[]>();
-
-  for (const tape of tapes) {
-    const key = tape.tapeSequence?.trim() || "Unsequenced";
-    const current = bySequence.get(key) ?? [];
-    current.push(tape);
-    bySequence.set(key, current);
-  }
-
-  return Array.from(bySequence.entries())
-    .map(([sequence, records]) => {
-      const expectedFromField = Math.max(...records.map((r) => r.tapesInSequence ?? 0));
-      const expected = expectedFromField > 0 ? expectedFromField : records.length;
-      const total = records.length;
-      const captured = records.filter((r) => r.captured).length;
-      const archived = records.filter((r) => r.stage === "Archived").length;
-
-      return {
-        sequence,
-        expected,
-        total,
-        captured,
-        archived,
-        completionRate: expected ? Number(((archived / expected) * 100).toFixed(1)) : 0,
-      };
-    })
-    .sort((a, b) => {
-      if (b.expected !== a.expected) return b.expected - a.expected;
-      return a.sequence.localeCompare(b.sequence);
-    })
-    .slice(0, 12);
-}
-
 export async function getOpsSummary(): Promise<OpsSummaryResponse> {
   const tapes = await getTapes();
 
-  const stageCounts = [...new Set([...pipelineStages, "Blocked"] as Stage[])].map((stage) => {
-    if (stage === "Blocked") {
-      return {
-        stage,
-        count: tapes.filter((t) => t.stage !== "Archived" && t.issueTags.length > 0).length,
-      };
-    }
+  const stageCounts = pipelineStages.map((stage) => ({
+    stage,
+    count: tapes.filter((t) => t.stage === stage).length,
+  }));
 
-    return {
-      stage,
-      count: tapes.filter((t) => t.stage === stage).length,
-    };
-  });
-
-  const inProgress = tapes.filter((t) => t.stage !== "Archived");
-  const archived = tapes.filter((t) => t.stage === "Archived");
-  const hasCompletionDates = tapes.some((t) => Boolean(t.completedDate));
-
-  const issueTagMap = new Map<string, number>();
-  for (const tape of tapes) {
-    for (const tag of tape.issueTags) {
-      issueTagMap.set(tag, (issueTagMap.get(tag) ?? 0) + 1);
-    }
-  }
-
-  const oldestWaiting = inProgress
-    .filter((t) => t.receivedDate)
-    .sort((a, b) => (b.ageInStageDays || 0) - (a.ageInStageDays || 0))[0];
-
-  const largestQueueStage = stageCounts
-    .filter((s) => s.stage !== "Archived")
-    .sort((a, b) => b.count - a.count)[0];
-
-  const queueAges = inProgress.map((t) => t.ageInStageDays);
-  const avgQueueAgeDays = queueAges.length
-    ? Number((queueAges.reduce((sum, v) => sum + v, 0) / queueAges.length).toFixed(1))
-    : 0;
-
-  const drifts = tapes
-    .map((t) => runtimeDrift(t))
+  const labelRuntimes = tapes
+    .map((t) => t.labelRuntimeMinutes)
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
-  const avgRuntimeDriftMinutes = drifts.length
-    ? Number((drifts.reduce((sum, v) => sum + v, 0) / drifts.length).toFixed(1))
-    : 0;
+  const qtRuntimes = tapes
+    .map((t) => t.qtRuntimeMinutes)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  const finalRuntimes = tapes
+    .map((t) => t.finalClipDurationMinutes)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
 
-  const transferredTotal = tapes.filter((t) => Boolean(t.transferredToNas)).length;
-  const runtimeDriftCoveragePercent = tapes.length ? Number(((drifts.length / tapes.length) * 100).toFixed(1)) : 0;
+  const runtimeDrifts = tapes
+    .map((t) => {
+      const source = t.labelRuntimeMinutes ?? t.qtRuntimeMinutes;
+      const out = t.finalClipDurationMinutes;
+      if (source == null || out == null) return null;
+      return Math.abs(out - source);
+    })
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+
+  const recentAcquisitions = [...tapes]
+    .filter((t) => t.acquisitionAt)
+    .sort((a, b) => parseISO(b.acquisitionAt!).getTime() - parseISO(a.acquisitionAt!).getTime())
+    .slice(0, 20);
 
   return {
     kpis: {
       totalTapes: tapes.length,
-      intakeQueue: tapes.filter((t) => t.stage === "Intake").length,
-      captureQueue: tapes.filter((t) => t.stage === "Capture").length,
-      processingQueue: tapes.filter((t) => t.stage === "Trim" || t.stage === "Combine").length,
-      transferQueue: tapes.filter((t) => t.stage === "Transfer").length,
-      blockedQueue: tapes.filter((t) => t.stage !== "Archived" && t.issueTags.length > 0).length,
-      archivedTotal: archived.length,
-      receivedToday: tapes.filter((t) => t.receivedDate && isToday(parseISO(t.receivedDate))).length,
-      avgQueueAgeDays,
-      avgRuntimeDriftMinutes,
-      archiveCompletionRate: tapes.length ? Number(((transferredTotal / tapes.length) * 100).toFixed(1)) : 0,
+      capturedCount: tapes.filter((t) => Boolean(t.captured)).length,
+      trimmedCount: tapes.filter((t) => Boolean(t.trimmed)).length,
+      combinedCount: tapes.filter((t) => Boolean(t.combined)).length,
+      transferredCount: tapes.filter((t) => Boolean(t.transferredToNas)).length,
+      receivedToday: tapes.filter((t) => t.acquisitionAt && isToday(parseISO(t.acquisitionAt))).length,
     },
     stageCounts,
-    throughputDaily: buildThroughput(tapes),
-    backlogTrend: hasCompletionDates ? buildBacklogTrend(tapes) : [],
-    runtimeDriftHistogram: buildRuntimeDriftHistogram(tapes),
-    issueTagCounts: Array.from(issueTagMap.entries())
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8),
-    sequenceProgress: buildSequenceProgress(tapes),
-    oldestWaiting,
-    largestQueueStage,
-    dataReadiness: {
-      hasCompletionDates,
-      runtimeDriftCoveragePercent,
-      issueSignalsAreInferred: true,
+    acquisitionDaily: buildAcquisitionDaily(tapes),
+    runtimeHistograms: {
+      labelRuntime: buildRuntimeHistogram(labelRuntimes),
+      qtRuntime: buildRuntimeHistogram(qtRuntimes),
+      finalRuntime: buildRuntimeHistogram(finalRuntimes),
     },
+    runtimeStats: {
+      labelAverage: average(labelRuntimes),
+      qtAverage: average(qtRuntimes),
+      finalAverage: average(finalRuntimes),
+      driftAverage: average(runtimeDrifts),
+    },
+    recentAcquisitions,
     tapes,
   };
 }
