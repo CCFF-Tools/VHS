@@ -20,6 +20,57 @@ function toNumber(value: unknown): number | undefined {
 }
 
 function toBool(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value > 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return false;
+    if (
+      normalized === "false" ||
+      normalized === "no" ||
+      normalized === "n" ||
+      normalized === "0" ||
+      normalized === "off" ||
+      normalized === "pending" ||
+      normalized === "not started" ||
+      normalized === "todo" ||
+      normalized === "to do" ||
+      normalized === "unchecked" ||
+      normalized === "nope" ||
+      normalized === "❌"
+    ) {
+      return false;
+    }
+    if (
+      normalized === "true" ||
+      normalized === "yes" ||
+      normalized === "y" ||
+      normalized === "1" ||
+      normalized === "done" ||
+      normalized === "complete" ||
+      normalized === "completed" ||
+      normalized === "captured" ||
+      normalized === "trimmed" ||
+      normalized === "combined" ||
+      normalized === "transferred" ||
+      normalized === "transferred to nas" ||
+      normalized === "checked" ||
+      normalized === "check" ||
+      normalized === "x" ||
+      normalized === "✓" ||
+      normalized === "✅"
+    ) {
+      return true;
+    }
+
+    // If the flag field stores a timestamp string, treat it as complete.
+    const asDate = new Date(value);
+    if (!Number.isNaN(asDate.getTime())) return true;
+
+    // Conservative fallback prevents overcounting on unknown text values.
+    return false;
+  }
+  if (Array.isArray(value)) return value.length > 0;
   return Boolean(value);
 }
 
@@ -114,7 +165,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
     const fields = record.fields as Record<string, unknown>;
     const receivedDate = toDate(fields[fieldMap.receivedDate]);
     const createdTime = toDate(record._rawJson.createdTime);
-    const acquisitionAt = createdTime ?? receivedDate;
+    const acquisitionAt = receivedDate ?? createdTime;
     const baselineDate = receivedDate ?? createdTime;
     const completedDate =
       fieldMap.completedDate && fields[fieldMap.completedDate]
@@ -216,7 +267,10 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       trimmedCount: tapes.filter((t) => Boolean(t.trimmed)).length,
       combinedCount: tapes.filter((t) => Boolean(t.combined)).length,
       transferredCount: tapes.filter((t) => Boolean(t.transferredToNas)).length,
-      receivedToday: tapes.filter((t) => t.acquisitionAt && isToday(parseISO(t.acquisitionAt))).length,
+      receivedToday: tapes.filter((t) => {
+        const date = t.receivedDate ?? t.acquisitionAt;
+        return Boolean(date && isToday(parseISO(date)));
+      }).length,
     },
     stageCounts,
     acquisitionDaily: buildAcquisitionDaily(tapes),

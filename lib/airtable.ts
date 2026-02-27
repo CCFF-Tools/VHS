@@ -61,18 +61,21 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 4): Promise<T> {
   }
 }
 
-export async function listRecords(maxRecords = 500) {
+export async function listRecords(maxRecords?: number) {
   const base = getBase();
 
   return withRetry(async () => {
     const selectOptions: {
-      maxRecords: number;
+      maxRecords?: number;
       view?: string;
       sort: Array<{ field: string; direction: "desc" | "asc" }>;
     } = {
-      maxRecords,
       sort: [{ field: fieldMap.receivedDate, direction: "desc" }],
     };
+
+    if (typeof maxRecords === "number" && maxRecords > 0) {
+      selectOptions.maxRecords = maxRecords;
+    }
 
     const view = (env.airtableViewId || "").trim();
     if (view) {
