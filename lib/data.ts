@@ -231,7 +231,10 @@ export async function getTapes(): Promise<TapeRecord[]> {
 export async function getOpsSummary(): Promise<OpsSummaryResponse> {
   const tapes = await getTapes();
 
-  const stageCounts = pipelineStages.map((stage) => ({
+  const coreStages: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"];
+  const stages = [...new Set([...coreStages, ...pipelineStages])];
+
+  const stageCounts = stages.map((stage) => ({
     stage,
     count: tapes.filter((t) => t.stage === stage).length,
   }));
