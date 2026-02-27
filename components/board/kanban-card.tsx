@@ -4,6 +4,12 @@ import type { TapeRecord } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { StageBadge } from "@/components/board/stage-badge";
 
+function cardMemeTag(tape: TapeRecord) {
+  if (tape.issueTags.length >= 2 || tape.ageInStageDays >= 16) return "Elmo with flames";
+  if (tape.issueTags.length >= 1 || tape.ageInStageDays >= 8) return "This is fine";
+  return "Cruising";
+}
+
 export function KanbanCard({ tape }: { tape: TapeRecord }) {
   return (
     <Link
@@ -20,6 +26,7 @@ export function KanbanCard({ tape }: { tape: TapeRecord }) {
 
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <Badge>{tape.priority}</Badge>
+        <Badge>{cardMemeTag(tape)}</Badge>
         <span className="inline-flex items-center gap-1">
           <CalendarClock className="h-3.5 w-3.5" /> {tape.ageInStageDays}d in stage
         </span>

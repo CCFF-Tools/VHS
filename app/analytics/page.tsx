@@ -7,6 +7,7 @@ import { HistogramChart } from "@/components/charts/histogram-chart";
 import { IssueTagsChart } from "@/components/charts/issue-tags-chart";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { useOpsSummary } from "@/lib/hooks/use-api";
+import { MemeAlert } from "@/components/dashboard/meme-alert";
 
 function cohortData(dates: string[]) {
   const map = new Map<string, number>();
@@ -44,107 +45,134 @@ function stageAgingHeatmapInput(
 export default function AnalyticsPage() {
   const { data, error, isLoading } = useOpsSummary();
 
+  const analyticsMood = (() => {
+    if (!data) return "fine" as const;
+    const highDrift = data.runtimeDriftHistogram.find((b) => b.bucket === "11m+")?.count ?? 0;
+    const total = data.tapes.length || 1;
+    const highDriftRate = highDrift / total;
+
+    if (highDriftRate >= 0.24) return "flames" as const;
+    if (highDriftRate >= 0.1) return "watch" as const;
+    return "fine" as const;
+  })();
+
   return (
     <div>
-      <Topbar title="Analytics Deep Dive" subtitle="Turnaround distribution, cohorts, aging patterns, and failure signals." />
+      <Topbar
+        title="Analytics Deep Dive"
+        subtitle="Runtime drift, stage aging, weekly cohorts, and sequence completion health."
+      />
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading analytics...</p>}
       {error && <p className="text-sm text-danger">{error.message}</p>}
 
       {data && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Runtime Drift Histogram</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <HistogramChart data={data.runtimeDriftHistogram} />
-            </CardContent>
-          </Card>
+        <div>
+          <MemeAlert
+            mode={analyticsMood}
+            title="Quality signal"
+            description="This mode is driven by high runtime drift incidence. If Elmo appears, prioritize QC and recapture checks."
+            right={
+              <p>
+                Avg runtime drift: <span className="font-semibold text-foreground">{data.kpis.avgRuntimeDriftMinutes} min</span>
+              </p>
+            }
+          />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Issue Tags</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <IssueTagsChart data={data.issueTagCounts} />
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Runtime Drift Histogram</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <HistogramChart data={data.runtimeDriftHistogram} />
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Cohorts by Week Received</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PipelineFlowChart
-                data={cohortData(data.tapes.map((t) => t.receivedDate).filter((d): d is string => Boolean(d)))}
-              />
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Issue Tags</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <IssueTagsChart data={data.issueTagCounts} />
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Stage Aging Heatmap (table)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-muted-foreground">
-                      <th className="py-2">Stage</th>
-                      <th>0-2d</th>
-                      <th>3-5d</th>
-                      <th>6-10d</th>
-                      <th>11+d</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stageAgingHeatmapInput(data.tapes).map((row) => (
-                      <tr key={row.stage} className="border-t">
-                        <td className="py-2 font-medium">{row.stage}</td>
-                        <td>{row["0-2"]}</td>
-                        <td>{row["3-5"]}</td>
-                        <td>{row["6-10"]}</td>
-                        <td>{row["11+"]}</td>
+            <Card>
+              <CardHeader>
+                <CardTitle>Cohorts by Week Received</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PipelineFlowChart
+                  data={cohortData(data.tapes.map((t) => t.receivedDate).filter((d): d is string => Boolean(d)))}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Stage Aging Heatmap (table)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-2">Stage</th>
+                        <th>0-2d</th>
+                        <th>3-5d</th>
+                        <th>6-10d</th>
+                        <th>11+d</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                    </thead>
+                    <tbody>
+                      {stageAgingHeatmapInput(data.tapes).map((row) => (
+                        <tr key={row.stage} className="border-t">
+                          <td className="py-2 font-medium">{row.stage}</td>
+                          <td>{row["0-2"]}</td>
+                          <td>{row["3-5"]}</td>
+                          <td>{row["6-10"]}</td>
+                          <td>{row["11+"]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Sequence Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-muted-foreground">
-                      <th className="py-2">Sequence</th>
-                      <th>Expected</th>
-                      <th>Captured</th>
-                      <th>Archived</th>
-                      <th>Complete</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.sequenceProgress.map((row) => (
-                      <tr key={row.sequence} className="border-t">
-                        <td className="py-2 font-medium">{row.sequence}</td>
-                        <td>{row.expected}</td>
-                        <td>{row.captured}</td>
-                        <td>{row.archived}</td>
-                        <td>{row.completionRate}%</td>
+            <Card>
+              <CardHeader>
+                <CardTitle>Sequence Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-2">Sequence</th>
+                        <th>Expected</th>
+                        <th>Captured</th>
+                        <th>Archived</th>
+                        <th>Complete</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                    </thead>
+                    <tbody>
+                      {data.sequenceProgress.map((row) => (
+                        <tr key={row.sequence} className="border-t">
+                          <td className="py-2 font-medium">{row.sequence}</td>
+                          <td>{row.expected}</td>
+                          <td>{row.captured}</td>
+                          <td>{row.archived}</td>
+                          <td>{row.completionRate}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
     </div>

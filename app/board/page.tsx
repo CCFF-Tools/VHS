@@ -9,6 +9,13 @@ import { KanbanCard } from "@/components/board/kanban-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTapes } from "@/lib/hooks/use-api";
 import { pipelineStages } from "@/lib/schema";
+import { MemeAlert } from "@/components/dashboard/meme-alert";
+
+function scoreForBoard(tape: { issueTags: string[]; ageInStageDays: number; priority: string }) {
+  const priorityScore =
+    tape.priority === "rush" ? 40 : tape.priority === "high" ? 25 : tape.priority === "normal" ? 12 : 0;
+  return tape.issueTags.length * 60 + tape.ageInStageDays + priorityScore;
+}
 
 export default function BoardPage() {
   const [search, setSearch] = useState("");
@@ -28,21 +35,45 @@ export default function BoardPage() {
   const grouped = useMemo(() => {
     const list = data?.items ?? [];
     return pipelineStages.reduce<Record<string, typeof list>>((acc, stage) => {
-      acc[stage] = list.filter((t) => t.stage === stage);
+      acc[stage] = list
+        .filter((t) => t.stage === stage)
+        .sort((a, b) => scoreForBoard(b) - scoreForBoard(a));
       return acc;
     }, {});
+  }, [data?.items]);
+
+  const mood = useMemo(() => {
+    const list = data?.items ?? [];
+    if (!list.length) return "fine" as const;
+
+    const blocked = list.filter((t) => t.issueTags.length > 0).length;
+    const blockedRate = blocked / list.length;
+    const oldest = Math.max(...list.map((t) => t.ageInStageDays));
+
+    if (blockedRate >= 0.28 || oldest >= 18) return "flames" as const;
+    if (blockedRate >= 0.14 || oldest >= 10) return "watch" as const;
+    return "fine" as const;
   }, [data?.items]);
 
   return (
     <div>
       <Topbar
         title="Production Board"
-        subtitle="Queue by stage with aging indicators, issue flags, and quick drill-down."
+        subtitle="Sorted by urgency: issue-heavy and aging tapes float to the top in each stage."
       />
+
+      {data && (
+        <MemeAlert
+          mode={mood}
+          title="Board temperature"
+          description="Use this signal before standup: calm days show This is fine; overloaded days switch to Elmo with flames."
+          right={<p>Total visible tapes: {data.total}</p>}
+        />
+      )}
 
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Filters (search first, then narrow)</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 md:grid-cols-3">
           <Input
@@ -87,7 +118,9 @@ export default function BoardPage() {
                 {(grouped[stage] || []).map((tape) => (
                   <KanbanCard key={tape.id} tape={tape} />
                 ))}
-                {(grouped[stage] || []).length === 0 && <p className="p-2 text-xs text-muted-foreground">No tapes</p>}
+                {(grouped[stage] || []).length === 0 && (
+                  <p className="p-2 text-xs text-muted-foreground">No tapes here. This is fine.</p>
+                )}
               </div>
             </div>
           ))}

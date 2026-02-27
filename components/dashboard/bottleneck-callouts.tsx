@@ -14,7 +14,7 @@ export function BottleneckCallouts({ summary }: { summary: OpsSummaryResponse })
         </CardHeader>
         <CardContent>
           <p className="text-lg font-semibold">{summary.largestQueueStage?.stage ?? "n/a"}</p>
-          <p className="text-sm text-muted-foreground">{summary.largestQueueStage?.count ?? 0} tapes waiting</p>
+          <p className="text-sm text-muted-foreground">{summary.largestQueueStage?.count ?? 0} tapes waiting in this step</p>
         </CardContent>
       </Card>
 
@@ -31,11 +31,11 @@ export function BottleneckCallouts({ summary }: { summary: OpsSummaryResponse })
                 {summary.oldestWaiting.tapeId}
               </Link>
               <p className="text-sm text-muted-foreground">
-                {summary.oldestWaiting.ageInStageDays} days in {summary.oldestWaiting.stage}
+                {summary.oldestWaiting.ageInStageDays} days parked in {summary.oldestWaiting.stage}
               </p>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">No waiting tapes.</p>
+            <p className="text-sm text-muted-foreground">No waiting tapes. This is fine.</p>
           )}
         </CardContent>
       </Card>

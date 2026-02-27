@@ -8,7 +8,17 @@ import { ThroughputChart } from "@/components/charts/throughput-chart";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { BacklogAreaChart } from "@/components/charts/backlog-area-chart";
 import { BottleneckCallouts } from "@/components/dashboard/bottleneck-callouts";
+import { MemeAlert } from "@/components/dashboard/meme-alert";
 import { useOpsSummary } from "@/lib/hooks/use-api";
+
+function queueMood(args: { blockedQueue: number; intakeQueue: number; captureQueue: number; processingQueue: number; transferQueue: number; oldestDays: number }) {
+  const queueTotal = args.intakeQueue + args.captureQueue + args.processingQueue + args.transferQueue;
+  const blockedRate = queueTotal ? args.blockedQueue / queueTotal : 0;
+
+  if (blockedRate >= 0.28 || args.oldestDays >= 18) return "flames" as const;
+  if (blockedRate >= 0.14 || args.oldestDays >= 10) return "watch" as const;
+  return "fine" as const;
+}
 
 export default function HomePage() {
   const { data, isLoading, error } = useOpsSummary();
@@ -29,13 +39,31 @@ export default function HomePage() {
 
       {data && (
         <div className="space-y-4">
+          <MemeAlert
+            mode={queueMood({
+              blockedQueue: data.kpis.blockedQueue,
+              intakeQueue: data.kpis.intakeQueue,
+              captureQueue: data.kpis.captureQueue,
+              processingQueue: data.kpis.processingQueue,
+              transferQueue: data.kpis.transferQueue,
+              oldestDays: data.oldestWaiting?.ageInStageDays ?? 0,
+            })}
+            title="Queue health at a glance"
+            description="This banner reacts to blocked ratio and oldest waiting tape age so you can spot fire-drill days immediately."
+            right={
+              <div className="space-y-1">
+                <p>Blocked queue: {data.kpis.blockedQueue}</p>
+                <p>Oldest waiting: {data.oldestWaiting?.ageInStageDays ?? 0}d</p>
+              </div>
+            }
+          />
           <KpiGrid kpis={data.kpis} />
           <BottleneckCallouts summary={data} />
 
           <section className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Throughput (30d)</CardTitle>
+                <CardTitle>Intake vs Archived Output (30d)</CardTitle>
               </CardHeader>
               <CardContent>
                 <ThroughputChart data={data.throughputDaily} />
@@ -44,7 +72,7 @@ export default function HomePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Pipeline Flow</CardTitle>
+                <CardTitle>Where Tapes Are Right Now</CardTitle>
               </CardHeader>
               <CardContent>
                 <PipelineFlowChart data={data.stageCounts} />
@@ -54,7 +82,7 @@ export default function HomePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Backlog Size Over Time</CardTitle>
+              <CardTitle>Backlog Pressure (30d)</CardTitle>
             </CardHeader>
             <CardContent>
               <BacklogAreaChart data={data.backlogTrend} />
