@@ -54,6 +54,10 @@ export default function AnalyticsPage() {
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-md border bg-white p-3">
+                  <p className="text-xs text-muted-foreground">Awaiting Capture</p>
+                  <p className="text-2xl font-semibold">{data.kpis.awaitingCaptureCount}</p>
+                </div>
+                <div className="rounded-md border bg-white p-3">
                   <p className="text-xs text-muted-foreground">Captured</p>
                   <p className="text-2xl font-semibold">{data.kpis.capturedCount}</p>
                 </div>

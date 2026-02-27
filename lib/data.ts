@@ -266,6 +266,7 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
   return {
     kpis: {
       totalTapes: tapes.length,
+      awaitingCaptureCount: tapes.filter((t) => t.stage === "Intake").length,
       capturedCount: tapes.filter((t) => Boolean(t.captured)).length,
       trimmedCount: tapes.filter((t) => Boolean(t.trimmed)).length,
       combinedCount: tapes.filter((t) => Boolean(t.combined)).length,

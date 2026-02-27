@@ -3,6 +3,7 @@ import type { DashboardKpis } from "@/lib/types";
 
 const items = [
   { key: "totalTapes", label: "Total Tapes" },
+  { key: "awaitingCaptureCount", label: "Awaiting Capture" },
   { key: "capturedCount", label: "Captured" },
   { key: "trimmedCount", label: "Trimmed" },
   { key: "combinedCount", label: "Combined" },

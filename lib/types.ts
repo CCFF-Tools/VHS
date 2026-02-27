@@ -39,6 +39,7 @@ export interface TapeRecord {
 
 export interface DashboardKpis {
   totalTapes: number;
+  awaitingCaptureCount: number;
   capturedCount: number;
   trimmedCount: number;
   combinedCount: number;
