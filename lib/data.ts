@@ -134,15 +134,19 @@ function buildAcquisitionDaily(tapes: TapeRecord[]) {
 }
 
 function bucketRuntime(minutes: number): string {
-  if (minutes <= 30) return "0-30";
-  if (minutes <= 60) return "31-60";
+  if (minutes <= 15) return "0-15";
+  if (minutes <= 30) return "16-30";
+  if (minutes <= 45) return "31-45";
+  if (minutes <= 60) return "46-60";
   if (minutes <= 90) return "61-90";
   if (minutes <= 120) return "91-120";
-  return "121+";
+  if (minutes <= 150) return "121-150";
+  if (minutes <= 180) return "151-180";
+  return "181+";
 }
 
 function buildRuntimeHistogram(values: number[]) {
-  const buckets = ["0-30", "31-60", "61-90", "91-120", "121+"];
+  const buckets = ["0-15", "16-30", "31-45", "46-60", "61-90", "91-120", "121-150", "151-180", "181+"];
   const counts = new Map<string, number>(buckets.map((b) => [b, 0]));
 
   for (const value of values) {

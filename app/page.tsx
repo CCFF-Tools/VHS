@@ -94,7 +94,7 @@ export default function HomePage() {
           <section className="grid gap-4 lg:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle>Label Runtime Distribution</CardTitle>
+                <CardTitle>Meeting Runtime Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 <HistogramChart data={data.runtimeHistograms.labelRuntime} />
