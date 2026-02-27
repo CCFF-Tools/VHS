@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing id or stage" }, { status: 400 });
     }
 
-    const updated = await updateRecord(body.id, stageToFields(body.stage));
-    return NextResponse.json({ ok: true, id: updated.id }, { status: 200 });
+    await updateRecord(body.id, stageToFields(body.stage));
+    return NextResponse.json({ ok: true, id: body.id }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to update status", detail: (error as Error).message },

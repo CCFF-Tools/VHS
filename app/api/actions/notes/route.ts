@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing id or note" }, { status: 400 });
     }
 
-    const updated = await updateRecord(body.id, { [notesField]: body.note });
-    return NextResponse.json({ ok: true, id: updated.id }, { status: 200 });
+    await updateRecord(body.id, { [notesField]: body.note });
+    return NextResponse.json({ ok: true, id: body.id }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       {
