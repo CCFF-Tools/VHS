@@ -1,4 +1,5 @@
 import Airtable from "airtable";
+import type { FieldSet } from "airtable/lib/field_set";
 import { env } from "@/lib/env";
 import { fieldMap } from "@/lib/schema";
 
@@ -87,7 +88,7 @@ export async function getRecord(recordId: string) {
   return withRetry(async () => base(env.airtableTableRef).find(recordId));
 }
 
-export async function updateRecord(recordId: string, fields: Record<string, unknown>) {
+export async function updateRecord(recordId: string, fields: Partial<FieldSet>) {
   const base = getBase();
   return withRetry(async () => base(env.airtableTableRef).update(recordId, fields));
 }
