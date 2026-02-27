@@ -1,6 +1,6 @@
 "use client";
 
-import { format, parseISO, startOfWeek } from "date-fns";
+import { format, parseISO, startOfWeek, subWeeks } from "date-fns";
 import {
   Area,
   AreaChart,
@@ -150,16 +150,11 @@ function runtimeDensityGrid(tapes: TapeRecord[]) {
     { key: "181+", min: 181, max: Number.POSITIVE_INFINITY },
   ];
 
-  const weekKeys = Array.from(
-    new Set(
-      tapes
-        .map((tape) => tape.acquisitionAt ?? tape.receivedDate)
-        .filter((value): value is string => Boolean(value))
-        .map((value) => format(startOfWeek(parseISO(value), { weekStartsOn: 1 }), "yyyy-MM-dd"))
-    )
-  )
-    .sort((a, b) => a.localeCompare(b))
-    .slice(-12);
+  // Always show a continuous weekly range so columns are predictable.
+  const currentWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekKeys = Array.from({ length: 12 }, (_, idx) =>
+    format(subWeeks(currentWeek, 11 - idx), "yyyy-MM-dd")
+  );
 
   const grid = runtimeBins.map((runtime) => ({
     runtime: runtime.key,
@@ -399,8 +394,8 @@ export default function AnalyticsPage() {
                       <tr className="text-left text-muted-foreground">
                         <th className="py-1 pr-2">Runtime</th>
                         {density.weekKeys.map((week) => (
-                          <th key={week} className="px-1 py-1 text-center">
-                            {week.slice(5)}
+                          <th key={week} className="px-1 py-1 text-center font-mono">
+                            {week}
                           </th>
                         ))}
                       </tr>
