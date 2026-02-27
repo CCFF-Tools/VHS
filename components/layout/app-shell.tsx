@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="rounded-xl border panel-gradient p-4 shadow-panel">
         <div className="mb-6">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">Internal Dashboard</p>
-          <h1 className="mt-2 text-xl font-bold">VHS Operations</h1>
+          <h1 className="mt-2 text-xl font-bold">VHS Operations Control Room</h1>
         </div>
 
         <nav className="space-y-2">
@@ -31,8 +31,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-                  active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-gradient-to-r from-primary to-cyan-700 text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
                 )}
               >
                 <Icon className="h-4 w-4" />

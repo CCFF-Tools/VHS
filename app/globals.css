@@ -26,9 +26,35 @@
 body {
   @apply bg-background text-foreground antialiased;
   min-height: 100vh;
-  background: hsl(34 31% 98%);
+  background:
+    radial-gradient(circle at 10% 0%, hsl(47 100% 86% / 0.42), transparent 38%),
+    radial-gradient(circle at 100% 10%, hsl(189 74% 86% / 0.35), transparent 36%),
+    repeating-linear-gradient(
+      -35deg,
+      hsl(35 72% 96% / 0.55) 0px,
+      hsl(35 72% 96% / 0.55) 10px,
+      hsl(41 92% 95% / 0.18) 10px,
+      hsl(41 92% 95% / 0.18) 20px
+    ),
+    hsl(34 31% 98%);
 }
 
 .panel-gradient {
-  background: hsl(0 0% 100%);
+  background: linear-gradient(150deg, hsl(0 0% 100%), hsl(45 86% 97%));
+}
+
+.kpi-tint-1 {
+  background: linear-gradient(145deg, hsl(164 58% 96%), hsl(164 58% 98%));
+}
+
+.kpi-tint-2 {
+  background: linear-gradient(145deg, hsl(40 100% 95%), hsl(40 100% 98%));
+}
+
+.kpi-tint-3 {
+  background: linear-gradient(145deg, hsl(198 84% 95%), hsl(198 84% 98%));
+}
+
+.kpi-tint-4 {
+  background: linear-gradient(145deg, hsl(16 100% 95%), hsl(16 100% 98%));
 }

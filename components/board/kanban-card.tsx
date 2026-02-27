@@ -8,7 +8,7 @@ export function KanbanCard({ tape }: { tape: TapeRecord }) {
   return (
     <Link
       href={`/tapes/${tape.id}`}
-      className="block rounded-md border bg-white p-3 text-sm transition-transform hover:-translate-y-0.5"
+      className="block rounded-md border bg-gradient-to-br from-white to-amber-50/70 p-3 text-sm transition-transform hover:-translate-y-0.5"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>

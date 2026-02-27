@@ -11,11 +11,13 @@ const items = [
   { key: "receivedToday", label: "Received Today" },
 ] as const;
 
+const cardTints = ["kpi-tint-1", "kpi-tint-2", "kpi-tint-3", "kpi-tint-4"] as const;
+
 export function KpiGrid({ kpis }: { kpis: DashboardKpis }) {
   return (
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {items.map((item) => (
-        <Card key={item.key}>
+      {items.map((item, idx) => (
+        <Card key={item.key} className={cardTints[idx % cardTints.length]}>
           <CardHeader>
             <CardTitle className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.label}</CardTitle>
           </CardHeader>
