@@ -30,6 +30,7 @@ export interface TapeRecord {
   notes?: string;
   updatedTime?: string;
   acquisitionAt?: string;
+  capturedAt?: string;
   dueDate?: string;
   assignedTech?: string;
   priority: Priority;
@@ -58,6 +59,8 @@ export interface OpsSummaryResponse {
   kpis: DashboardKpis;
   stageCounts: Array<{ stage: Stage; count: number }>;
   acquisitionDaily: Array<{ date: string; count: number }>;
+  capturedDaily: Array<{ date: string; count: number }>;
+  capturedDateCoveragePercent: number;
   runtimeHistograms: {
     labelRuntime: Array<{ bucket: string; count: number }>;
     qtRuntime: Array<{ bucket: string; count: number }>;

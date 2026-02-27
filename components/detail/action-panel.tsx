@@ -10,10 +10,10 @@ import type { Stage } from "@/lib/types";
 
 const stageOptions = [
   { value: "Intake", label: "Awaiting Capture" },
-  { value: "Capture", label: "Capture" },
-  { value: "Trim", label: "Trim" },
-  { value: "Combine", label: "Combine" },
-  { value: "Transfer", label: "Transfer" },
+  { value: "Capture", label: "Captured" },
+  { value: "Trim", label: "Trimmed" },
+  { value: "Combine", label: "Combined" },
+  { value: "Transfer", label: "Transferred" },
   { value: "Archived", label: "Archived" },
 ];
 

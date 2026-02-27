@@ -70,6 +70,27 @@ export default function HomePage() {
             </Card>
           </section>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Captures Per Day (30d)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {data.capturedDateCoveragePercent > 0 ? (
+                <>
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Capture date coverage: {data.capturedDateCoveragePercent}%
+                  </p>
+                  <AcquisitionChart data={data.capturedDaily} />
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No captured timestamp data yet. Set `AIRTABLE_CAPTURED_AT_FIELD` to your imported movie file
+                  creation-time field when available.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           <section className="grid gap-4 lg:grid-cols-3">
             <Card>
               <CardHeader>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, AreaChart, ClipboardList, ShieldCheck } from "lucide-react";
+import { Activity, AreaChart, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -44,12 +44,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="mt-6 rounded-md bg-muted p-3 text-xs text-muted-foreground">
-          <div className="mb-1 flex items-center gap-2 font-semibold text-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Internal-only
-          </div>
-          Airtable keys stay server-side. Status and notes can be updated from tape detail pages.
-        </div>
       </aside>
 
       <main>{children}</main>

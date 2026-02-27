@@ -171,6 +171,10 @@ export async function getTapes(): Promise<TapeRecord[]> {
       fieldMap.completedDate && fields[fieldMap.completedDate]
         ? toDate(fields[fieldMap.completedDate])
         : undefined;
+    const capturedAt =
+      fieldMap.capturedAt && fields[fieldMap.capturedAt]
+        ? toDate(fields[fieldMap.capturedAt])
+        : undefined;
 
     const parsed: Partial<TapeRecord> = {
       id: record.id,
@@ -192,6 +196,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       finalClipDurationMinutes: toNumber(fields[fieldMap.finalClipDuration]),
       updatedTime: createdTime,
       acquisitionAt,
+      capturedAt,
       ageInStageDays: calcAgeInDays(baselineDate),
     };
 
@@ -218,6 +223,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       notes: undefined,
       updatedTime: parsed.updatedTime,
       acquisitionAt: parsed.acquisitionAt,
+      capturedAt: parsed.capturedAt,
       priority: inferPriority(parsed.ageInStageDays ?? 0),
       ageInStageDays: parsed.ageInStageDays ?? 0,
       completedDate,
@@ -225,6 +231,21 @@ export async function getTapes(): Promise<TapeRecord[]> {
 
     result.issueTags = inferIssues(result);
     return result;
+  });
+}
+
+function buildCapturedDaily(tapes: TapeRecord[]) {
+  const start = subDays(startOfDay(new Date()), 29);
+  const end = endOfDay(new Date());
+  const days = eachDayOfInterval({ start, end });
+
+  return days.map((d) => {
+    const key = format(d, "yyyy-MM-dd");
+    const count = tapes.filter((t) => {
+      const capturedAt = t.capturedAt;
+      return capturedAt && format(parseISO(capturedAt), "yyyy-MM-dd") === key;
+    }).length;
+    return { date: key, count };
   });
 }
 
@@ -263,6 +284,11 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
     .sort((a, b) => parseISO(b.acquisitionAt!).getTime() - parseISO(a.acquisitionAt!).getTime())
     .slice(0, 20);
 
+  const capturedDateCount = tapes.filter((t) => Boolean(t.capturedAt)).length;
+  const capturedDateCoveragePercent = tapes.length
+    ? Number(((capturedDateCount / tapes.length) * 100).toFixed(1))
+    : 0;
+
   return {
     kpis: {
       totalTapes: tapes.length,
@@ -278,6 +304,8 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
     },
     stageCounts,
     acquisitionDaily: buildAcquisitionDaily(tapes),
+    capturedDaily: buildCapturedDaily(tapes),
+    capturedDateCoveragePercent,
     runtimeHistograms: {
       labelRuntime: buildRuntimeHistogram(labelRuntimes),
       qtRuntime: buildRuntimeHistogram(qtRuntimes),

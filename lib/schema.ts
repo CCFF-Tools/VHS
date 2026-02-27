@@ -9,6 +9,7 @@ export const fieldMap = {
   labelRuntime: process.env.AIRTABLE_LABEL_RUNTIME_FIELD ?? "Label RT",
   qtRuntime: process.env.AIRTABLE_QT_RUNTIME_FIELD ?? "QT TRT",
   qtFilename: process.env.AIRTABLE_QT_FILENAME_FIELD ?? "QT Filename",
+  capturedAt: process.env.AIRTABLE_CAPTURED_AT_FIELD ?? "",
   captured: process.env.AIRTABLE_CAPTURED_FIELD ?? "Captured",
   trimmed: process.env.AIRTABLE_TRIMMED_FIELD ?? "Trimmed",
   combined: process.env.AIRTABLE_COMBINED_FIELD ?? "Combined",
