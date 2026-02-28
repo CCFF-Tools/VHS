@@ -325,9 +325,14 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
     })
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
 
-  const recentAcquisitions = [...tapes]
-    .filter((t) => t.acquisitionAt)
-    .sort((a, b) => parseISO(b.acquisitionAt!).getTime() - parseISO(a.acquisitionAt!).getTime());
+  const timestampOf = (t: TapeRecord) => {
+    const source = t.acquisitionAt ?? t.receivedDate ?? t.updatedTime;
+    if (!source) return 0;
+    const ms = Date.parse(source);
+    return Number.isFinite(ms) ? ms : 0;
+  };
+
+  const recentAcquisitions = [...tapes].sort((a, b) => timestampOf(b) - timestampOf(a));
 
   const capturedDateCount = tapes.filter((t) => Boolean(t.capturedAt)).length;
   const capturedDateCoveragePercent = tapes.length

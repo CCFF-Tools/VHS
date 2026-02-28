@@ -13,25 +13,25 @@ import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 const SLIDE_INTERVAL_MS = 12000;
 
+function formatFeedDate(acquiredAt?: string, receivedDate?: string, updatedTime?: string) {
+  const source = acquiredAt ?? receivedDate ?? updatedTime;
+  if (!source) return "n/a";
+  const parsed = new Date(source);
+  if (Number.isNaN(parsed.getTime())) return "n/a";
+  return format(parsed, "yyyy-MM-dd HH:mm");
+}
+
 function SlideHeader({
   title,
-  subtitle,
-  slideIndex,
-  slideCount,
 }: {
   title: string;
-  subtitle: string;
-  slideIndex: number;
-  slideCount: number;
 }) {
   return (
     <header className="mb-4 flex items-center justify-between">
       <div>
         <h1 className="text-4xl font-extrabold tracking-tight text-white">{title}</h1>
-        <p className="text-sm text-cyan-100/90">{subtitle}</p>
       </div>
       <div className="text-right text-cyan-50">
-        <p className="font-mono text-sm">Slide {slideIndex + 1}/{slideCount}</p>
         <p className="font-mono text-xs opacity-80">{format(new Date(), "yyyy-MM-dd HH:mm:ss")}</p>
       </div>
     </header>
@@ -175,7 +175,7 @@ export default function PresentationPage() {
       title: "Recent Acquisitions Feed",
       subtitle: "Newest records with runtime + progression flags",
       content: data ? (
-        <Card className="h-full border-cyan-200/40 bg-white/95">
+        <Card className="h-full border-cyan-200/40 bg-white/95 text-slate-900">
           <CardHeader>
             <CardTitle>Top 30 Most Recent</CardTitle>
           </CardHeader>
@@ -187,7 +187,7 @@ export default function PresentationPage() {
               <p>Avg Drift: <span className="font-semibold text-slate-900">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span></p>
             </div>
             <div className="overflow-auto" style={{ maxHeight: "42vh" }}>
-              <table className="w-full text-sm">
+              <table className="w-full text-sm text-slate-900">
                 <thead className="sticky top-0 bg-white">
                   <tr className="text-left text-slate-500">
                     <th className="py-2">📼</th>
@@ -200,17 +200,30 @@ export default function PresentationPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.recentAcquisitions.slice(0, 30).map((t) => (
-                    <tr key={t.id} className="border-t">
-                      <td className="py-2 font-mono text-xs">{t.tapeId}</td>
-                      <td className="font-medium">{t.tapeName}</td>
-                      <td className="font-mono text-xs">{t.acquisitionAt ? format(new Date(t.acquisitionAt), "yyyy-MM-dd HH:mm") : "n/a"}</td>
-                      <td>{formatDurationHMSFromMinutes(t.labelRuntimeMinutes)}</td>
-                      <td>{formatDurationHMSFromMinutes(t.qtRuntimeMinutes)}</td>
-                      <td>{formatDurationHMSFromMinutes(t.finalClipDurationMinutes)}</td>
-                      <td className="font-mono text-xs">{t.captured ? "Y" : "N"}/{t.trimmed ? "Y" : "N"}/{t.combined ? "Y" : "N"}/{t.transferredToNas ? "Y" : "N"}</td>
+                  {data.recentAcquisitions.length > 0 ? (
+                    data.recentAcquisitions.slice(0, 30).map((t) => (
+                      <tr key={t.id} className="border-t text-slate-800">
+                        <td className="py-2 font-mono text-xs">{t.tapeId}</td>
+                        <td className="font-medium">{t.tapeName}</td>
+                        <td className="font-mono text-xs">
+                          {formatFeedDate(t.acquisitionAt, t.receivedDate, t.updatedTime)}
+                        </td>
+                        <td>{formatDurationHMSFromMinutes(t.labelRuntimeMinutes)}</td>
+                        <td>{formatDurationHMSFromMinutes(t.qtRuntimeMinutes)}</td>
+                        <td>{formatDurationHMSFromMinutes(t.finalClipDurationMinutes)}</td>
+                        <td className="font-mono text-xs">
+                          {t.captured ? "Y" : "N"}/{t.trimmed ? "Y" : "N"}/{t.combined ? "Y" : "N"}/
+                          {t.transferredToNas ? "Y" : "N"}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="border-t">
+                      <td colSpan={7} className="py-4 text-center text-sm text-slate-500">
+                        No acquisition rows available yet.
+                      </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -227,9 +240,6 @@ export default function PresentationPage() {
       <div className="mx-auto max-w-[1800px]">
         <SlideHeader
           title={current.title}
-          subtitle={`${current.subtitle} • Auto-rotates every ${SLIDE_INTERVAL_MS / 1000}s • Arrow keys navigate`}
-          slideIndex={slide}
-          slideCount={slides.length}
         />
 
         {isLoading && (
