@@ -44,7 +44,7 @@ function runtimeScatterData(tapes: TapeRecord[]) {
   return tapes
     .map((tape) => {
       const runtime = runtimeForTape(tape);
-      const date = tape.contentRecordedAt ?? tape.acquisitionAt ?? tape.receivedDate;
+      const date = tape.contentRecordedAt;
       if (runtime == null || !date) return null;
       const ts = parseISO(date).getTime();
       if (Number.isNaN(ts)) return null;

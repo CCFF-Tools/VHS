@@ -10,6 +10,24 @@ function toDate(value: unknown): string | undefined {
   return d.toISOString();
 }
 
+function toDateOnly(value: unknown): string | undefined {
+  if (!value || typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const explicitMatch = trimmed.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+  if (explicitMatch) return explicitMatch[1];
+
+  const d = new Date(trimmed);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return format(d, "yyyy-MM-dd");
+}
+
+function inferMeetingDateFromQtFilename(qtFilename?: string): string | undefined {
+  if (!qtFilename) return undefined;
+  return toDateOnly(qtFilename);
+}
+
 function toNumber(value: unknown): number | undefined {
   if (typeof value === "number") return value;
   if (typeof value === "string" && value.trim() !== "") {
@@ -238,10 +256,11 @@ export async function getTapes(): Promise<TapeRecord[]> {
       fieldMap.capturedAt && fields[fieldMap.capturedAt]
         ? toDate(fields[fieldMap.capturedAt])
         : undefined;
+    const qtFilename = fields[fieldMap.qtFilename] ? String(fields[fieldMap.qtFilename]) : undefined;
     const contentRecordedAt =
       fieldMap.contentRecordedDate && fields[fieldMap.contentRecordedDate]
-        ? toDate(fields[fieldMap.contentRecordedDate])
-        : undefined;
+        ? toDateOnly(fields[fieldMap.contentRecordedDate])
+        : inferMeetingDateFromQtFilename(qtFilename);
 
     const parsed: Partial<TapeRecord> = {
       id: record.id,
@@ -252,7 +271,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       receivedDate,
       labelRuntimeMinutes: toRuntimeMinutes(fields[fieldMap.labelRuntime]),
       qtRuntimeMinutes: toRuntimeMinutes(fields[fieldMap.qtRuntime]),
-      qtFilename: fields[fieldMap.qtFilename] ? String(fields[fieldMap.qtFilename]) : undefined,
+      qtFilename,
       captured: toBool(fields[fieldMap.captured]),
       trimmed: toBool(fields[fieldMap.trimmed]),
       combined: toBool(fields[fieldMap.combined]),
