@@ -1,6 +1,6 @@
 "use client";
 
-import { format, parseISO, startOfWeek, subWeeks } from "date-fns";
+import { format, parseISO, startOfDay, startOfWeek, subWeeks } from "date-fns";
 import {
   Area,
   AreaChart,
@@ -44,13 +44,26 @@ function runtimeScatterData(tapes: TapeRecord[]) {
   return tapes
     .map((tape) => {
       const runtime = runtimeForTape(tape);
-      const date = tape.acquisitionAt ?? tape.receivedDate;
+      const date = tape.contentRecordedAt ?? tape.acquisitionAt ?? tape.receivedDate;
       if (runtime == null || !date) return null;
       const ts = parseISO(date).getTime();
       if (Number.isNaN(ts)) return null;
       return { ts, runtime, stage: tape.stage };
     })
     .filter((item): item is { ts: number; runtime: number; stage: Stage } => Boolean(item));
+}
+
+function scatterTicks(points: Array<{ ts: number }>) {
+  if (!points.length) return [];
+
+  const dayValues = [...new Set(points.map((point) => startOfDay(new Date(point.ts)).getTime()))].sort(
+    (a, b) => a - b
+  );
+
+  if (dayValues.length <= 12) return dayValues;
+
+  const step = Math.ceil(dayValues.length / 12);
+  return dayValues.filter((_, idx) => idx % step === 0 || idx === dayValues.length - 1);
 }
 
 function cdfData(tapes: TapeRecord[]) {
@@ -185,6 +198,7 @@ export default function AnalyticsPage() {
   const { data, error, isLoading } = useOpsSummary();
 
   const scatter = data ? runtimeScatterData(data.tapes) : [];
+  const scatterXAxisTicks = scatterTicks(scatter);
   const cdf = data ? cdfData(data.tapes) : [];
   const box = data ? stageBoxData(data.tapes) : [];
   const ridges = data ? stageRidgelineData(data.tapes) : [];
@@ -287,7 +301,7 @@ export default function AnalyticsPage() {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Runtime Scatter (Cataloged Date vs Runtime)</CardTitle>
+              <CardTitle>Runtime Scatter (Recorded Date vs Runtime)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[320px] w-full">
@@ -297,6 +311,7 @@ export default function AnalyticsPage() {
                     <XAxis
                       type="number"
                       dataKey="ts"
+                      ticks={scatterXAxisTicks}
                       tickFormatter={(value) => format(new Date(value), "yyyy-MM-dd")}
                       domain={["dataMin", "dataMax"]}
                       tick={{ fontSize: 11 }}

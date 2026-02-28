@@ -8,16 +8,20 @@ export function Topbar({
   title,
   subtitle,
   titleClassName,
+  subtitleClassName,
 }: {
   title: string;
   subtitle?: string;
   titleClassName?: string;
+  subtitleClassName?: string;
 }) {
   return (
     <header className="mb-5">
       <div>
         <h2 className={cn("text-3xl font-semibold tracking-tight", titleClassName)}>{title}</h2>
-        {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+        {subtitle ? (
+          <p className={cn("mt-1 text-sm text-muted-foreground", subtitleClassName)}>{subtitle}</p>
+        ) : null}
       </div>
     </header>
   );

@@ -53,6 +53,7 @@ export default function HomePage() {
         title="VHS Operations Snapshot"
         subtitle="Mission Control for municipal meeting archives"
         titleClassName="text-4xl font-extrabold tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-r from-teal-700 via-cyan-700 to-amber-600 md:text-5xl"
+        subtitleClassName="mt-2 text-base font-semibold tracking-wide text-slate-700 md:text-lg"
       />
 
       {isLoading && (
