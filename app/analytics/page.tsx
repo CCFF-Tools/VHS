@@ -297,7 +297,7 @@ export default function AnalyticsPage() {
                     <XAxis
                       type="number"
                       dataKey="ts"
-                      tickFormatter={(value) => format(new Date(value), "MM/dd")}
+                      tickFormatter={(value) => format(new Date(value), "yyyy-MM-dd")}
                       domain={["dataMin", "dataMax"]}
                       tick={{ fontSize: 11 }}
                     />
