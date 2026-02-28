@@ -8,7 +8,7 @@ const items: Array<{ key: keyof DashboardKpis; label: string; progress?: boolean
   { key: "trimmedCount", label: "Trimmed", progress: true },
   { key: "combinedCount", label: "Combined", progress: true },
   { key: "transferredCount", label: "Transferred to NAS", progress: true },
-  { key: "receivedToday", label: "Received Today" },
+  { key: "receivedToday", label: "Cataloged Today" },
 ] as const;
 
 const cardTints = ["kpi-tint-1", "kpi-tint-2", "kpi-tint-3", "kpi-tint-4"] as const;

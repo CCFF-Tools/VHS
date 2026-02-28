@@ -41,7 +41,7 @@ export default function BoardPage() {
     <div>
       <Topbar
         title="Production Board"
-        subtitle="Grouped by stage and sorted by newest acquisition first."
+        subtitle="Grouped by stage and sorted by newest cataloged entry first."
       />
 
       <Card className="mb-4">

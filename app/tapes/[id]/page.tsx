@@ -42,7 +42,7 @@ export default async function TapeDetailPage({ params }: { params: Promise<{ id:
             <p>
               Stage: <Badge className="ml-2">{stageLabel(tape.stage)}</Badge>
             </p>
-            <p>Received: {tape.receivedDate ? new Date(tape.receivedDate).toLocaleDateString() : "n/a"}</p>
+            <p>Cataloged: {tape.acquisitionAt ? new Date(tape.acquisitionAt).toLocaleDateString() : "n/a"}</p>
             <p>Label Runtime: {formatDurationHMSFromMinutes(tape.labelRuntimeMinutes)}</p>
             <p>QT Runtime: {formatDurationHMSFromMinutes(tape.qtRuntimeMinutes)}</p>
             <p>QT Filename: {tape.qtFilename ?? "n/a"}</p>

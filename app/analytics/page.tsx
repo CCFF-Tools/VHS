@@ -287,7 +287,7 @@ export default function AnalyticsPage() {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Runtime Scatter (Acquisition Date vs Runtime)</CardTitle>
+              <CardTitle>Runtime Scatter (Cataloged Date vs Runtime)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[320px] w-full">

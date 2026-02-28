@@ -175,6 +175,22 @@ function buildAcquisitionDaily(tapes: TapeRecord[]) {
   });
 }
 
+function buildContentRecordedDaily(tapes: TapeRecord[]) {
+  const counts = new Map<string, number>();
+
+  for (const tape of tapes) {
+    if (!tape.contentRecordedAt) continue;
+    const parsed = parseISO(tape.contentRecordedAt);
+    if (Number.isNaN(parsed.getTime())) continue;
+    const key = format(parsed, "yyyy-MM-dd");
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
 function bucketRuntime(minutes: number): string {
   if (minutes <= 15) return "0-15";
   if (minutes <= 30) return "16-30";
@@ -211,8 +227,9 @@ export async function getTapes(): Promise<TapeRecord[]> {
     const fields = record.fields as Record<string, unknown>;
     const receivedDate = toDate(fields[fieldMap.receivedDate]);
     const createdTime = toDate(record._rawJson.createdTime);
-    const acquisitionAt = receivedDate ?? createdTime;
-    const baselineDate = receivedDate ?? createdTime;
+    // For this workflow, "acquisition" means catalog/sticker entry time in Airtable.
+    const acquisitionAt = createdTime ?? receivedDate;
+    const baselineDate = createdTime ?? receivedDate;
     const completedDate =
       fieldMap.completedDate && fields[fieldMap.completedDate]
         ? toDate(fields[fieldMap.completedDate])
@@ -220,6 +237,10 @@ export async function getTapes(): Promise<TapeRecord[]> {
     const capturedAt =
       fieldMap.capturedAt && fields[fieldMap.capturedAt]
         ? toDate(fields[fieldMap.capturedAt])
+        : undefined;
+    const contentRecordedAt =
+      fieldMap.contentRecordedDate && fields[fieldMap.contentRecordedDate]
+        ? toDate(fields[fieldMap.contentRecordedDate])
         : undefined;
 
     const parsed: Partial<TapeRecord> = {
@@ -242,6 +263,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       finalClipDurationMinutes: toRuntimeMinutes(fields[fieldMap.finalClipDuration]),
       updatedTime: createdTime,
       acquisitionAt,
+      contentRecordedAt,
       capturedAt,
       ageInStageDays: calcAgeInDays(baselineDate),
     };
@@ -269,6 +291,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       notes: undefined,
       updatedTime: parsed.updatedTime,
       acquisitionAt: parsed.acquisitionAt,
+      contentRecordedAt: parsed.contentRecordedAt,
       capturedAt: parsed.capturedAt,
       priority: inferPriority(parsed.ageInStageDays ?? 0),
       ageInStageDays: parsed.ageInStageDays ?? 0,
@@ -338,6 +361,10 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
   const capturedDateCoveragePercent = tapes.length
     ? Number(((capturedDateCount / tapes.length) * 100).toFixed(1))
     : 0;
+  const contentRecordedCount = tapes.filter((t) => Boolean(t.contentRecordedAt)).length;
+  const contentRecordedCoveragePercent = tapes.length
+    ? Number(((contentRecordedCount / tapes.length) * 100).toFixed(1))
+    : 0;
 
   return {
     kpis: {
@@ -348,12 +375,14 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       combinedCount: tapes.filter((t) => Boolean(t.combined)).length,
       transferredCount: tapes.filter((t) => Boolean(t.transferredToNas)).length,
       receivedToday: tapes.filter((t) => {
-        const date = t.receivedDate ?? t.acquisitionAt;
+        const date = t.acquisitionAt ?? t.receivedDate;
         return Boolean(date && isToday(parseISO(date)));
       }).length,
     },
     stageCounts,
     acquisitionDaily: buildAcquisitionDaily(tapes),
+    contentRecordedDaily: buildContentRecordedDaily(tapes),
+    contentRecordedCoveragePercent,
     capturedDaily: buildCapturedDaily(tapes),
     capturedDateCoveragePercent,
     runtimeHistograms: {

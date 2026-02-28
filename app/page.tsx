@@ -86,7 +86,7 @@ export default function HomePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Acquisitions Per Day (30d)</CardTitle>
+                <CardTitle>Cataloged Per Day (30d)</CardTitle>
               </CardHeader>
               <CardContent>
                 <AcquisitionChart data={data.acquisitionDaily} />
@@ -94,26 +94,49 @@ export default function HomePage() {
             </Card>
           </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Captures Per Day (30d)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.capturedDateCoveragePercent > 0 ? (
-                <>
-                  <p className="mb-2 text-xs text-muted-foreground">
-                    Capture date coverage: {data.capturedDateCoveragePercent}%
+          <section className="grid gap-4 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Captures Per Day (30d)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {data.capturedDateCoveragePercent > 0 ? (
+                  <>
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      Capture date coverage: {data.capturedDateCoveragePercent}%
+                    </p>
+                    <AcquisitionChart data={data.capturedDaily} />
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No captured timestamp data yet. Set `AIRTABLE_CAPTURED_AT_FIELD` to your imported movie file
+                    creation-time field when available.
                   </p>
-                  <AcquisitionChart data={data.capturedDaily} />
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No captured timestamp data yet. Set `AIRTABLE_CAPTURED_AT_FIELD` to your imported movie file
-                  creation-time field when available.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Original Content Recorded Timeline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {data.contentRecordedCoveragePercent > 0 ? (
+                  <>
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      Original content date coverage: {data.contentRecordedCoveragePercent}%
+                    </p>
+                    <AcquisitionChart data={data.contentRecordedDaily} />
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No original content date data yet. Set `AIRTABLE_CONTENT_DATE_FIELD` to the field that stores the
+                    tape meeting/event recording date.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </section>
 
           <section className="grid gap-4 lg:grid-cols-3">
             <Card>
@@ -146,7 +169,7 @@ export default function HomePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Acquisitions</CardTitle>
+              <CardTitle>Recent Cataloged Tapes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -192,8 +215,8 @@ export default function HomePage() {
                     <tr className="text-left text-muted-foreground">
                       <th className="py-2">📼 Sticker</th>
                       <th>Tape Name</th>
-                      <th>Acquired At</th>
-                      <th>Rec Date</th>
+                      <th>Cataloged At</th>
+                      <th>Rec Date (Optional)</th>
                       <th>Label</th>
                       <th>QT</th>
                       <th>Final</th>

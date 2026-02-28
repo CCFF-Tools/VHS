@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { RefreshCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
@@ -41,6 +42,7 @@ function SlideHeader({
 export default function PresentationPage() {
   const { data, isLoading, error, mutate } = useOpsSummary();
   const [slide, setSlide] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -54,10 +56,11 @@ export default function PresentationPage() {
       if (event.key === "ArrowRight") setSlide((prev) => (prev + 1) % 4);
       if (event.key === "ArrowLeft") setSlide((prev) => (prev + 3) % 4);
       if (event.key.toLowerCase() === "r") mutate();
+      if (event.key === "Escape") router.push("/");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mutate]);
+  }, [mutate, router]);
 
   const stageData = useMemo(
     () =>
@@ -88,7 +91,7 @@ export default function PresentationPage() {
               ["Trimmed", data.kpis.trimmedCount],
               ["Combined", data.kpis.combinedCount],
               ["Transferred", data.kpis.transferredCount],
-              ["Received Today", data.kpis.receivedToday],
+              ["Cataloged Today", data.kpis.receivedToday],
             ].map(([label, value]) => (
               <Card key={label} className="border-cyan-200/40 bg-white/95">
                 <CardContent className="py-4">
@@ -103,13 +106,13 @@ export default function PresentationPage() {
     },
     {
       key: "throughput",
-      title: "Acquisition + Capture Throughput",
+      title: "Cataloged + Capture Throughput",
       subtitle: "Last 30 days",
       content: data ? (
-        <div className="grid h-full gap-4 md:grid-cols-2">
+        <div className="grid h-full gap-4 md:grid-cols-3">
           <Card className="border-cyan-200/40 bg-white/95">
             <CardHeader>
-              <CardTitle>Acquisitions Per Day</CardTitle>
+              <CardTitle>Cataloged Per Day</CardTitle>
             </CardHeader>
             <CardContent>
               <AcquisitionChart data={data.acquisitionDaily} />
@@ -130,6 +133,25 @@ export default function PresentationPage() {
               ) : (
                 <div className="flex h-[260px] items-center justify-center text-center text-sm text-slate-500">
                   Capture timestamp field not available yet.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="border-cyan-200/40 bg-white/95">
+            <CardHeader>
+              <CardTitle>Original Content Recorded Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {data.contentRecordedCoveragePercent > 0 ? (
+                <>
+                  <p className="mb-2 text-xs text-slate-500">
+                    Coverage: {data.contentRecordedCoveragePercent}% have content recorded dates
+                  </p>
+                  <AcquisitionChart data={data.contentRecordedDaily} />
+                </>
+              ) : (
+                <div className="flex h-[260px] items-center justify-center text-center text-sm text-slate-500">
+                  Content recorded date field not available yet.
                 </div>
               )}
             </CardContent>
@@ -172,7 +194,7 @@ export default function PresentationPage() {
     },
     {
       key: "recent",
-      title: "Recent Acquisitions Feed",
+      title: "Recent Cataloged Feed",
       subtitle: "Newest records with runtime + progression flags",
       content: data ? (
         <Card className="h-full border-cyan-200/40 bg-white/95 text-slate-900">
@@ -192,7 +214,7 @@ export default function PresentationPage() {
                   <tr className="text-left text-slate-500">
                     <th className="py-2">📼</th>
                     <th>Name</th>
-                    <th>Acquired</th>
+                    <th>Cataloged</th>
                     <th>Label</th>
                     <th>QT</th>
                     <th>Final</th>
@@ -220,7 +242,7 @@ export default function PresentationPage() {
                   ) : (
                     <tr className="border-t">
                       <td colSpan={7} className="py-4 text-center text-sm text-slate-500">
-                        No acquisition rows available yet.
+                        No catalog rows available yet.
                       </td>
                     </tr>
                   )}

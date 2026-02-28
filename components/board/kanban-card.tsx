@@ -25,7 +25,7 @@ export function KanbanCard({ tape }: { tape: TapeRecord }) {
         <Badge>NAS {tape.transferredToNas ? "Y" : "N"}</Badge>
         <span className="inline-flex items-center gap-1">
           <CalendarClock className="h-3.5 w-3.5" />{" "}
-          {tape.acquisitionAt ? new Date(tape.acquisitionAt).toLocaleString() : "acq n/a"}
+          {tape.acquisitionAt ? new Date(tape.acquisitionAt).toLocaleString() : "catalog n/a"}
         </span>
       </div>
     </Link>
