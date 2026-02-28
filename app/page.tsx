@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { SimpleSelect } from "@/components/ui/select";
 import { Topbar } from "@/components/layout/topbar";
 import { KpiGrid } from "@/components/dashboard/kpi-grid";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
@@ -10,6 +13,7 @@ import { HistogramChart } from "@/components/charts/histogram-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
+import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 function formatDateTime(value?: string) {
   if (!value) return "n/a";
@@ -22,12 +26,32 @@ function formatDateTime(value?: string) {
 
 export default function HomePage() {
   const { data, isLoading, error } = useOpsSummary();
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState("50");
+
+  const totalRows = data?.recentAcquisitions.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalRows / Number(rowsPerPage)));
+
+  useEffect(() => {
+    setPage(1);
+  }, [rowsPerPage, totalRows]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedAcquisitions = useMemo(() => {
+    if (!data) return [];
+    const size = Number(rowsPerPage);
+    const start = (page - 1) * size;
+    return data.recentAcquisitions.slice(start, start + size);
+  }, [data, page, rowsPerPage]);
 
   return (
     <div>
       <Topbar
         title="VHS Operations Snapshot"
-        subtitle="Captured, trimmed, combined, transferred, acquisition timeline, and runtime distributions."
+        titleClassName="text-4xl font-extrabold tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-r from-teal-700 via-cyan-700 to-amber-600 md:text-5xl"
       />
 
       {isLoading && (
@@ -125,11 +149,41 @@ export default function HomePage() {
               <CardTitle>Recent Acquisitions</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <p>{totalRows} rows total (newest first)</p>
+                <div className="flex items-center gap-2">
+                  <SimpleSelect
+                    className="h-8 w-[120px] text-xs"
+                    value={rowsPerPage}
+                    onChange={(e) => setRowsPerPage(e.target.value)}
+                    options={[
+                      { label: "25 / page", value: "25" },
+                      { label: "50 / page", value: "50" },
+                      { label: "100 / page", value: "100" },
+                    ]}
+                  />
+                  <Button size="sm" variant="secondary" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                    Prev
+                  </Button>
+                  <span className="font-mono text-xs">
+                    {page}/{totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+
               <div className="mb-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground md:grid-cols-4">
-                <p>Avg Label RT: <span className="font-semibold text-foreground">{data.runtimeStats.labelAverage}m</span></p>
-                <p>Avg QT RT: <span className="font-semibold text-foreground">{data.runtimeStats.qtAverage}m</span></p>
-                <p>Avg Final RT: <span className="font-semibold text-foreground">{data.runtimeStats.finalAverage}m</span></p>
-                <p>Avg Drift: <span className="font-semibold text-foreground">{data.runtimeStats.driftAverage}m</span></p>
+                <p>Avg Label RT: <span className="font-semibold text-foreground">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</span></p>
+                <p>Avg QT RT: <span className="font-semibold text-foreground">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</span></p>
+                <p>Avg Final RT: <span className="font-semibold text-foreground">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</span></p>
+                <p>Avg Drift: <span className="font-semibold text-foreground">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span></p>
               </div>
 
               <div className="overflow-x-auto">
@@ -147,15 +201,15 @@ export default function HomePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.recentAcquisitions.map((tape) => (
+                    {pagedAcquisitions.map((tape) => (
                       <tr key={tape.id} className="border-t">
                         <td className="py-2 font-mono text-xs">{tape.tapeId}</td>
                         <td className="font-medium">{tape.tapeName}</td>
                         <td>{formatDateTime(tape.acquisitionAt)}</td>
                         <td>{formatDateTime(tape.receivedDate)}</td>
-                        <td>{tape.labelRuntimeMinutes ?? "-"}</td>
-                        <td>{tape.qtRuntimeMinutes ?? "-"}</td>
-                        <td>{tape.finalClipDurationMinutes ?? "-"}</td>
+                        <td>{formatDurationHMSFromMinutes(tape.labelRuntimeMinutes)}</td>
+                        <td>{formatDurationHMSFromMinutes(tape.qtRuntimeMinutes)}</td>
+                        <td>{formatDurationHMSFromMinutes(tape.finalClipDurationMinutes)}</td>
                         <td className="font-mono text-xs">
                           {tape.captured ? "Y" : "N"}/{tape.trimmed ? "Y" : "N"}/{tape.combined ? "Y" : "N"}/
                           {tape.transferredToNas ? "Y" : "N"}

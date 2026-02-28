@@ -19,6 +19,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { HistogramChart } from "@/components/charts/histogram-chart";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
+import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 import type { Stage, TapeRecord } from "@/lib/types";
 
 const STAGES: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"];
@@ -260,25 +261,25 @@ export default function AnalyticsPage() {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Runtime Averages (minutes)</CardTitle>
+              <CardTitle>Runtime Averages (HH:MM:SS)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-4">
                 <div className="rounded-md border bg-white p-3">
                   <p className="text-xs text-muted-foreground">Label RT</p>
-                  <p className="text-2xl font-semibold">{data.runtimeStats.labelAverage}</p>
+                  <p className="text-2xl font-semibold">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</p>
                 </div>
                 <div className="rounded-md border bg-white p-3">
                   <p className="text-xs text-muted-foreground">QT RT</p>
-                  <p className="text-2xl font-semibold">{data.runtimeStats.qtAverage}</p>
+                  <p className="text-2xl font-semibold">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</p>
                 </div>
                 <div className="rounded-md border bg-white p-3">
                   <p className="text-xs text-muted-foreground">Final RT</p>
-                  <p className="text-2xl font-semibold">{data.runtimeStats.finalAverage}</p>
+                  <p className="text-2xl font-semibold">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</p>
                 </div>
                 <div className="rounded-md border bg-white p-3">
                   <p className="text-xs text-muted-foreground">Runtime Drift</p>
-                  <p className="text-2xl font-semibold">{data.runtimeStats.driftAverage}</p>
+                  <p className="text-2xl font-semibold">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</p>
                 </div>
               </div>
             </CardContent>

@@ -6,6 +6,7 @@ import { StageTimeline } from "@/components/detail/stage-timeline";
 import { ActionPanel } from "@/components/detail/action-panel";
 import { getTapes } from "@/lib/data";
 import { stageLabel } from "@/lib/stage-label";
+import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 export default async function TapeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -42,11 +43,11 @@ export default async function TapeDetailPage({ params }: { params: Promise<{ id:
               Stage: <Badge className="ml-2">{stageLabel(tape.stage)}</Badge>
             </p>
             <p>Received: {tape.receivedDate ? new Date(tape.receivedDate).toLocaleDateString() : "n/a"}</p>
-            <p>Label Runtime: {tape.labelRuntimeMinutes ?? "n/a"} min</p>
-            <p>QT Runtime: {tape.qtRuntimeMinutes ?? "n/a"} min</p>
+            <p>Label Runtime: {formatDurationHMSFromMinutes(tape.labelRuntimeMinutes)}</p>
+            <p>QT Runtime: {formatDurationHMSFromMinutes(tape.qtRuntimeMinutes)}</p>
             <p>QT Filename: {tape.qtFilename ?? "n/a"}</p>
             <p>Archival Filename: {tape.archivalFilename ?? "n/a"}</p>
-            <p>Final Duration: {tape.finalClipDurationMinutes ?? "n/a"} min</p>
+            <p>Final Duration: {formatDurationHMSFromMinutes(tape.finalClipDurationMinutes)}</p>
             <p>Priority: {tape.priority}</p>
             {tape.issueTags.length > 0 && <p>Issues: {tape.issueTags.join(", ")}</p>}
           </CardContent>

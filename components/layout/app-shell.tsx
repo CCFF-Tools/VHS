@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, AreaChart, ClipboardList } from "lucide-react";
+import { Activity, AreaChart, ClipboardList, MonitorPlay } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/", label: "Overview", icon: Activity },
   { href: "/board", label: "Production Board", icon: ClipboardList },
   { href: "/analytics", label: "Analytics", icon: AreaChart },
+  { href: "/presentation", label: "Presentation", icon: MonitorPlay },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isPresentation = pathname.startsWith("/presentation");
+
+  if (isPresentation) {
+    return <main className="min-h-screen">{children}</main>;
+  }
 
   return (
     <div className="mx-auto grid min-h-screen w-full max-w-[1400px] grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-[220px_1fr] lg:px-8">

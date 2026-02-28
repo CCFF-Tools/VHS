@@ -19,6 +19,48 @@ function toNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function parseDurationClockStringToMinutes(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed.includes(":")) return undefined;
+  const parts = trimmed.split(":").map((p) => p.trim());
+  if (!parts.every((p) => p !== "" && !Number.isNaN(Number(p)))) return undefined;
+
+  if (parts.length === 3) {
+    const [h, m, s] = parts.map(Number);
+    return h * 60 + m + s / 60;
+  }
+
+  if (parts.length === 2) {
+    const [m, s] = parts.map(Number);
+    return m + s / 60;
+  }
+
+  return undefined;
+}
+
+function normalizeNumericDurationToMinutes(value: number): number {
+  const mode = (process.env.AIRTABLE_RUNTIME_NUMERIC_UNIT ?? "seconds").toLowerCase();
+  if (mode === "seconds") return value / 60;
+  if (mode === "minutes") return value;
+
+  // Auto mode: Airtable duration fields are commonly seconds.
+  // Values over 300 are very likely seconds for this workflow.
+  return value > 300 ? value / 60 : value;
+}
+
+function toRuntimeMinutes(value: unknown): number | undefined {
+  if (typeof value === "number") return normalizeNumericDurationToMinutes(value);
+  if (typeof value === "string") {
+    const clock = parseDurationClockStringToMinutes(value);
+    if (clock != null) return clock;
+    if (value.trim() === "") return undefined;
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return undefined;
+    return normalizeNumericDurationToMinutes(numeric);
+  }
+  return undefined;
+}
+
 function toBool(value: unknown): boolean {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value > 0;
@@ -187,8 +229,8 @@ export async function getTapes(): Promise<TapeRecord[]> {
       tapeSequence: fields[fieldMap.tapeSequence] ? String(fields[fieldMap.tapeSequence]) : undefined,
       tapesInSequence: toNumber(fields[fieldMap.tapesInSequence]),
       receivedDate,
-      labelRuntimeMinutes: toNumber(fields[fieldMap.labelRuntime]),
-      qtRuntimeMinutes: toNumber(fields[fieldMap.qtRuntime]),
+      labelRuntimeMinutes: toRuntimeMinutes(fields[fieldMap.labelRuntime]),
+      qtRuntimeMinutes: toRuntimeMinutes(fields[fieldMap.qtRuntime]),
       qtFilename: fields[fieldMap.qtFilename] ? String(fields[fieldMap.qtFilename]) : undefined,
       captured: toBool(fields[fieldMap.captured]),
       trimmed: toBool(fields[fieldMap.trimmed]),
@@ -197,7 +239,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
       archivalFilename: fields[fieldMap.archivalFilename]
         ? String(fields[fieldMap.archivalFilename])
         : undefined,
-      finalClipDurationMinutes: toNumber(fields[fieldMap.finalClipDuration]),
+      finalClipDurationMinutes: toRuntimeMinutes(fields[fieldMap.finalClipDuration]),
       updatedTime: createdTime,
       acquisitionAt,
       capturedAt,
@@ -285,8 +327,7 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
 
   const recentAcquisitions = [...tapes]
     .filter((t) => t.acquisitionAt)
-    .sort((a, b) => parseISO(b.acquisitionAt!).getTime() - parseISO(a.acquisitionAt!).getTime())
-    .slice(0, 20);
+    .sort((a, b) => parseISO(b.acquisitionAt!).getTime() - parseISO(a.acquisitionAt!).getTime());
 
   const capturedDateCount = tapes.filter((t) => Boolean(t.capturedAt)).length;
   const capturedDateCoveragePercent = tapes.length
