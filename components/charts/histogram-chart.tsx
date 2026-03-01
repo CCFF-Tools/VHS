@@ -8,19 +8,38 @@ export function HistogramChart({
   data,
   onBarClick,
   activeBucket,
+  theme = "default",
 }: {
   data: BucketDatum[];
   onBarClick?: (datum: BucketDatum) => void;
   activeBucket?: string;
+  theme?: "default" | "mission";
 }) {
+  const mission = theme === "mission";
+  const tickStyle = mission ? { fontSize: 11, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
+  const gridStroke = mission ? "hsl(196 63% 30% / 0.55)" : "hsl(35 18% 83%)";
+  const activeFill = mission ? "hsl(41 95% 61%)" : "hsl(171 45% 34%)";
+  const defaultFill = mission ? "hsl(190 81% 48%)" : "hsl(38 84% 57%)";
+  const tooltipStyles = mission
+    ? {
+        contentStyle: {
+          background: "hsl(223 47% 11% / 0.95)",
+          border: "1px solid hsl(195 73% 43% / 0.45)",
+          borderRadius: "10px",
+          color: "hsl(192 89% 92%)",
+        },
+        labelStyle: { color: "hsl(41 96% 77%)" },
+      }
+    : {};
+
   return (
     <div className="h-[260px] w-full">
       <ResponsiveContainer>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(35 18% 83%)" vertical={false} />
-          <XAxis dataKey="bucket" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-          <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-          <Tooltip />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+          <XAxis dataKey="bucket" tick={tickStyle} tickLine={false} axisLine={false} />
+          <YAxis tick={tickStyle} tickLine={false} axisLine={false} />
+          <Tooltip {...tooltipStyles} />
           <Bar
             dataKey="count"
             radius={[8, 8, 0, 0]}
@@ -30,7 +49,7 @@ export function HistogramChart({
             {data.map((row) => (
               <Cell
                 key={`${row.bucket}-${row.count}`}
-                fill={activeBucket === row.bucket ? "hsl(171 45% 34%)" : "hsl(38 84% 57%)"}
+                fill={activeBucket === row.bucket ? activeFill : defaultFill}
               />
             ))}
           </Bar>

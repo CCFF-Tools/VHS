@@ -40,10 +40,12 @@ function SlideHeader({
   return (
     <header className="mb-4 flex items-center justify-between">
       <div>
-        <h1 className="text-4xl font-extrabold tracking-tight text-white">{title}</h1>
+        <p className="font-mono text-[11px] uppercase tracking-[0.32em] text-cyan-200/70">VHS Mission Control</p>
+        <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-white">{title}</h1>
         {subtitle ? <p className="mt-1 text-sm text-cyan-100/80">{subtitle}</p> : null}
       </div>
       <div className="text-right text-cyan-50">
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cyan-200/70">Live Telemetry</p>
         <p className="font-mono text-xs opacity-80">{format(new Date(), "yyyy-MM-dd HH:mm:ss")}</p>
       </div>
     </header>
@@ -72,38 +74,38 @@ export default function PresentationPage() {
             <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} />
           </div>
           <div className="md:col-span-2 grid gap-4">
-            <Card className="border-cyan-200/40 bg-white/95">
+            <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Projected Launch Window</p>
-                <p className="mt-1 font-mono text-lg font-semibold text-slate-900">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Projected Launch Window</p>
+                <p className="mt-1 font-mono text-lg font-semibold text-cyan-50">
                   {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-cyan-200/40 bg-white/95">
+            <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Completion Status</p>
-                <p className="mt-1 text-3xl font-bold leading-none text-slate-900">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Completion Status</p>
+                <p className="mt-1 text-3xl font-bold leading-none text-white">
                   {data.launchProjection.completedCount}/{data.kpis.totalTapes}
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-cyan-200/40 bg-white/95">
+            <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Velocity</p>
-                <p className="mt-1 font-mono text-3xl font-bold leading-none text-slate-900">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Velocity</p>
+                <p className="mt-1 font-mono text-3xl font-bold leading-none text-white">
                   {data.launchProjection.throughputPerDay.toFixed(2)}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">tapes/day ({data.launchProjection.source})</p>
+                <p className="mt-1 text-xs text-cyan-100/65">tapes/day ({data.launchProjection.source})</p>
               </CardContent>
             </Card>
-            <Card className="border-cyan-200/40 bg-white/95">
+            <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Confidence</p>
-                <p className="mt-1 text-3xl font-bold uppercase leading-none text-slate-900">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Confidence</p>
+                <p className="mt-1 text-3xl font-bold uppercase leading-none text-white">
                   {data.launchProjection.confidence}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-cyan-100/65">
                   Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}%
                 </p>
               </CardContent>
@@ -118,12 +120,12 @@ export default function PresentationPage() {
       subtitle: "Project pulse for wall display",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
-          <Card className="md:col-span-3 border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel md:col-span-3">
             <CardHeader>
-              <CardTitle>Stage Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">Stage Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <PipelineFlowChart data={stageData} />
+              <PipelineFlowChart data={stageData} theme="mission" />
             </CardContent>
           </Card>
           <div className="md:col-span-2 grid gap-4">
@@ -136,10 +138,10 @@ export default function PresentationPage() {
               ["Transferred", data.kpis.transferredCount],
               ["Cataloged Today", data.kpis.receivedToday],
             ].map(([label, value]) => (
-              <Card key={label} className="border-cyan-200/40 bg-white/95">
+              <Card key={label} className="mission-panel">
                 <CardContent className="py-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{label}</p>
-                  <p className="text-4xl font-bold leading-none text-slate-900">{value}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">{label}</p>
+                  <p className="text-4xl font-bold leading-none text-white">{value}</p>
                 </CardContent>
               </Card>
             ))}
@@ -153,47 +155,47 @@ export default function PresentationPage() {
       subtitle: "Last 30 days",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-3">
-          <Card className="border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel">
             <CardHeader>
-              <CardTitle>Captured Per Day</CardTitle>
+              <CardTitle className="text-cyan-50">Captured Per Day</CardTitle>
             </CardHeader>
             <CardContent>
               {data.capturedDateCoveragePercent > 0 ? (
                 <>
-                  <p className="mb-2 text-xs text-slate-500">
+                  <p className="mb-2 text-xs text-cyan-100/65">
                     Coverage: {data.capturedDateCoveragePercent}% have capture timestamps
                   </p>
-                  <AcquisitionChart data={data.capturedDaily} />
+                  <AcquisitionChart data={data.capturedDaily} theme="mission" />
                 </>
               ) : (
-                <div className="flex h-[260px] items-center justify-center text-center text-sm text-slate-500">
+                <div className="flex h-[260px] items-center justify-center text-center text-sm text-cyan-100/65">
                   Capture timestamp field not available yet.
                 </div>
               )}
             </CardContent>
           </Card>
-          <Card className="border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel">
             <CardHeader>
-              <CardTitle>Cataloged Per Day</CardTitle>
+              <CardTitle className="text-cyan-50">Cataloged Per Day</CardTitle>
             </CardHeader>
             <CardContent>
-              <AcquisitionChart data={data.acquisitionDaily} />
+              <AcquisitionChart data={data.acquisitionDaily} theme="mission" />
             </CardContent>
           </Card>
-          <Card className="border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel">
             <CardHeader>
-              <CardTitle>Original Content Recorded Timeline</CardTitle>
+              <CardTitle className="text-cyan-50">Projected Source Recording Timeline</CardTitle>
             </CardHeader>
             <CardContent>
               {data.contentRecordedCoveragePercent > 0 ? (
                 <>
-                  <p className="mb-2 text-xs text-slate-500">
+                  <p className="mb-2 text-xs text-cyan-100/65">
                     Coverage: {data.contentRecordedCoveragePercent}% have content recorded dates
                   </p>
-                  <AcquisitionChart data={data.contentRecordedDaily} />
+                  <AcquisitionChart data={data.contentRecordedDaily} theme="mission" />
                 </>
               ) : (
-                <div className="flex h-[260px] items-center justify-center text-center text-sm text-slate-500">
+                <div className="flex h-[260px] items-center justify-center text-center text-sm text-cyan-100/65">
                   Content recorded date field not available yet.
                 </div>
               )}
@@ -208,28 +210,28 @@ export default function PresentationPage() {
       subtitle: "Distribution by source/output runtime fields",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-3">
-          <Card className="border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel">
             <CardHeader>
-              <CardTitle>Meeting Runtime Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">Meeting Runtime Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <HistogramChart data={data.runtimeHistograms.labelRuntime} />
+              <HistogramChart data={data.runtimeHistograms.labelRuntime} theme="mission" />
             </CardContent>
           </Card>
-          <Card className="border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel">
             <CardHeader>
-              <CardTitle>QT Runtime Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">QT Runtime Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <HistogramChart data={data.runtimeHistograms.qtRuntime} />
+              <HistogramChart data={data.runtimeHistograms.qtRuntime} theme="mission" />
             </CardContent>
           </Card>
-          <Card className="border-cyan-200/40 bg-white/95">
+          <Card className="mission-panel">
             <CardHeader>
-              <CardTitle>Final Runtime Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">Final Runtime Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <HistogramChart data={data.runtimeHistograms.finalRuntime} />
+              <HistogramChart data={data.runtimeHistograms.finalRuntime} theme="mission" />
             </CardContent>
           </Card>
         </div>
@@ -240,21 +242,21 @@ export default function PresentationPage() {
       title: "Recent Cataloged Feed",
       subtitle: "Newest records with runtime + progression flags",
       content: data ? (
-        <Card className="h-full border-cyan-200/40 bg-white/95 text-slate-900">
+        <Card className="mission-panel h-full text-cyan-50">
           <CardHeader>
-            <CardTitle>Top 30 Most Recent</CardTitle>
+            <CardTitle className="text-cyan-50">Top 30 Most Recent</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-3 grid grid-cols-4 gap-2 text-xs text-slate-500">
-              <p>Avg Label RT: <span className="font-semibold text-slate-900">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</span></p>
-              <p>Avg QT RT: <span className="font-semibold text-slate-900">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</span></p>
-              <p>Avg Final RT: <span className="font-semibold text-slate-900">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</span></p>
-              <p>Avg Drift: <span className="font-semibold text-slate-900">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span></p>
+            <div className="mb-3 grid grid-cols-4 gap-2 text-xs text-cyan-100/70">
+              <p>Avg Label RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</span></p>
+              <p>Avg QT RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</span></p>
+              <p>Avg Final RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</span></p>
+              <p>Avg Drift: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span></p>
             </div>
             <div className="overflow-auto" style={{ maxHeight: "42vh" }}>
-              <table className="w-full text-sm text-slate-900">
-                <thead className="sticky top-0 bg-white">
-                  <tr className="text-left text-slate-500">
+              <table className="w-full text-sm text-cyan-50">
+                <thead className="sticky top-0 bg-slate-950/90 backdrop-blur-sm">
+                  <tr className="text-left text-cyan-100/70">
                     <th className="py-2">📼</th>
                     <th>Name</th>
                     <th>Cataloged</th>
@@ -267,10 +269,10 @@ export default function PresentationPage() {
                 <tbody>
                   {data.recentAcquisitions.length > 0 ? (
                     data.recentAcquisitions.slice(0, 30).map((t) => (
-                      <tr key={t.id} className="border-t text-slate-800">
+                      <tr key={t.id} className="border-t border-cyan-300/20 text-cyan-50">
                         <td className="py-2 font-mono text-xs">{t.tapeId}</td>
-                        <td className="font-medium">{t.tapeName}</td>
-                        <td className="font-mono text-xs">
+                        <td className="font-medium text-cyan-50">{t.tapeName}</td>
+                        <td className="font-mono text-xs text-cyan-100/75">
                           {formatFeedDate(t.acquisitionAt, t.receivedDate, t.updatedTime)}
                         </td>
                         <td>{formatDurationHMSFromMinutes(t.labelRuntimeMinutes)}</td>
@@ -283,8 +285,8 @@ export default function PresentationPage() {
                       </tr>
                     ))
                   ) : (
-                    <tr className="border-t">
-                      <td colSpan={7} className="py-4 text-center text-sm text-slate-500">
+                    <tr className="border-t border-cyan-300/20">
+                      <td colSpan={7} className="py-4 text-center text-sm text-cyan-100/65">
                         No catalog rows available yet.
                       </td>
                     </tr>
@@ -321,21 +323,21 @@ export default function PresentationPage() {
   const current = slides[slide];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 p-6 text-white">
-      <div className="mx-auto max-w-[1800px]">
+    <div className="presentation-mission-bg min-h-screen p-6 text-white">
+      <div className="relative z-10 mx-auto max-w-[1800px]">
         <SlideHeader
           title={current.title}
           subtitle={current.subtitle}
         />
 
         {isLoading && (
-          <div className="rounded-xl border border-cyan-200/20 bg-white/10 p-8 text-center text-cyan-50">
+          <div className="mission-alert-box p-8 text-center text-cyan-50">
             Loading presentation data...
           </div>
         )}
 
         {error && (
-          <div className="rounded-xl border border-rose-300/30 bg-rose-950/50 p-8 text-center text-rose-100">
+          <div className="rounded-xl border border-rose-300/35 bg-rose-950/60 p-8 text-center text-rose-100">
             Presentation data unavailable: {error.message}
           </div>
         )}
@@ -355,7 +357,7 @@ export default function PresentationPage() {
           </div>
           <button
             onClick={() => mutate()}
-            className="inline-flex items-center gap-1 rounded-md border border-cyan-100/30 bg-white/10 px-2 py-1 hover:bg-white/20"
+            className="inline-flex items-center gap-1 rounded-md border border-cyan-300/35 bg-slate-900/65 px-2 py-1 text-cyan-50 hover:bg-slate-800/75"
           >
             <RefreshCcw className="h-3.5 w-3.5" /> Refresh Data
           </button>

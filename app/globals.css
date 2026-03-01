@@ -117,3 +117,59 @@ body {
     opacity: 0.78;
   }
 }
+
+.presentation-mission-bg {
+  background:
+    radial-gradient(circle at 14% 8%, hsl(189 95% 62% / 0.2), transparent 32%),
+    radial-gradient(circle at 88% 16%, hsl(40 95% 66% / 0.16), transparent 30%),
+    linear-gradient(150deg, hsl(225 46% 11%), hsl(231 57% 7%) 56%, hsl(218 44% 10%));
+  position: relative;
+  overflow: hidden;
+}
+
+.presentation-mission-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, hsl(0 0% 100% / 0.45) 0.65px, transparent 0.7px);
+  background-size: 2.5px 2.5px;
+  opacity: 0.24;
+}
+
+.presentation-mission-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, hsl(193 81% 66% / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(193 81% 66% / 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, hsl(0 0% 0% / 0.78), transparent 82%);
+}
+
+.mission-panel {
+  border-color: hsl(194 66% 44% / 0.38);
+  color: hsl(190 90% 93%);
+  background:
+    linear-gradient(160deg, hsl(223 48% 13% / 0.95), hsl(225 49% 10% / 0.95)),
+    linear-gradient(to right, hsl(194 88% 72% / 0.1), transparent 40%);
+  box-shadow: 0 22px 42px hsl(222 52% 5% / 0.48), inset 0 1px 0 hsl(0 0% 100% / 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 100% 0%, hsl(42 100% 70% / 0.12), transparent 38%);
+}
+
+.mission-alert-box {
+  border-radius: 0.75rem;
+  border: 1px solid hsl(194 66% 44% / 0.32);
+  background: hsl(222 44% 10% / 0.72);
+}
