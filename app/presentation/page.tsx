@@ -112,15 +112,7 @@ export default function PresentationPage() {
         <div className="grid h-full gap-4 md:grid-cols-3">
           <Card className="border-cyan-200/40 bg-white/95">
             <CardHeader>
-              <CardTitle>Cataloged Per Day</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AcquisitionChart data={data.acquisitionDaily} />
-            </CardContent>
-          </Card>
-          <Card className="border-cyan-200/40 bg-white/95">
-            <CardHeader>
-              <CardTitle>Captures Per Day</CardTitle>
+              <CardTitle>Captured Per Day</CardTitle>
             </CardHeader>
             <CardContent>
               {data.capturedDateCoveragePercent > 0 ? (
@@ -135,6 +127,14 @@ export default function PresentationPage() {
                   Capture timestamp field not available yet.
                 </div>
               )}
+            </CardContent>
+          </Card>
+          <Card className="border-cyan-200/40 bg-white/95">
+            <CardHeader>
+              <CardTitle>Cataloged Per Day</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AcquisitionChart data={data.acquisitionDaily} />
             </CardContent>
           </Card>
           <Card className="border-cyan-200/40 bg-white/95">

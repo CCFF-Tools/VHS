@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +12,11 @@ import { KpiGrid } from "@/components/dashboard/kpi-grid";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
+import { TapeDrilldownDrawer } from "@/components/drilldown/tape-drilldown-drawer";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
+import { runtimeBucketToRange } from "@/lib/runtime-buckets";
 
 function formatDateTime(value?: string) {
   if (!value) return "n/a";
@@ -26,8 +29,127 @@ function formatDateTime(value?: string) {
 
 export default function HomePage() {
   const { data, isLoading, error } = useOpsSummary();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("50");
+
+  const drilldown = useMemo(
+    () => ({
+      open: searchParams.get("drOpen") === "1",
+      label: searchParams.get("drLabel") || "Filtered Tapes",
+      stage: searchParams.get("drStage") || "",
+      date: searchParams.get("drDate") || "",
+      dateField: searchParams.get("drDateField") || "",
+      runtimeField: searchParams.get("drRuntimeField") || "",
+      bucket: searchParams.get("drBucket") || "",
+      runtimeMin: searchParams.get("drRuntimeMin") || "",
+      runtimeMax: searchParams.get("drRuntimeMax") || "",
+    }),
+    [searchParams]
+  );
+
+  const drillQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (drilldown.stage) params.set("stage", drilldown.stage);
+    if (drilldown.date) params.set("date", drilldown.date);
+    if (drilldown.dateField) params.set("dateField", drilldown.dateField);
+    if (drilldown.runtimeField) params.set("runtimeField", drilldown.runtimeField);
+    if (drilldown.runtimeMin) params.set("runtimeMin", drilldown.runtimeMin);
+    if (drilldown.runtimeMax) params.set("runtimeMax", drilldown.runtimeMax);
+    return params.toString();
+  }, [drilldown]);
+
+  const updateDrilldown = (next: {
+    label: string;
+    stage?: string;
+    date?: string;
+    dateField?: string;
+    runtimeField?: string;
+    bucket?: string;
+    runtimeMin?: string;
+    runtimeMax?: string;
+  }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const keys = [
+      "drOpen",
+      "drLabel",
+      "drStage",
+      "drDate",
+      "drDateField",
+      "drRuntimeField",
+      "drBucket",
+      "drRuntimeMin",
+      "drRuntimeMax",
+    ];
+    for (const key of keys) params.delete(key);
+
+    params.set("drOpen", "1");
+    params.set("drLabel", next.label);
+    if (next.stage) params.set("drStage", next.stage);
+    if (next.date) params.set("drDate", next.date);
+    if (next.dateField) params.set("drDateField", next.dateField);
+    if (next.runtimeField) params.set("drRuntimeField", next.runtimeField);
+    if (next.bucket) params.set("drBucket", next.bucket);
+    if (next.runtimeMin) params.set("drRuntimeMin", next.runtimeMin);
+    if (next.runtimeMax) params.set("drRuntimeMax", next.runtimeMax);
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const closeDrilldown = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    const keys = [
+      "drOpen",
+      "drLabel",
+      "drStage",
+      "drDate",
+      "drDateField",
+      "drRuntimeField",
+      "drBucket",
+      "drRuntimeMin",
+      "drRuntimeMax",
+    ];
+    for (const key of keys) params.delete(key);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const onStageClick = (payload: { stage?: string; stageRaw?: string }) => {
+    const stageRaw = payload.stageRaw || "";
+    if (!stageRaw) return;
+    updateDrilldown({
+      label: `Stage: ${payload.stage ?? stageLabel(stageRaw)}`,
+      stage: stageRaw,
+    });
+  };
+
+  const onDateClick = (dateField: "cataloged" | "captured" | "content", labelPrefix: string) => {
+    return (payload: { date?: string }) => {
+      if (!payload.date) return;
+      updateDrilldown({
+        label: `${labelPrefix}: ${payload.date}`,
+        date: payload.date,
+        dateField,
+      });
+    };
+  };
+
+  const onRuntimeBucketClick = (runtimeField: "label" | "qt" | "final", title: string) => {
+    return (payload: { bucket?: string }) => {
+      if (!payload.bucket) return;
+      const range = runtimeBucketToRange(payload.bucket);
+      if (!range) return;
+      updateDrilldown({
+        label: `${title}: ${payload.bucket} min`,
+        runtimeField,
+        bucket: payload.bucket,
+        runtimeMin: String(range.min),
+        runtimeMax: range.max != null ? String(range.max) : undefined,
+      });
+    };
+  };
 
   const totalRows = data?.recentAcquisitions.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalRows / Number(rowsPerPage)));
@@ -81,25 +203,20 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <PipelineFlowChart
-                  data={data.stageCounts.map((s) => ({ stage: stageLabel(s.stage), count: s.count }))}
+                  data={data.stageCounts.map((s) => ({
+                    stage: stageLabel(s.stage),
+                    stageRaw: s.stage,
+                    count: s.count,
+                  }))}
+                  onBarClick={onStageClick}
+                  activeStageRaw={drilldown.stage}
                 />
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Cataloged Per Day (30d)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AcquisitionChart data={data.acquisitionDaily} />
-              </CardContent>
-            </Card>
-          </section>
-
-          <section className="grid gap-4 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Captures Per Day (30d)</CardTitle>
+                <CardTitle>Captured Per Day (30d)</CardTitle>
               </CardHeader>
               <CardContent>
                 {data.capturedDateCoveragePercent > 0 ? (
@@ -107,7 +224,11 @@ export default function HomePage() {
                     <p className="mb-2 text-xs text-muted-foreground">
                       Capture date coverage: {data.capturedDateCoveragePercent}%
                     </p>
-                    <AcquisitionChart data={data.capturedDaily} />
+                    <AcquisitionChart
+                      data={data.capturedDaily}
+                      onBarClick={onDateClick("captured", "Captured Date")}
+                      activeDate={drilldown.dateField === "captured" ? drilldown.date : undefined}
+                    />
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -115,6 +236,21 @@ export default function HomePage() {
                     creation-time field when available.
                   </p>
                 )}
+              </CardContent>
+            </Card>
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cataloged Per Day (30d)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AcquisitionChart
+                  data={data.acquisitionDaily}
+                  onBarClick={onDateClick("cataloged", "Cataloged Date")}
+                  activeDate={drilldown.dateField === "cataloged" ? drilldown.date : undefined}
+                />
               </CardContent>
             </Card>
 
@@ -128,7 +264,11 @@ export default function HomePage() {
                     <p className="mb-2 text-xs text-muted-foreground">
                       Original content date coverage: {data.contentRecordedCoveragePercent}%
                     </p>
-                    <AcquisitionChart data={data.contentRecordedDaily} />
+                    <AcquisitionChart
+                      data={data.contentRecordedDaily}
+                      onBarClick={onDateClick("content", "Recorded Date")}
+                      activeDate={drilldown.dateField === "content" ? drilldown.date : undefined}
+                    />
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -146,7 +286,11 @@ export default function HomePage() {
                 <CardTitle>Meeting Runtime Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <HistogramChart data={data.runtimeHistograms.labelRuntime} />
+                <HistogramChart
+                  data={data.runtimeHistograms.labelRuntime}
+                  onBarClick={onRuntimeBucketClick("label", "Meeting Runtime")}
+                  activeBucket={drilldown.runtimeField === "label" ? drilldown.bucket : undefined}
+                />
               </CardContent>
             </Card>
 
@@ -155,7 +299,11 @@ export default function HomePage() {
                 <CardTitle>QT Runtime Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <HistogramChart data={data.runtimeHistograms.qtRuntime} />
+                <HistogramChart
+                  data={data.runtimeHistograms.qtRuntime}
+                  onBarClick={onRuntimeBucketClick("qt", "QT Runtime")}
+                  activeBucket={drilldown.runtimeField === "qt" ? drilldown.bucket : undefined}
+                />
               </CardContent>
             </Card>
 
@@ -164,7 +312,11 @@ export default function HomePage() {
                 <CardTitle>Final Runtime Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <HistogramChart data={data.runtimeHistograms.finalRuntime} />
+                <HistogramChart
+                  data={data.runtimeHistograms.finalRuntime}
+                  onBarClick={onRuntimeBucketClick("final", "Final Runtime")}
+                  activeBucket={drilldown.runtimeField === "final" ? drilldown.bucket : undefined}
+                />
               </CardContent>
             </Card>
           </section>
@@ -248,6 +400,14 @@ export default function HomePage() {
           </Card>
         </div>
       )}
+
+      <TapeDrilldownDrawer
+        open={drilldown.open}
+        title={drilldown.label}
+        subtitle="Click a tape name to open detail."
+        queryString={drillQuery}
+        onClose={closeDrilldown}
+      />
     </div>
   );
 }

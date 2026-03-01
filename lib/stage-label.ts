@@ -13,3 +13,11 @@ const LABELS: Record<Stage, string> = {
 export function stageLabel(stage: Stage | string) {
   return LABELS[stage as Stage] ?? String(stage);
 }
+
+export function stageFromLabel(label: string): Stage | undefined {
+  const normalized = label.trim().toLowerCase();
+  const entry = (Object.entries(LABELS) as Array<[Stage, string]>).find(
+    ([stage, display]) => stage.toLowerCase() === normalized || display.toLowerCase() === normalized
+  );
+  return entry?.[0];
+}

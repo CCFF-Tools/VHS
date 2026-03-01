@@ -1,8 +1,18 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-export function AcquisitionChart({ data }: { data: Array<{ date: string; count: number }> }) {
+type DateBarDatum = { date: string; count: number };
+
+export function AcquisitionChart({
+  data,
+  onBarClick,
+  activeDate,
+}: {
+  data: DateBarDatum[];
+  onBarClick?: (datum: DateBarDatum) => void;
+  activeDate?: string;
+}) {
   return (
     <div className="h-[260px] w-full">
       <ResponsiveContainer>
@@ -11,7 +21,19 @@ export function AcquisitionChart({ data }: { data: Array<{ date: string; count: 
           <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={28} />
           <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
           <Tooltip />
-          <Bar dataKey="count" fill="hsl(171 45% 34%)" radius={[8, 8, 0, 0]} />
+          <Bar
+            dataKey="count"
+            radius={[8, 8, 0, 0]}
+            cursor={onBarClick ? "pointer" : "default"}
+            onClick={(entry) => onBarClick?.(entry.payload as DateBarDatum)}
+          >
+            {data.map((row) => (
+              <Cell
+                key={`${row.date}-${row.count}`}
+                fill={activeDate === row.date ? "hsl(33 92% 52%)" : "hsl(171 45% 34%)"}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

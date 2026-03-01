@@ -1,8 +1,18 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-export function HistogramChart({ data }: { data: Array<{ bucket: string; count: number }> }) {
+type BucketDatum = { bucket: string; count: number };
+
+export function HistogramChart({
+  data,
+  onBarClick,
+  activeBucket,
+}: {
+  data: BucketDatum[];
+  onBarClick?: (datum: BucketDatum) => void;
+  activeBucket?: string;
+}) {
   return (
     <div className="h-[260px] w-full">
       <ResponsiveContainer>
@@ -11,7 +21,19 @@ export function HistogramChart({ data }: { data: Array<{ bucket: string; count: 
           <XAxis dataKey="bucket" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
           <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
           <Tooltip />
-          <Bar dataKey="count" fill="hsl(38 84% 57%)" radius={[8, 8, 0, 0]} />
+          <Bar
+            dataKey="count"
+            radius={[8, 8, 0, 0]}
+            cursor={onBarClick ? "pointer" : "default"}
+            onClick={(entry) => onBarClick?.(entry.payload as BucketDatum)}
+          >
+            {data.map((row) => (
+              <Cell
+                key={`${row.bucket}-${row.count}`}
+                fill={activeBucket === row.bucket ? "hsl(171 45% 34%)" : "hsl(38 84% 57%)"}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

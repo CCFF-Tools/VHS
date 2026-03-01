@@ -1,12 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO, startOfDay, startOfWeek, subWeeks } from "date-fns";
 import {
   Area,
   AreaChart,
   CartesianGrid,
   ComposedChart,
-  Line,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -17,9 +18,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Topbar } from "@/components/layout/topbar";
 import { HistogramChart } from "@/components/charts/histogram-chart";
+import { TapeDrilldownDrawer } from "@/components/drilldown/tape-drilldown-drawer";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
+import { runtimeBucketToRange } from "@/lib/runtime-buckets";
 import type { Stage, TapeRecord } from "@/lib/types";
 
 const STAGES: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"];
@@ -196,6 +199,109 @@ function densityColor(count: number, max: number) {
 
 export default function AnalyticsPage() {
   const { data, error, isLoading } = useOpsSummary();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const drilldown = useMemo(
+    () => ({
+      open: searchParams.get("drOpen") === "1",
+      label: searchParams.get("drLabel") || "Filtered Tapes",
+      date: searchParams.get("drDate") || "",
+      dateField: searchParams.get("drDateField") || "",
+      runtimeField: searchParams.get("drRuntimeField") || "",
+      bucket: searchParams.get("drBucket") || "",
+      runtimeMin: searchParams.get("drRuntimeMin") || "",
+      runtimeMax: searchParams.get("drRuntimeMax") || "",
+    }),
+    [searchParams]
+  );
+
+  const drillQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (drilldown.date) params.set("date", drilldown.date);
+    if (drilldown.dateField) params.set("dateField", drilldown.dateField);
+    if (drilldown.runtimeField) params.set("runtimeField", drilldown.runtimeField);
+    if (drilldown.runtimeMin) params.set("runtimeMin", drilldown.runtimeMin);
+    if (drilldown.runtimeMax) params.set("runtimeMax", drilldown.runtimeMax);
+    return params.toString();
+  }, [drilldown]);
+
+  const updateDrilldown = (next: {
+    label: string;
+    date?: string;
+    dateField?: string;
+    runtimeField?: string;
+    bucket?: string;
+    runtimeMin?: string;
+    runtimeMax?: string;
+  }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const keys = [
+      "drOpen",
+      "drLabel",
+      "drDate",
+      "drDateField",
+      "drRuntimeField",
+      "drBucket",
+      "drRuntimeMin",
+      "drRuntimeMax",
+    ];
+    for (const key of keys) params.delete(key);
+
+    params.set("drOpen", "1");
+    params.set("drLabel", next.label);
+    if (next.date) params.set("drDate", next.date);
+    if (next.dateField) params.set("drDateField", next.dateField);
+    if (next.runtimeField) params.set("drRuntimeField", next.runtimeField);
+    if (next.bucket) params.set("drBucket", next.bucket);
+    if (next.runtimeMin) params.set("drRuntimeMin", next.runtimeMin);
+    if (next.runtimeMax) params.set("drRuntimeMax", next.runtimeMax);
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const closeDrilldown = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    const keys = [
+      "drOpen",
+      "drLabel",
+      "drDate",
+      "drDateField",
+      "drRuntimeField",
+      "drBucket",
+      "drRuntimeMin",
+      "drRuntimeMax",
+    ];
+    for (const key of keys) params.delete(key);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const onRuntimeBucketClick = (runtimeField: "label" | "qt" | "final", title: string) => {
+    return (payload: { bucket?: string }) => {
+      if (!payload.bucket) return;
+      const range = runtimeBucketToRange(payload.bucket);
+      if (!range) return;
+      updateDrilldown({
+        label: `${title}: ${payload.bucket} min`,
+        runtimeField,
+        bucket: payload.bucket,
+        runtimeMin: String(range.min),
+        runtimeMax: range.max != null ? String(range.max) : undefined,
+      });
+    };
+  };
+
+  const onScatterClick = (payload: { ts?: number }) => {
+    if (!payload.ts) return;
+    const day = format(new Date(payload.ts), "yyyy-MM-dd");
+    updateDrilldown({
+      label: `Recorded Date: ${day}`,
+      date: day,
+      dateField: "content",
+    });
+  };
 
   const scatter = data ? runtimeScatterData(data.tapes) : [];
   const scatterXAxisTicks = scatterTicks(scatter);
@@ -221,7 +327,11 @@ export default function AnalyticsPage() {
               <CardTitle>Meeting Runtime Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <HistogramChart data={data.runtimeHistograms.labelRuntime} />
+              <HistogramChart
+                data={data.runtimeHistograms.labelRuntime}
+                onBarClick={onRuntimeBucketClick("label", "Meeting Runtime")}
+                activeBucket={drilldown.runtimeField === "label" ? drilldown.bucket : undefined}
+              />
             </CardContent>
           </Card>
 
@@ -230,7 +340,11 @@ export default function AnalyticsPage() {
               <CardTitle>QT Runtime Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <HistogramChart data={data.runtimeHistograms.qtRuntime} />
+              <HistogramChart
+                data={data.runtimeHistograms.qtRuntime}
+                onBarClick={onRuntimeBucketClick("qt", "QT Runtime")}
+                activeBucket={drilldown.runtimeField === "qt" ? drilldown.bucket : undefined}
+              />
             </CardContent>
           </Card>
 
@@ -239,7 +353,11 @@ export default function AnalyticsPage() {
               <CardTitle>Final Runtime Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <HistogramChart data={data.runtimeHistograms.finalRuntime} />
+              <HistogramChart
+                data={data.runtimeHistograms.finalRuntime}
+                onBarClick={onRuntimeBucketClick("final", "Final Runtime")}
+                activeBucket={drilldown.runtimeField === "final" ? drilldown.bucket : undefined}
+              />
             </CardContent>
           </Card>
 
@@ -323,7 +441,12 @@ export default function AnalyticsPage() {
                       }
                       labelFormatter={(value) => format(new Date(Number(value)), "MMM d, yyyy")}
                     />
-                    <Scatter data={scatter} fill="hsl(171 45% 34%)" />
+                    <Scatter
+                      data={scatter}
+                      fill="hsl(171 45% 34%)"
+                      cursor="pointer"
+                      onClick={(entry) => onScatterClick((entry as { payload?: { ts?: number } }).payload ?? {})}
+                    />
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
@@ -441,6 +564,14 @@ export default function AnalyticsPage() {
           </Card>
         </div>
       )}
+
+      <TapeDrilldownDrawer
+        open={drilldown.open}
+        title={drilldown.label}
+        subtitle="Filtered from runtime analytics interactions."
+        queryString={drillQuery}
+        onClose={closeDrilldown}
+      />
     </div>
   );
 }

@@ -19,8 +19,10 @@ export function useOpsSummary() {
   });
 }
 
-export function useTapes(queryString: string) {
-  return useSWR<{ items: TapeRecord[]; total: number }>(`/api/tapes?${queryString}`, fetcher, {
+export function useTapes(queryString?: string | null) {
+  const key =
+    queryString == null ? null : queryString.trim() ? `/api/tapes?${queryString}` : "/api/tapes";
+  return useSWR<{ items: TapeRecord[]; total: number }>(key, fetcher, {
     refreshInterval: 15000,
   });
 }
