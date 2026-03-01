@@ -9,7 +9,7 @@ const nav = [
   { href: "/", label: "Overview", icon: Activity },
   { href: "/board", label: "Production Board", icon: ClipboardList },
   { href: "/analytics", label: "Analytics", icon: AreaChart },
-  { href: "/presentation", label: "Presentation", icon: MonitorPlay },
+  { href: "/presentation", label: "Mission Control", icon: MonitorPlay },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
