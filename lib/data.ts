@@ -1,7 +1,7 @@
 import { eachDayOfInterval, endOfDay, format, isToday, parseISO, startOfDay, subDays } from "date-fns";
 import { listRecords } from "@/lib/airtable";
 import { fieldMap, pipelineStages } from "@/lib/schema";
-import type { OpsSummaryResponse, Stage, TapeRecord } from "@/lib/types";
+import type { LaunchProjection, OpsSummaryResponse, Stage, TapeRecord } from "@/lib/types";
 
 function toDate(value: unknown): string | undefined {
   if (!value || typeof value !== "string") return undefined;
@@ -337,6 +337,116 @@ function buildCapturedDaily(tapes: TapeRecord[]) {
   });
 }
 
+function toTimestamp(value?: string) {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isLaunchComplete(tape: TapeRecord) {
+  return Boolean(tape.archivalFilename || tape.transferredToNas || tape.stage === "Archived");
+}
+
+function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
+  const now = new Date();
+  const nowMs = now.getTime();
+  if (!tapes.length) {
+    return {
+      status: "insufficient_data",
+      generatedAt: now.toISOString(),
+      backlogCount: 0,
+      completedCount: 0,
+      throughputPerDay: 0,
+      throughputWindowDays: 21,
+      recentCompletions: 0,
+      completionDateCoveragePercent: 0,
+      confidence: "low",
+      source: "none",
+    };
+  }
+
+  const completedTapes = tapes.filter((tape) => isLaunchComplete(tape));
+  const completedCount = completedTapes.length;
+  const backlogCount = Math.max(0, tapes.length - completedCount);
+  const completionTimestamps = completedTapes
+    .map((tape) => toTimestamp(tape.completedDate))
+    .filter((timestamp): timestamp is number => typeof timestamp === "number")
+    .sort((a, b) => a - b);
+
+  const throughputWindowDays = 21;
+  const recentWindowStartMs = subDays(startOfDay(now), throughputWindowDays - 1).getTime();
+  const recentCompletions = completionTimestamps.filter((timestamp) => timestamp >= recentWindowStartMs).length;
+  const recentThroughput = recentCompletions / throughputWindowDays;
+
+  const timelineStartCandidates = tapes
+    .map((tape) => toTimestamp(tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.completedDate))
+    .filter((timestamp): timestamp is number => typeof timestamp === "number");
+  const timelineStartMs = timelineStartCandidates.length ? Math.min(...timelineStartCandidates) : null;
+  const activeDays =
+    timelineStartMs == null
+      ? 0
+      : Math.max(
+          1,
+          Math.floor((startOfDay(now).getTime() - startOfDay(new Date(timelineStartMs)).getTime()) / 86400000) + 1
+        );
+  const historicalThroughput = activeDays > 0 ? completedCount / activeDays : 0;
+
+  let throughputPerDay = 0;
+  let source: LaunchProjection["source"] = "none";
+  if (completionTimestamps.length >= 3 && recentCompletions > 0) {
+    throughputPerDay = recentThroughput;
+    source = "completion-dates";
+  } else if (completionTimestamps.length >= 3 && historicalThroughput > 0) {
+    throughputPerDay = historicalThroughput;
+    source = "completion-dates";
+  } else if (historicalThroughput > 0) {
+    throughputPerDay = historicalThroughput;
+    source = "historical-count";
+  }
+
+  throughputPerDay = Number(throughputPerDay.toFixed(2));
+
+  let status: LaunchProjection["status"] = "insufficient_data";
+  let projectedLaunchAt: string | undefined;
+  let estimatedDaysRemaining: number | undefined;
+
+  if (backlogCount === 0) {
+    status = "launched";
+    projectedLaunchAt = now.toISOString();
+    estimatedDaysRemaining = 0;
+  } else if (throughputPerDay > 0) {
+    status = "counting";
+    estimatedDaysRemaining = Number((backlogCount / throughputPerDay).toFixed(1));
+    projectedLaunchAt = new Date(nowMs + (backlogCount / throughputPerDay) * 86400000).toISOString();
+  }
+
+  const completionDateCoveragePercent = completedCount
+    ? Number(((completionTimestamps.length / completedCount) * 100).toFixed(1))
+    : 0;
+
+  let confidence: LaunchProjection["confidence"] = "low";
+  if (source === "completion-dates" && recentCompletions >= 4 && completionDateCoveragePercent >= 60) {
+    confidence = "high";
+  } else if (throughputPerDay > 0 && completedCount >= 5) {
+    confidence = "medium";
+  }
+
+  return {
+    status,
+    projectedLaunchAt,
+    generatedAt: now.toISOString(),
+    backlogCount,
+    completedCount,
+    throughputPerDay,
+    throughputWindowDays,
+    estimatedDaysRemaining,
+    recentCompletions,
+    completionDateCoveragePercent,
+    confidence,
+    source,
+  };
+}
+
 export async function getOpsSummary(): Promise<OpsSummaryResponse> {
   const tapes = await getTapes();
 
@@ -415,6 +525,7 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       finalAverage: average(finalRuntimes),
       driftAverage: average(runtimeDrifts),
     },
+    launchProjection: buildLaunchProjection(tapes),
     recentAcquisitions,
     tapes,
   };

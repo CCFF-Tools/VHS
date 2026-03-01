@@ -58,3 +58,62 @@ body {
 .kpi-tint-4 {
   background: linear-gradient(145deg, hsl(16 100% 95%), hsl(16 100% 98%));
 }
+
+.launch-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 14%, hsl(191 100% 64% / 0.24), transparent 36%),
+    radial-gradient(circle at 86% 18%, hsl(43 100% 67% / 0.18), transparent 34%),
+    linear-gradient(150deg, hsl(224 49% 10%), hsl(227 52% 7%) 54%, hsl(215 46% 11%));
+}
+
+.launch-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, hsl(0 0% 100% / 0.55) 0.75px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.25;
+  animation: launch-star-drift 24s linear infinite;
+}
+
+.launch-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, hsl(195 75% 64% / 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(195 75% 64% / 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, hsl(0 0% 0% / 0.75), transparent 70%);
+}
+
+.launch-digit-glow {
+  text-shadow:
+    0 0 6px hsl(191 96% 78% / 0.92),
+    0 0 16px hsl(191 92% 61% / 0.7),
+    0 0 30px hsl(204 95% 67% / 0.45);
+  animation: launch-digit-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes launch-star-drift {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(15px);
+  }
+}
+
+@keyframes launch-digit-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}

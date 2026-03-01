@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SimpleSelect } from "@/components/ui/select";
 import { Topbar } from "@/components/layout/topbar";
 import { KpiGrid } from "@/components/dashboard/kpi-grid";
+import { LaunchCountdown } from "@/components/dashboard/launch-countdown";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
@@ -194,6 +195,8 @@ export default function HomePage() {
 
       {data && (
         <div className="space-y-4">
+          <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} />
+
           <KpiGrid kpis={data.kpis} />
 
           <section className="grid gap-4 xl:grid-cols-2">

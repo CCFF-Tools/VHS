@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
+import { LaunchCountdown } from "@/components/dashboard/launch-countdown";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
@@ -22,15 +23,25 @@ function formatFeedDate(acquiredAt?: string, receivedDate?: string, updatedTime?
   return format(parsed, "yyyy-MM-dd HH:mm");
 }
 
+function formatProjectedLaunch(value?: string) {
+  if (!value) return "TBD";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "TBD";
+  return format(parsed, "yyyy-MM-dd HH:mm:ss");
+}
+
 function SlideHeader({
   title,
+  subtitle,
 }: {
   title: string;
+  subtitle?: string;
 }) {
   return (
     <header className="mb-4 flex items-center justify-between">
       <div>
         <h1 className="text-4xl font-extrabold tracking-tight text-white">{title}</h1>
+        {subtitle ? <p className="mt-1 text-sm text-cyan-100/80">{subtitle}</p> : null}
       </div>
       <div className="text-right text-cyan-50">
         <p className="font-mono text-xs opacity-80">{format(new Date(), "yyyy-MM-dd HH:mm:ss")}</p>
@@ -44,24 +55,6 @@ export default function PresentationPage() {
   const [slide, setSlide] = useState(0);
   const router = useRouter();
 
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setSlide((prev) => (prev + 1) % 4);
-    }, SLIDE_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight") setSlide((prev) => (prev + 1) % 4);
-      if (event.key === "ArrowLeft") setSlide((prev) => (prev + 3) % 4);
-      if (event.key.toLowerCase() === "r") mutate();
-      if (event.key === "Escape") router.push("/");
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [mutate, router]);
-
   const stageData = useMemo(
     () =>
       data?.stageCounts.map((row) => ({ stage: stageLabel(row.stage), count: row.count })) ?? [],
@@ -69,6 +62,56 @@ export default function PresentationPage() {
   );
 
   const slides = [
+    {
+      key: "launch",
+      title: "Launch Readiness",
+      subtitle: "Projected mission completion from live queue + throughput",
+      content: data ? (
+        <div className="grid h-full gap-4 md:grid-cols-5">
+          <div className="md:col-span-3">
+            <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} />
+          </div>
+          <div className="md:col-span-2 grid gap-4">
+            <Card className="border-cyan-200/40 bg-white/95">
+              <CardContent className="py-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Projected Launch Window</p>
+                <p className="mt-1 font-mono text-lg font-semibold text-slate-900">
+                  {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-cyan-200/40 bg-white/95">
+              <CardContent className="py-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Completion Status</p>
+                <p className="mt-1 text-3xl font-bold leading-none text-slate-900">
+                  {data.launchProjection.completedCount}/{data.kpis.totalTapes}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-cyan-200/40 bg-white/95">
+              <CardContent className="py-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Velocity</p>
+                <p className="mt-1 font-mono text-3xl font-bold leading-none text-slate-900">
+                  {data.launchProjection.throughputPerDay.toFixed(2)}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">tapes/day ({data.launchProjection.source})</p>
+              </CardContent>
+            </Card>
+            <Card className="border-cyan-200/40 bg-white/95">
+              <CardContent className="py-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Confidence</p>
+                <p className="mt-1 text-3xl font-bold uppercase leading-none text-slate-900">
+                  {data.launchProjection.confidence}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}%
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      ) : null,
+    },
     {
       key: "overview",
       title: "VHS Mission Control",
@@ -255,6 +298,26 @@ export default function PresentationPage() {
     },
   ];
 
+  const totalSlides = slides.length;
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSlide((prev) => (prev + 1) % totalSlides);
+    }, SLIDE_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [totalSlides]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight") setSlide((prev) => (prev + 1) % totalSlides);
+      if (event.key === "ArrowLeft") setSlide((prev) => (prev + totalSlides - 1) % totalSlides);
+      if (event.key.toLowerCase() === "r") mutate();
+      if (event.key === "Escape") router.push("/");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mutate, router, totalSlides]);
+
   const current = slides[slide];
 
   return (
@@ -262,6 +325,7 @@ export default function PresentationPage() {
       <div className="mx-auto max-w-[1800px]">
         <SlideHeader
           title={current.title}
+          subtitle={current.subtitle}
         />
 
         {isLoading && (

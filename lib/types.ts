@@ -56,6 +56,21 @@ export interface RuntimeStats {
   driftAverage: number;
 }
 
+export interface LaunchProjection {
+  status: "counting" | "launched" | "insufficient_data";
+  projectedLaunchAt?: string;
+  generatedAt: string;
+  backlogCount: number;
+  completedCount: number;
+  throughputPerDay: number;
+  throughputWindowDays: number;
+  estimatedDaysRemaining?: number;
+  recentCompletions: number;
+  completionDateCoveragePercent: number;
+  confidence: "high" | "medium" | "low";
+  source: "completion-dates" | "historical-count" | "none";
+}
+
 export interface OpsSummaryResponse {
   kpis: DashboardKpis;
   stageCounts: Array<{ stage: Stage; count: number }>;
@@ -70,6 +85,7 @@ export interface OpsSummaryResponse {
     finalRuntime: Array<{ bucket: string; count: number }>;
   };
   runtimeStats: RuntimeStats;
+  launchProjection: LaunchProjection;
   recentAcquisitions: TapeRecord[];
   tapes: TapeRecord[];
 }
