@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO, startOfDay, startOfWeek, subWeeks } from "date-fns";
 import {
@@ -197,7 +197,7 @@ function densityColor(count: number, max: number) {
   return `rgba(13, 148, 136, ${alpha.toFixed(3)})`;
 }
 
-export default function AnalyticsPage() {
+function AnalyticsPageContent() {
   const { data, error, isLoading } = useOpsSummary();
   const router = useRouter();
   const pathname = usePathname();
@@ -573,5 +573,25 @@ export default function AnalyticsPage() {
         onClose={closeDrilldown}
       />
     </div>
+  );
+}
+
+function AnalyticsPageFallback() {
+  return (
+    <div>
+      <Topbar
+        title="Runtime Analytics"
+        subtitle="Scatter, box, ridgeline, CDF, and density views of tape runtime behavior."
+      />
+      <p className="text-sm text-muted-foreground">Loading analytics...</p>
+    </div>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<AnalyticsPageFallback />}>
+      <AnalyticsPageContent />
+    </Suspense>
   );
 }

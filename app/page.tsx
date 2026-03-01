@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ function formatDateTime(value?: string) {
   }
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const { data, isLoading, error } = useOpsSummary();
   const router = useRouter();
   const pathname = usePathname();
@@ -412,5 +412,31 @@ export default function HomePage() {
         onClose={closeDrilldown}
       />
     </div>
+  );
+}
+
+function HomePageFallback() {
+  return (
+    <div>
+      <Topbar
+        title="VHS Operations Snapshot"
+        subtitle="Mission Control for municipal meeting archives"
+        titleClassName="text-4xl font-extrabold tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-r from-teal-700 via-cyan-700 to-amber-600 md:text-5xl"
+        subtitleClassName="mt-2 text-base font-semibold tracking-wide text-slate-700 md:text-lg"
+      />
+      <div className="space-y-3">
+        <Skeleton className="h-24" />
+        <Skeleton className="h-64" />
+        <Skeleton className="h-64" />
+      </div>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<HomePageFallback />}>
+      <HomePageContent />
+    </Suspense>
   );
 }
