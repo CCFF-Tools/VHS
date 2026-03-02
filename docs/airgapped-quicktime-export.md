@@ -35,8 +35,10 @@ Default behavior:
 - Scans for `mov,mp4,m4v,qt`
 - Uses file creation date (birth time), with modified-time fallback if unavailable
 - Extracts primary identifier in `VHS-XXX` style for Airtable field `📼` (can rename with `--id-field`)
-- Uses folder grouping internally to calculate sequence (`--series-mode parent`)
-- Assigns `Sequence Number` and `Series Count` per series
+- Parses tape span from filename `X of Y` (for example `1 of 2`) into:
+  - `Tape Sequence` = `X`
+  - `Tapes in Sequence` = `Y`
+- If no `X of Y` is found, defaults to `1 of 1`
 - Tries to infer `Original Recording Date` from filename patterns like `YYYY-MM-DD`, `YYYY_MM_DD`, or `YYYYMMDD`
 - Auto-tags content type as `City Council Meeting` if path/name includes keywords like `city council`, `city_council`, `city-council`, `citycouncil`, or `council meeting`; otherwise `Other`
 - Writes Airtable-ready columns:
@@ -45,8 +47,8 @@ Default behavior:
   - `Captured At`
   - `Captured`
   - `Capture File Path`
-  - `Sequence Number`
-  - `Series Count`
+  - `Tape Sequence`
+  - `Tapes in Sequence`
   - `Original Recording Date`
   - `Content Type`
   - `Is City Council Meeting`
@@ -93,7 +95,7 @@ If your Airtable field expects text/single-select, pass `--captured-value "Yes"`
 
 Useful options:
 - `--key-field "📼"` (default; change upsert key if needed)
-- `--fields "📼,QT Filename,Captured At,Sequence Number,Series Count,Original Recording Date,Content Type,Is City Council Meeting"` (import only these columns)
+- `--fields "📼,QT Filename,Captured At,Tape Sequence,Tapes in Sequence,Original Recording Date"` (import only these columns)
 - `--include-empty` (allow blank CSV values to clear Airtable fields)
 - `--env-file /path/to/.env.local` (explicit env file path)
 - `--schema-csv /path/to/Titled Table-Grid view.csv` (only upload fields that exist in that schema CSV)
@@ -107,10 +109,10 @@ Recommended table fields:
 - `QT Filename` (single line text)
 - `📼` (single line text; Primary Identifier like `VHS-001`)
 - `Captured At` (date+time)
-- `Captured` (checkbox)
+- `Captured` (single select `yes/no` or checkbox, depending on your base)
 - `Capture File Path` (long text, optional)
-- `Sequence Number` (number)
-- `Series Count` (number)
+- `Tape Sequence` (number)
+- `Tapes in Sequence` (number)
 - `Original Recording Date` (date)
 - `Content Type` (single select or text)
 - `Is City Council Meeting` (checkbox)

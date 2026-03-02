@@ -15,10 +15,10 @@ Options:
   -o, --output FILE       CSV output path (default: ./quicktime_capture_export_YYYYmmdd_HHMMSS.csv)
   -e, --ext LIST          Comma-separated extensions (default: mov,mp4,m4v,qt)
   -f, --format FORMAT     csv format: airtable or standard (default: airtable)
-      --id-field NAME     Primary identifier field name (default: AIRTABLE_TAPE_ID_FIELD or 📼)
-      --series-mode MODE  Series grouping: parent or root (default: parent)
-      --series-name NAME  Force one series name for all rows
-      --sequence-by MODE  Sequence ordering: created or name (default: created)
+  --id-field NAME     Primary identifier field name (default: AIRTABLE_TAPE_ID_FIELD or 📼)
+      --series-mode MODE  Series grouping: parent or root (default: parent, standard format only)
+      --series-name NAME  Force one series name for all rows (standard format only)
+      --sequence-by MODE  Row ordering in output: created or name (default: created)
       --recording-date D  Force original recording date for all rows (YYYY-MM-DD)
       --content-type T    Force content type for all rows
       --city-label LABEL  Label used for City Council content (default: City Council Meeting)
@@ -27,8 +27,8 @@ Options:
   -h, --help              Show this help
 
 Formats:
-  airtable  -> QT Filename,📼,Captured At,Captured,Capture File Path,Sequence Number,Series Count,Original Recording Date,Content Type,Is City Council Meeting
-  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Sequence Number,Series Count,Original Recording Date,Recording Date Source,Content Type,Is City Council Meeting
+  airtable  -> QT Filename,📼,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Content Type,Is City Council Meeting
+  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Content Type,Is City Council Meeting
 
 Examples:
   ./export_quicktime_capture_csv.sh -r "/Volumes/Capture Drive/Session_2026_03_01"
@@ -161,6 +161,31 @@ infer_primary_identifier() {
   printf 'VHS-%03d' "$((10#$digits))"
 }
 
+infer_tape_span() {
+  local filename="$1"
+  local lowered=""
+  local seq_raw=""
+  local total_raw=""
+  local seq=1
+  local total=1
+
+  lowered="$(echo "$filename" | tr '[:upper:]' '[:lower:]')"
+
+  if [[ "$lowered" =~ (^|[^0-9])([0-9]{1,3})[[:space:]_-]*of[[:space:]_-]*([0-9]{1,3})([^0-9]|$) ]]; then
+    seq_raw="${BASH_REMATCH[2]}"
+    total_raw="${BASH_REMATCH[3]}"
+    seq=$((10#$seq_raw))
+    total=$((10#$total_raw))
+
+    if [ "$seq" -ge 1 ] && [ "$total" -ge "$seq" ]; then
+      printf '%s\t%s\tfilename_pattern' "$seq" "$total"
+      return
+    fi
+  fi
+
+  printf '1\t1\tdefault_single'
+}
+
 infer_recording_date() {
   local filename="$1"
   local token=""
@@ -252,16 +277,15 @@ fi
 
 TMP_META="$(mktemp "/tmp/qt_export_meta.XXXXXX")"
 TMP_SORTED="$(mktemp "/tmp/qt_export_sorted.XXXXXX")"
-TMP_COUNTS="$(mktemp "/tmp/qt_export_counts.XXXXXX")"
-trap 'rm -f "$TMP_META" "$TMP_SORTED" "$TMP_COUNTS"' EXIT
+trap 'rm -f "$TMP_META" "$TMP_SORTED"' EXIT
 
 exec 3>"$OUTPUT"
 
 if [ "$FORMAT" = "airtable" ]; then
   id_field_escaped="${ID_FIELD//\"/\"\"}"
-  printf '"QT Filename","%s","Captured At","Captured","Capture File Path","Sequence Number","Series Count","Original Recording Date","Content Type","Is City Council Meeting"\n' "$id_field_escaped" >&3
+  printf '"QT Filename","%s","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Content Type","Is City Council Meeting"\n' "$id_field_escaped" >&3
 else
-  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Sequence Number","Series Count","Original Recording Date","Recording Date Source","Content Type","Is City Council Meeting"\n' >&3
+  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Content Type","Is City Council Meeting"\n' >&3
 fi
 
 FIND_ARGS=()
@@ -297,19 +321,27 @@ while IFS= read -r -d '' file; do
 
   created_at="$(date -r "$created_epoch" '+%Y-%m-%d %H:%M:%S %z')"
   primary_id="$(infer_primary_identifier "$filename" "$file")"
+  tape_span_result="$(infer_tape_span "$filename")"
+  tape_sequence="${tape_span_result%%$'\t'*}"
+  tape_span_rest="${tape_span_result#*$'\t'}"
+  tapes_in_sequence="${tape_span_rest%%$'\t'*}"
+  tape_span_source="${tape_span_rest#*$'\t'}"
   recording_result="$(infer_recording_date "$filename")"
   recording_date="${recording_result%%$'\t'*}"
   recording_source="${recording_result#*$'\t'}"
   content_type="$(infer_content_type "$file")"
   city_flag="$(is_city_flag "$content_type")"
 
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$filename" \
     "$file" \
     "$created_at" \
     "$created_epoch" \
     "$source" \
     "$series_name" \
+    "$tape_sequence" \
+    "$tapes_in_sequence" \
+    "$tape_span_source" \
     "$recording_date" \
     "$recording_source" \
     "$content_type" \
@@ -325,26 +357,12 @@ if [ "$count" -eq 0 ]; then
 fi
 
 if [ "$SEQUENCE_BY" = "name" ]; then
-  sort -t "$(printf '\t')" -k6,6 -k1,1 "$TMP_META" > "$TMP_SORTED"
+  sort -t "$(printf '\t')" -k1,1 "$TMP_META" > "$TMP_SORTED"
 else
-  sort -t "$(printf '\t')" -k6,6 -k4,4n -k1,1 "$TMP_META" > "$TMP_SORTED"
+  sort -t "$(printf '\t')" -k4,4n -k1,1 "$TMP_META" > "$TMP_SORTED"
 fi
 
-awk -F "$(printf '\t')" '{ counts[$6] += 1 } END { for (s in counts) { printf "%s\t%d\n", s, counts[s] } }' "$TMP_SORTED" > "$TMP_COUNTS"
-
-current_series=""
-sequence_number=0
-series_count=0
-
-while IFS="$(printf '\t')" read -r filename file created_at created_epoch source series_name recording_date recording_source content_type city_flag primary_id; do
-  if [ "$series_name" != "$current_series" ]; then
-    current_series="$series_name"
-    sequence_number=0
-    series_count="$(awk -F "$(printf '\t')" -v series="$series_name" '$1 == series { print $2; exit }' "$TMP_COUNTS")"
-    [ -z "$series_count" ] && series_count=0
-  fi
-
-  sequence_number=$((sequence_number + 1))
+while IFS="$(printf '\t')" read -r filename file created_at created_epoch source series_name tape_sequence tapes_in_sequence tape_span_source recording_date recording_source content_type city_flag primary_id; do
 
   if [ "$FORMAT" = "airtable" ]; then
     csv_escape "$filename" >&3
@@ -357,9 +375,9 @@ while IFS="$(printf '\t')" read -r filename file created_at created_epoch source
     printf ',' >&3
     csv_escape "$file" >&3
     printf ',' >&3
-    csv_escape "$sequence_number" >&3
+    csv_escape "$tape_sequence" >&3
     printf ',' >&3
-    csv_escape "$series_count" >&3
+    csv_escape "$tapes_in_sequence" >&3
     printf ',' >&3
     csv_escape "$recording_date" >&3
     printf ',' >&3
@@ -382,9 +400,11 @@ while IFS="$(printf '\t')" read -r filename file created_at created_epoch source
     printf ',' >&3
     csv_escape "$series_name" >&3
     printf ',' >&3
-    csv_escape "$sequence_number" >&3
+    csv_escape "$tape_sequence" >&3
     printf ',' >&3
-    csv_escape "$series_count" >&3
+    csv_escape "$tapes_in_sequence" >&3
+    printf ',' >&3
+    csv_escape "$tape_span_source" >&3
     printf ',' >&3
     csv_escape "$recording_date" >&3
     printf ',' >&3
