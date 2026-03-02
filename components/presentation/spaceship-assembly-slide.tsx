@@ -191,20 +191,20 @@ function KerbalCrew({
 
       <g opacity={badgeOpacity}>
         <rect
-          x={-74 + badgeDx}
+          x={-88 + badgeDx}
           y={-100 + badgeDy}
-          width="148"
-          height="38"
+          width="176"
+          height="48"
           rx="8"
           fill="rgba(4, 17, 45, 1)"
           stroke="rgba(236, 249, 255, 1)"
           strokeWidth="1.5"
         />
         <rect
-          x={-68 + badgeDx}
+          x={-82 + badgeDx}
           y={-94 + badgeDy}
-          width="136"
-          height="12"
+          width="164"
+          height="14"
           rx="5"
           fill="rgba(183, 226, 255, 0.22)"
         />
@@ -219,10 +219,10 @@ function KerbalCrew({
         <circle cx={0} cy={-45} r="2.1" fill="rgba(236, 249, 255, 1)" />
         <text
           x={badgeDx}
-          y={-79 + badgeDy}
+          y={-83 + badgeDy}
           textAnchor="middle"
           fill="rgba(0, 0, 0, 0.7)"
-          fontSize="9.2"
+          fontSize="11.6"
           letterSpacing="0.4"
           style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
         >
@@ -230,10 +230,10 @@ function KerbalCrew({
         </text>
         <text
           x={badgeDx}
-          y={-80 + badgeDy}
+          y={-84 + badgeDy}
           textAnchor="middle"
           fill="#f4fcff"
-          fontSize="9.2"
+          fontSize="11.6"
           letterSpacing="0.4"
           style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
         >
@@ -241,22 +241,22 @@ function KerbalCrew({
         </text>
         <text
           x={badgeDx}
-          y={-67 + badgeDy}
+          y={-68 + badgeDy}
           textAnchor="middle"
           fill="rgba(0, 0, 0, 0.7)"
-          fontSize="7.1"
-          letterSpacing="1"
+          fontSize="9.2"
+          letterSpacing="0.9"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}
         >
           {title}
         </text>
         <text
           x={badgeDx}
-          y={-68 + badgeDy}
+          y={-69 + badgeDy}
           textAnchor="middle"
           fill="#c8eaff"
-          fontSize="7.1"
-          letterSpacing="1"
+          fontSize="9.2"
+          letterSpacing="0.9"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}
         >
           {title}
@@ -306,6 +306,33 @@ export function SpaceshipAssemblySlide({
     { label: "Guidance Wiring", minProgress: 0.68 },
     { label: "Payload Integration", minProgress: 0.82 },
     { label: "Archive Seal", minProgress: 0.95 },
+  ];
+
+  const componentTaskBoxes = [
+    {
+      title: "Command Capsule",
+      task: "Task: Finalize nav glass and uplink checks.",
+      value: combineOrBetter,
+      className: "left-3 top-[7%]",
+    },
+    {
+      title: "Main Airframe",
+      task: "Task: Reticulating Splines and pressure seals.",
+      value: captureOrBetter,
+      className: "left-3 top-[25%]",
+    },
+    {
+      title: "Booster Pair",
+      task: "Task: Clamp lock and transfer manifold tests.",
+      value: transferOrBetter,
+      className: "right-3 top-[7%] text-right",
+    },
+    {
+      title: "Engine Cluster",
+      task: "Task: Vector trim and burn sim validation.",
+      value: trimOrBetter,
+      className: "right-3 top-[25%] text-right",
+    },
   ];
 
   return (
@@ -413,131 +440,54 @@ export function SpaceshipAssemblySlide({
               <line x1="780" y1="116" x2="570" y2="158" stroke="rgba(220,243,255,0.92)" strokeWidth="3" />
               <line x1="785" y1="248" x2="570" y2="292" stroke="rgba(220,243,255,0.92)" strokeWidth="3" />
 
-              <text
-                x="84"
-                y="98"
-                fill="rgba(0,0,0,0.5)"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                COMMAND CAPSULE
-              </text>
-              <text
-                x="84"
-                y="96"
-                fill="#eefbff"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                COMMAND CAPSULE
-              </text>
-              <text
-                x="84"
-                y="122"
-                fill="#d7efff"
-                fontSize="14"
-                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
-              >
-                {percent(combineOrBetter)}
-              </text>
-
-              <text
-                x="84"
-                y="230"
-                fill="rgba(0,0,0,0.5)"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                MAIN AIRFRAME
-              </text>
-              <text
-                x="84"
-                y="228"
-                fill="#eefbff"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                MAIN AIRFRAME
-              </text>
-              <text
-                x="84"
-                y="254"
-                fill="#d7efff"
-                fontSize="14"
-                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
-              >
-                {percent(captureOrBetter)}
-              </text>
-
-              <text
-                x="916"
-                y="98"
-                textAnchor="end"
-                fill="rgba(0,0,0,0.5)"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                BOOSTER PAIR
-              </text>
-              <text
-                x="916"
-                y="96"
-                textAnchor="end"
-                fill="#eefbff"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                BOOSTER PAIR
-              </text>
-              <text
-                x="916"
-                y="122"
-                textAnchor="end"
-                fill="#d7efff"
-                fontSize="14"
-                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
-              >
-                {percent(transferOrBetter)}
-              </text>
-
-              <text
-                x="916"
-                y="230"
-                textAnchor="end"
-                fill="rgba(0,0,0,0.5)"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                ENGINE CLUSTER
-              </text>
-              <text
-                x="916"
-                y="228"
-                textAnchor="end"
-                fill="#eefbff"
-                fontSize="22"
-                letterSpacing="1.1"
-                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
-              >
-                ENGINE CLUSTER
-              </text>
-              <text
-                x="916"
-                y="254"
-                textAnchor="end"
-                fill="#d7efff"
-                fontSize="14"
-                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
-              >
-                {percent(trimOrBetter)}
-              </text>
+              <rect
+                x="450"
+                y="66"
+                width="100"
+                height="95"
+                rx="22"
+                fill="none"
+                stroke="rgba(224,246,255,0.76)"
+                strokeWidth="2.2"
+                strokeDasharray="10 8"
+                opacity={partOpacity(combineOrBetter)}
+              />
+              <rect
+                x="432"
+                y="138"
+                width="136"
+                height="275"
+                rx="30"
+                fill="none"
+                stroke="rgba(224,246,255,0.76)"
+                strokeWidth="2.2"
+                strokeDasharray="10 8"
+                opacity={partOpacity(captureOrBetter)}
+              />
+              <rect
+                x="352"
+                y="204"
+                width="296"
+                height="198"
+                rx="38"
+                fill="none"
+                stroke="rgba(224,246,255,0.76)"
+                strokeWidth="2.2"
+                strokeDasharray="10 8"
+                opacity={partOpacity(transferOrBetter)}
+              />
+              <rect
+                x="444"
+                y="388"
+                width="112"
+                height="82"
+                rx="20"
+                fill="none"
+                stroke="rgba(224,246,255,0.76)"
+                strokeWidth="2.2"
+                strokeDasharray="10 8"
+                opacity={partOpacity(trimOrBetter)}
+              />
 
               <g opacity={partOpacity(combineOrBetter)}>
                 <path
@@ -622,6 +572,27 @@ export function SpaceshipAssemblySlide({
               <circle cx="780" cy="116" r="4" fill="#f8fdff" />
               <circle cx="785" cy="248" r="4" fill="#f8fdff" />
             </svg>
+
+            {componentTaskBoxes.map((box) => {
+              const state = box.value >= 0.98 ? "READY" : box.value >= 0.35 ? "IN WORK" : "QUEUED";
+              return (
+                <div
+                  key={box.title}
+                  className={`absolute z-20 max-w-[250px] rounded-md border-2 border-cyan-50/95 bg-[#082968]/98 px-3 py-2 text-cyan-50 shadow-[0_8px_22px_rgba(1,8,24,0.45)] ${box.className}`}
+                >
+                  <div className="rounded-[0.28rem] border border-cyan-100/60 px-2 py-1">
+                    <p className="text-[clamp(0.92rem,0.74vw,1.34rem)] uppercase tracking-[0.08em] text-cyan-50">
+                      {box.title}
+                    </p>
+                    <p className="mt-1 text-[clamp(0.78rem,0.6vw,1.06rem)] leading-snug text-cyan-100/90">{box.task}</p>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3 border-t border-cyan-100/45 pt-1.5">
+                    <p className="font-mono text-[clamp(0.9rem,0.7vw,1.2rem)] text-cyan-50">{percent(box.value)}</p>
+                    <span className="font-mono text-[clamp(0.72rem,0.56vw,0.94rem)] text-amber-100">{state}</span>
+                  </div>
+                </div>
+              );
+            })}
 
             <div className="absolute inset-x-2 bottom-2 grid grid-cols-12 gap-2 text-cyan-50">
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
