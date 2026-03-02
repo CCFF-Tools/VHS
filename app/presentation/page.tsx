@@ -109,6 +109,51 @@ export default function PresentationPage() {
     deadlineReached || !deadlineCountdown
       ? "WINDOW CLOSED"
       : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`;
+  const captureLaunchSummary = useMemo(() => {
+    if (!data) return null;
+
+    const throughputWindowDays = 21;
+    const captureBacklogCount = Math.max(0, data.kpis.totalTapes - data.kpis.capturedCount);
+    const recentCapturedCount = data.capturedDaily
+      .slice(-throughputWindowDays)
+      .reduce((sum, day) => sum + day.count, 0);
+
+    let captureThroughputPerDay = recentCapturedCount / throughputWindowDays;
+    let source = `captured-at (${throughputWindowDays}d window)`;
+
+    if (captureThroughputPerDay <= 0 && data.kpis.capturedCount > 0) {
+      const timelineStartCandidates = data.tapes
+        .map((tape) => {
+          const raw = tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.capturedAt;
+          if (!raw) return null;
+          const parsed = Date.parse(raw);
+          return Number.isFinite(parsed) ? parsed : null;
+        })
+        .filter((timestamp): timestamp is number => timestamp != null);
+
+      if (timelineStartCandidates.length > 0) {
+        const timelineStartMs = Math.min(...timelineStartCandidates);
+        const activeDays = Math.max(1, Math.floor((Date.now() - timelineStartMs) / 86400000) + 1);
+        captureThroughputPerDay = data.kpis.capturedCount / activeDays;
+        source = "historical capture ratio";
+      }
+    }
+
+    const throughputPerDay = Number(captureThroughputPerDay.toFixed(2));
+    const estimatedDaysRemaining =
+      captureBacklogCount === 0
+        ? 0
+        : throughputPerDay > 0
+          ? Number((captureBacklogCount / throughputPerDay).toFixed(1))
+          : undefined;
+
+    return {
+      backlogCount: captureBacklogCount,
+      throughputPerDay,
+      estimatedDaysRemaining,
+      source,
+    };
+  }, [data]);
 
   const slides = [
     {
@@ -171,6 +216,17 @@ export default function PresentationPage() {
               kpis={data.kpis}
               className="h-full"
               showFrameHeader={false}
+              summaryOverride={
+                captureLaunchSummary
+                  ? {
+                      backlogCount: captureLaunchSummary.backlogCount,
+                      throughputPerDay: captureLaunchSummary.throughputPerDay,
+                      estimatedDaysRemaining: captureLaunchSummary.estimatedDaysRemaining,
+                      labelPrefix: "Capture",
+                      throughputUnit: "tapes/day",
+                    }
+                  : undefined
+              }
             />
           </div>
           <div className="md:col-span-2 grid gap-4 sm:grid-cols-2 md:grid-cols-1 [@media(min-width:2800px)]:grid-cols-2">
@@ -200,10 +256,10 @@ export default function PresentationPage() {
                   Velocity
                 </p>
                 <p className="mt-1 font-mono text-[clamp(2rem,2.2vw,3.9rem)] font-bold leading-none text-white">
-                  {data.launchProjection.throughputPerDay.toFixed(2)}
+                  {(captureLaunchSummary?.throughputPerDay ?? data.launchProjection.throughputPerDay).toFixed(2)}
                 </p>
                 <p className="mt-1 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
-                  tapes/day ({data.launchProjection.source})
+                  tapes/day ({captureLaunchSummary?.source ?? data.launchProjection.source})
                 </p>
               </CardContent>
             </Card>

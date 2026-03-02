@@ -186,9 +186,12 @@ function buildAcquisitionDaily(tapes: TapeRecord[]) {
 
   return days.map((d) => {
     const key = format(d, "yyyy-MM-dd");
-    const count = tapes.filter(
-      (t) => t.acquisitionAt && format(parseISO(t.acquisitionAt), "yyyy-MM-dd") === key
-    ).length;
+    const count = tapes.filter((t) => {
+      const source = t.updatedTime ?? t.acquisitionAt ?? t.receivedDate;
+      if (!source) return false;
+      const parsed = parseISO(source);
+      return !Number.isNaN(parsed.getTime()) && format(parsed, "yyyy-MM-dd") === key;
+    }).length;
     return { date: key, count };
   });
 }
@@ -244,6 +247,8 @@ export async function getTapes(): Promise<TapeRecord[]> {
   return records.map((record) => {
     const fields = record.fields as Record<string, unknown>;
     const receivedDate = toDate(fields[fieldMap.receivedDate]);
+    const updatedAt =
+      fieldMap.updatedAt && fields[fieldMap.updatedAt] ? toDate(fields[fieldMap.updatedAt]) : undefined;
     const createdTime = toDate(record._rawJson.createdTime);
     // For this workflow, "acquisition" means catalog/sticker entry time in Airtable.
     const acquisitionAt = createdTime ?? receivedDate;
@@ -280,7 +285,7 @@ export async function getTapes(): Promise<TapeRecord[]> {
         ? String(fields[fieldMap.archivalFilename])
         : undefined,
       finalClipDurationMinutes: toRuntimeMinutes(fields[fieldMap.finalClipDuration]),
-      updatedTime: createdTime,
+      updatedTime: updatedAt ?? createdTime,
       acquisitionAt,
       contentRecordedAt,
       capturedAt,
@@ -504,7 +509,7 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       combinedCount: tapes.filter((t) => Boolean(t.combined)).length,
       transferredCount: tapes.filter((t) => Boolean(t.transferredToNas)).length,
       receivedToday: tapes.filter((t) => {
-        const date = t.acquisitionAt ?? t.receivedDate;
+        const date = t.updatedTime ?? t.acquisitionAt ?? t.receivedDate;
         return Boolean(date && isToday(parseISO(date)));
       }).length,
     },

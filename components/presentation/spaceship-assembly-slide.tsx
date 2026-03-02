@@ -72,13 +72,15 @@ function KerbalCrew({
   x,
   y,
   progress,
-  label,
+  name,
+  title,
   role,
 }: {
   x: number;
   y: number;
   progress: number;
-  label: string;
+  name: string;
+  title: string;
   role: "eva" | "marshal" | "scientist";
 }) {
   const opacity = workerOpacity(progress);
@@ -180,17 +182,37 @@ function KerbalCrew({
         </g>
       )}
 
-      <rect x="-46" y="-83" width="92" height="15" rx="7" fill="rgba(9, 27, 67, 0.82)" stroke="rgba(206, 233, 255, 0.55)" />
+      <rect
+        x="-65"
+        y="-90"
+        width="130"
+        height="33"
+        rx="8"
+        fill="rgba(7, 25, 66, 0.9)"
+        stroke="rgba(214, 237, 255, 0.72)"
+      />
+      <line x1="0" y1="-57" x2="0" y2="-50" stroke="rgba(214, 237, 255, 0.72)" strokeWidth="1.3" />
       <text
         x="0"
-        y="-73"
+        y="-76"
         textAnchor="middle"
-        fill="#dff5ff"
-        fontSize="8"
-        letterSpacing="0.9"
+        fill="#f4fcff"
+        fontSize="9.2"
+        letterSpacing="0.4"
+        style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
+      >
+        {name}
+      </text>
+      <text
+        x="0"
+        y="-65"
+        textAnchor="middle"
+        fill="#c8eaff"
+        fontSize="7.1"
+        letterSpacing="1"
         style={{ fontFamily: "'IBM Plex Mono', monospace" }}
       >
-        {label}
+        {title}
       </text>
     </g>
   );
@@ -416,21 +438,24 @@ export function SpaceshipAssemblySlide({
                 x={344}
                 y={426}
                 progress={captureOrBetter}
-                label="EVA Tech"
+                name="Jebrin Kerman"
+                title="EVA TECHNICIAN"
                 role="eva"
               />
               <KerbalCrew
                 x={656}
                 y={400}
                 progress={combineOrBetter}
-                label="Runway Marshal"
+                name="Valdo Kerman"
+                title="RUNWAY MARSHAL"
                 role="marshal"
               />
               <KerbalCrew
                 x={500}
                 y={516}
                 progress={trimOrBetter}
-                label="Science Lead"
+                name="Mira Kerman"
+                title="SCIENCE LEAD"
                 role="scientist"
               />
 

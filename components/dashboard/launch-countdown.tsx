@@ -52,18 +52,28 @@ function formatDeadlineTime(value?: string) {
   return format(new Date(parsed), "MMM d, yyyy HH:mm:ss");
 }
 
+interface SummaryOverride {
+  backlogCount: number;
+  throughputPerDay: number;
+  estimatedDaysRemaining?: number;
+  labelPrefix?: string;
+  throughputUnit?: string;
+}
+
 export function LaunchCountdown({
   projection,
   kpis,
   deadlineAt,
   className,
   showFrameHeader = true,
+  summaryOverride,
 }: {
   projection: LaunchProjection;
   kpis: DashboardKpis;
   deadlineAt?: string;
   className?: string;
   showFrameHeader?: boolean;
+  summaryOverride?: SummaryOverride;
 }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -110,6 +120,14 @@ export function LaunchCountdown({
     { label: "Combine", count: kpis.combinedCount },
     { label: "Transfer", count: kpis.transferredCount },
   ];
+  const summaryPrefix = summaryOverride?.labelPrefix?.trim();
+  const backlogLabel = summaryPrefix ? `${summaryPrefix} Backlog` : "Backlog";
+  const velocityLabel = summaryPrefix ? `${summaryPrefix} Velocity` : "Velocity";
+  const etaLabel = summaryPrefix ? `${summaryPrefix} ETA` : "ETA";
+  const summaryBacklog = summaryOverride?.backlogCount ?? projection.backlogCount;
+  const summaryThroughput = summaryOverride?.throughputPerDay ?? projection.throughputPerDay;
+  const summaryEta = summaryOverride?.estimatedDaysRemaining ?? projection.estimatedDaysRemaining;
+  const throughputUnit = summaryOverride?.throughputUnit ?? "tapes/day";
 
   return (
     <Card
@@ -178,17 +196,17 @@ export function LaunchCountdown({
 
         <div className="grid gap-3 md:grid-cols-3">
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">Backlog</p>
-            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{projection.backlogCount}</p>
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">{backlogLabel}</p>
+            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{summaryBacklog}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">Velocity</p>
-            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{projection.throughputPerDay.toFixed(2)} tapes/day</p>
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">{velocityLabel}</p>
+            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{summaryThroughput.toFixed(2)} {throughputUnit}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">ETA</p>
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">{etaLabel}</p>
             <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">
-              {projection.estimatedDaysRemaining != null ? `${projection.estimatedDaysRemaining} days` : "TBD"}
+              {summaryEta != null ? `${summaryEta} days` : "TBD"}
             </p>
           </div>
         </div>

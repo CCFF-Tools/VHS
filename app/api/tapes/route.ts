@@ -33,11 +33,17 @@ export async function GET(request: NextRequest) {
 
     const dateValueForField = (
       mode: string,
-      tape: { acquisitionAt?: string; receivedDate?: string; capturedAt?: string; contentRecordedAt?: string }
+      tape: {
+        updatedTime?: string;
+        acquisitionAt?: string;
+        receivedDate?: string;
+        capturedAt?: string;
+        contentRecordedAt?: string;
+      }
     ) => {
       if (mode === "captured") return tape.capturedAt;
       if (mode === "content") return tape.contentRecordedAt;
-      return tape.acquisitionAt ?? tape.receivedDate;
+      return tape.updatedTime ?? tape.acquisitionAt ?? tape.receivedDate;
     };
 
     const runtimeForField = (
