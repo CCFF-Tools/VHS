@@ -87,176 +87,181 @@ function KerbalCrew({
   badgeDx?: number;
   badgeDy?: number;
 }) {
-  const opacity = workerOpacity(progress);
+  const bodyOpacity = workerOpacity(progress);
+  const badgeOpacity = progress > 0.02 ? 1 : 0;
 
   return (
-    <g transform={`translate(${x} ${y})`} opacity={opacity}>
-      <ellipse cx="0" cy="47" rx="34" ry="10" fill="rgba(5, 14, 38, 0.45)" />
+    <g transform={`translate(${x} ${y})`}>
+      <g opacity={bodyOpacity}>
+        <ellipse cx="0" cy="47" rx="34" ry="10" fill="rgba(5, 14, 38, 0.45)" />
 
-      {role === "eva" && (
+        {role === "eva" && (
+          <g>
+            <ellipse cx="0" cy="-30" rx="42" ry="42" fill="url(#helmetShell)" stroke="#f6f9ff" strokeWidth="2.4" />
+            <ellipse cx="0" cy="-30" rx="34" ry="33" fill="url(#helmetVisor)" stroke="#d8e8ff" strokeWidth="1.4" />
+            <ellipse cx="0" cy="8" rx="38" ry="6.5" fill="url(#helmetRim)" stroke="#dce7f9" strokeWidth="1.2" />
+          </g>
+        )}
+
         <g>
-          <ellipse cx="0" cy="-30" rx="42" ry="42" fill="url(#helmetShell)" stroke="#f6f9ff" strokeWidth="2.4" />
-          <ellipse cx="0" cy="-30" rx="34" ry="33" fill="url(#helmetVisor)" stroke="#d8e8ff" strokeWidth="1.4" />
-          <ellipse cx="0" cy="8" rx="38" ry="6.5" fill="url(#helmetRim)" stroke="#dce7f9" strokeWidth="1.2" />
+          <rect x="-20" y="-56" width="40" height="56" rx="18" fill="url(#kerbalSkin)" stroke="#dcf3bf" strokeWidth="2" />
+          {role === "marshal" && <path d="M -20 -55 Q 0 -70 20 -55 L 20 -49 Q 0 -60 -20 -49 Z" fill="url(#kerbalHair)" />}
+          {role === "scientist" && <path d="M -20 -55 Q -2 -68 20 -55 L 20 -45 Q 0 -54 -20 -44 Z" fill="#5f442c" />}
+
+          <circle cx="-8.5" cy="-32" r="8.5" fill="#fff" />
+          <circle cx="8.5" cy="-32" r="8.5" fill="#fff" />
+          <circle cx="-6.5" cy="-31" r="3.2" fill="#121928" />
+          <circle cx="10" cy="-31" r="3.2" fill="#121928" />
+
+          {role === "scientist" && (
+            <g fill="none" stroke="#131927" strokeWidth="1.7">
+              <circle cx="-8.5" cy="-32" r="11.5" />
+              <circle cx="8.5" cy="-32" r="11.5" />
+              <line x1="-0.5" y1="-32" x2="0.5" y2="-32" />
+            </g>
+          )}
+
+          {role === "marshal" && (
+            <path
+              d="M -7 -17 Q -1 -19 7 -17"
+              fill="none"
+              stroke="#2f3d1d"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          )}
+          {role === "eva" && <path d="M -8 -18 Q -1 -11 8 -18" fill="none" stroke="#243318" strokeWidth="1.6" strokeLinecap="round" />}
+          {role === "scientist" && (
+            <path
+              d="M -8 -18 Q -1 -9 8 -18"
+              fill="none"
+              stroke="#243318"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          )}
         </g>
-      )}
 
-      <g>
-        <rect x="-20" y="-56" width="40" height="56" rx="18" fill="url(#kerbalSkin)" stroke="#dcf3bf" strokeWidth="2" />
-        {role === "marshal" && <path d="M -20 -55 Q 0 -70 20 -55 L 20 -49 Q 0 -60 -20 -49 Z" fill="url(#kerbalHair)" />}
-        {role === "scientist" && <path d="M -20 -55 Q -2 -68 20 -55 L 20 -45 Q 0 -54 -20 -44 Z" fill="#5f442c" />}
-
-        <circle cx="-8.5" cy="-32" r="8.5" fill="#fff" />
-        <circle cx="8.5" cy="-32" r="8.5" fill="#fff" />
-        <circle cx="-6.5" cy="-31" r="3.2" fill="#121928" />
-        <circle cx="10" cy="-31" r="3.2" fill="#121928" />
-
-        {role === "scientist" && (
-          <g fill="none" stroke="#131927" strokeWidth="1.7">
-            <circle cx="-8.5" cy="-32" r="11.5" />
-            <circle cx="8.5" cy="-32" r="11.5" />
-            <line x1="-0.5" y1="-32" x2="0.5" y2="-32" />
+        {role === "eva" && (
+          <g>
+            <rect x="-24" y="-2" width="48" height="52" rx="13" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.6" />
+            <rect x="-6" y="2" width="12" height="44" rx="5" fill="#243554" />
+            <rect x="-33" y="5" width="11" height="24" rx="5.5" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.2" />
+            <rect x="22" y="5" width="11" height="24" rx="5.5" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.2" />
+            <rect x="-18" y="50" width="13" height="24" rx="5" fill="url(#suitShadow)" />
+            <rect x="5" y="50" width="13" height="24" rx="5" fill="url(#suitShadow)" />
+            <ellipse cx="-12" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+            <ellipse cx="12" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
           </g>
         )}
 
         {role === "marshal" && (
-          <path
-            d="M -7 -17 Q -1 -19 7 -17"
-            fill="none"
-            stroke="#2f3d1d"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
+          <g>
+            <rect x="-22" y="-2" width="44" height="49" rx="12" fill="#2a3549" />
+            <path d="M -22 8 H 22 V 30 H -22 Z" fill="url(#vestLime)" />
+            <path d="M -7 8 H -2 V 47 H -7 Z M 2 8 H 7 V 47 H 2 Z" fill="#ebffd0" opacity="0.75" />
+            <rect x="-30" y="5" width="10" height="23" rx="5" fill="#27344c" />
+            <rect x="20" y="5" width="10" height="23" rx="5" fill="#27344c" />
+            <rect x="-17" y="47" width="12" height="24" rx="4.5" fill="#1d2231" />
+            <rect x="5" y="47" width="12" height="24" rx="4.5" fill="#1d2231" />
+            <ellipse cx="-11" cy="71" rx="12" ry="6" fill="url(#bootDark)" />
+            <ellipse cx="11" cy="71" rx="12" ry="6" fill="url(#bootDark)" />
+            <rect x="-36" y="10" width="5" height="21" rx="2.2" fill="#ff7a35" />
+            <rect x="31" y="10" width="5" height="21" rx="2.2" fill="#ff7a35" />
+          </g>
         )}
-        {role === "eva" && <path d="M -8 -18 Q -1 -11 8 -18" fill="none" stroke="#243318" strokeWidth="1.6" strokeLinecap="round" />}
+
         {role === "scientist" && (
-          <path
-            d="M -8 -18 Q -1 -9 8 -18"
-            fill="none"
-            stroke="#243318"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          />
+          <g>
+            <rect x="-22" y="-2" width="44" height="14" rx="7" fill="#91b7ff" />
+            <rect x="-24" y="8" width="48" height="45" rx="12" fill="url(#labCoat)" stroke="#e7f4ff" strokeWidth="1.2" />
+            <rect x="-5" y="9" width="10" height="38" rx="4" fill="#94adcc" />
+            <circle cx="0" cy="18" r="1.2" fill="#5b6f8c" />
+            <circle cx="0" cy="25" r="1.2" fill="#5b6f8c" />
+            <circle cx="0" cy="32" r="1.2" fill="#5b6f8c" />
+            <rect x="-31" y="8" width="10" height="22" rx="5" fill="#eff8ff" stroke="#d8eaf8" strokeWidth="1.1" />
+            <rect x="21" y="8" width="10" height="22" rx="5" fill="#eff8ff" stroke="#d8eaf8" strokeWidth="1.1" />
+            <rect x="-17" y="52" width="12" height="22" rx="4.5" fill="#453324" />
+            <rect x="5" y="52" width="12" height="22" rx="4.5" fill="#453324" />
+            <ellipse cx="-11" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+            <ellipse cx="11" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+          </g>
         )}
       </g>
 
-      {role === "eva" && (
-        <g>
-          <rect x="-24" y="-2" width="48" height="52" rx="13" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.6" />
-          <rect x="-6" y="2" width="12" height="44" rx="5" fill="#243554" />
-          <rect x="-33" y="5" width="11" height="24" rx="5.5" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.2" />
-          <rect x="22" y="5" width="11" height="24" rx="5.5" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.2" />
-          <rect x="-18" y="50" width="13" height="24" rx="5" fill="url(#suitShadow)" />
-          <rect x="5" y="50" width="13" height="24" rx="5" fill="url(#suitShadow)" />
-          <ellipse cx="-12" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
-          <ellipse cx="12" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
-        </g>
-      )}
-
-      {role === "marshal" && (
-        <g>
-          <rect x="-22" y="-2" width="44" height="49" rx="12" fill="#2a3549" />
-          <path d="M -22 8 H 22 V 30 H -22 Z" fill="url(#vestLime)" />
-          <path d="M -7 8 H -2 V 47 H -7 Z M 2 8 H 7 V 47 H 2 Z" fill="#ebffd0" opacity="0.75" />
-          <rect x="-30" y="5" width="10" height="23" rx="5" fill="#27344c" />
-          <rect x="20" y="5" width="10" height="23" rx="5" fill="#27344c" />
-          <rect x="-17" y="47" width="12" height="24" rx="4.5" fill="#1d2231" />
-          <rect x="5" y="47" width="12" height="24" rx="4.5" fill="#1d2231" />
-          <ellipse cx="-11" cy="71" rx="12" ry="6" fill="url(#bootDark)" />
-          <ellipse cx="11" cy="71" rx="12" ry="6" fill="url(#bootDark)" />
-          <rect x="-36" y="10" width="5" height="21" rx="2.2" fill="#ff7a35" />
-          <rect x="31" y="10" width="5" height="21" rx="2.2" fill="#ff7a35" />
-        </g>
-      )}
-
-      {role === "scientist" && (
-        <g>
-          <rect x="-22" y="-2" width="44" height="14" rx="7" fill="#91b7ff" />
-          <rect x="-24" y="8" width="48" height="45" rx="12" fill="url(#labCoat)" stroke="#e7f4ff" strokeWidth="1.2" />
-          <rect x="-5" y="9" width="10" height="38" rx="4" fill="#94adcc" />
-          <circle cx="0" cy="18" r="1.2" fill="#5b6f8c" />
-          <circle cx="0" cy="25" r="1.2" fill="#5b6f8c" />
-          <circle cx="0" cy="32" r="1.2" fill="#5b6f8c" />
-          <rect x="-31" y="8" width="10" height="22" rx="5" fill="#eff8ff" stroke="#d8eaf8" strokeWidth="1.1" />
-          <rect x="21" y="8" width="10" height="22" rx="5" fill="#eff8ff" stroke="#d8eaf8" strokeWidth="1.1" />
-          <rect x="-17" y="52" width="12" height="22" rx="4.5" fill="#453324" />
-          <rect x="5" y="52" width="12" height="22" rx="4.5" fill="#453324" />
-          <ellipse cx="-11" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
-          <ellipse cx="11" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
-        </g>
-      )}
-
-      <rect
-        x={-74 + badgeDx}
-        y={-100 + badgeDy}
-        width="148"
-        height="38"
-        rx="8"
-        fill="rgba(4, 17, 45, 0.98)"
-        stroke="rgba(228, 246, 255, 0.94)"
-        strokeWidth="1.3"
-      />
-      <rect
-        x={-68 + badgeDx}
-        y={-94 + badgeDy}
-        width="136"
-        height="12"
-        rx="5"
-        fill="rgba(169, 219, 255, 0.16)"
-      />
-      <line
-        x1={badgeDx}
-        y1={-62 + badgeDy}
-        x2={0}
-        y2={-45}
-        stroke="rgba(214, 237, 255, 0.9)"
-        strokeWidth="1.4"
-      />
-      <circle cx={0} cy={-45} r="2.1" fill="rgba(214, 237, 255, 0.96)" />
-      <text
-        x={badgeDx}
-        y={-79 + badgeDy}
-        textAnchor="middle"
-        fill="rgba(0, 0, 0, 0.65)"
-        fontSize="9.2"
-        letterSpacing="0.4"
-        style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
-      >
-        {name}
-      </text>
-      <text
-        x={badgeDx}
-        y={-80 + badgeDy}
-        textAnchor="middle"
-        fill="#f4fcff"
-        fontSize="9.2"
-        letterSpacing="0.4"
-        style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
-      >
-        {name}
-      </text>
-      <text
-        x={badgeDx}
-        y={-67 + badgeDy}
-        textAnchor="middle"
-        fill="rgba(0, 0, 0, 0.65)"
-        fontSize="7.1"
-        letterSpacing="1"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        {title}
-      </text>
-      <text
-        x={badgeDx}
-        y={-68 + badgeDy}
-        textAnchor="middle"
-        fill="#c8eaff"
-        fontSize="7.1"
-        letterSpacing="1"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        {title}
-      </text>
+      <g opacity={badgeOpacity}>
+        <rect
+          x={-74 + badgeDx}
+          y={-100 + badgeDy}
+          width="148"
+          height="38"
+          rx="8"
+          fill="rgba(4, 17, 45, 1)"
+          stroke="rgba(236, 249, 255, 1)"
+          strokeWidth="1.5"
+        />
+        <rect
+          x={-68 + badgeDx}
+          y={-94 + badgeDy}
+          width="136"
+          height="12"
+          rx="5"
+          fill="rgba(183, 226, 255, 0.22)"
+        />
+        <line
+          x1={badgeDx}
+          y1={-62 + badgeDy}
+          x2={0}
+          y2={-45}
+          stroke="rgba(236, 249, 255, 1)"
+          strokeWidth="1.5"
+        />
+        <circle cx={0} cy={-45} r="2.1" fill="rgba(236, 249, 255, 1)" />
+        <text
+          x={badgeDx}
+          y={-79 + badgeDy}
+          textAnchor="middle"
+          fill="rgba(0, 0, 0, 0.7)"
+          fontSize="9.2"
+          letterSpacing="0.4"
+          style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
+        >
+          {name}
+        </text>
+        <text
+          x={badgeDx}
+          y={-80 + badgeDy}
+          textAnchor="middle"
+          fill="#f4fcff"
+          fontSize="9.2"
+          letterSpacing="0.4"
+          style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
+        >
+          {name}
+        </text>
+        <text
+          x={badgeDx}
+          y={-67 + badgeDy}
+          textAnchor="middle"
+          fill="rgba(0, 0, 0, 0.7)"
+          fontSize="7.1"
+          letterSpacing="1"
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        >
+          {title}
+        </text>
+        <text
+          x={badgeDx}
+          y={-68 + badgeDy}
+          textAnchor="middle"
+          fill="#c8eaff"
+          fontSize="7.1"
+          letterSpacing="1"
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        >
+          {title}
+        </text>
+      </g>
     </g>
   );
 }
@@ -292,37 +297,6 @@ export function SpaceshipAssemblySlide({
     { label: "Avionics", value: combineOrBetter, hint: "Combine+" },
     { label: "Booster Transfer", value: transferOrBetter, hint: "Transfer+" },
     { label: "Archive Seal", value: archivedRatio, hint: "Archived" },
-  ];
-
-  const technicalCallouts = [
-    {
-      title: "Command Capsule",
-      detail: "Guidance, windows, and control stack",
-      value: combineOrBetter,
-      className: "left-4 top-4",
-      align: "left" as const,
-    },
-    {
-      title: "Main Airframe",
-      detail: "Capture-aligned hull sections and couplers",
-      value: captureOrBetter,
-      className: "left-4 top-[136px]",
-      align: "left" as const,
-    },
-    {
-      title: "Booster Pair",
-      detail: "Transfer-ready side modules and clamps",
-      value: transferOrBetter,
-      className: "right-4 top-4 text-right",
-      align: "right" as const,
-    },
-    {
-      title: "Engine Cluster",
-      detail: "Trim stage nozzle integration",
-      value: trimOrBetter,
-      className: "right-4 top-[136px] text-right",
-      align: "right" as const,
-    },
   ];
 
   const assemblySteps = [
@@ -648,20 +622,6 @@ export function SpaceshipAssemblySlide({
               <circle cx="780" cy="116" r="4" fill="#f8fdff" />
               <circle cx="785" cy="248" r="4" fill="#f8fdff" />
             </svg>
-
-            {technicalCallouts.map((callout) => (
-              <div
-                key={callout.title}
-                className={`absolute max-w-[220px] rounded-md border border-cyan-100/45 bg-[#082968]/80 px-3 py-2 text-cyan-50 ${callout.className}`}
-              >
-                <p className="text-[clamp(0.84rem,0.68vw,1.26rem)] uppercase tracking-[0.12em] text-cyan-100/88">{callout.title}</p>
-                <p className="mt-1 font-mono text-[clamp(0.92rem,0.76vw,1.34rem)] text-cyan-50">{percent(callout.value)}</p>
-                <p className="mt-1 text-[clamp(0.74rem,0.56vw,1rem)] leading-snug text-cyan-100/86">{callout.detail}</p>
-                <div
-                  className={`mt-1 h-px w-12 bg-cyan-100/60 ${callout.align === "right" ? "ml-auto" : "mr-auto"}`}
-                />
-              </div>
-            ))}
 
             <div className="absolute inset-x-2 bottom-2 grid grid-cols-12 gap-2 text-cyan-50">
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
