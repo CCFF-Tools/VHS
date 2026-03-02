@@ -123,7 +123,7 @@ export default function PresentationPage() {
             <CardTitle className="text-[clamp(1.1rem,1.2vw,2rem)] text-cyan-50">May 1, 2026 00:00:00 EDT</CardTitle>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col justify-between gap-8">
-            <p className="launch-digit-glow text-center font-mono text-[clamp(3.8rem,10vw,15rem)] font-semibold leading-none tracking-[0.1em] text-cyan-100">
+            <p className="launch-digit-glow whitespace-nowrap text-center font-mono text-[clamp(2.8rem,7.5vw,10rem)] font-semibold leading-none tracking-[0.08em] text-cyan-100">
               {deadlineClockLabel}
             </p>
             <div className="grid gap-3 xl:gap-5 lg:grid-cols-3">
@@ -221,7 +221,7 @@ export default function PresentationPage() {
     {
       key: "overview",
       title: "Stage Distribution",
-      subtitle: undefined,
+      subtitle: "Current pipeline load by stage",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <Card className="mission-panel md:col-span-3">
