@@ -31,6 +31,20 @@ function formatProjectedLaunch(value?: string) {
   return format(parsed, "yyyy-MM-dd HH:mm:ss");
 }
 
+function countdownParts(totalSeconds: number) {
+  const clamped = Math.max(0, totalSeconds);
+  const days = Math.floor(clamped / 86400);
+  const hours = Math.floor((clamped % 86400) / 3600);
+  const minutes = Math.floor((clamped % 3600) / 60);
+  const seconds = clamped % 60;
+  return {
+    days: String(days).padStart(3, "0"),
+    hours: String(hours).padStart(2, "0"),
+    minutes: String(minutes).padStart(2, "0"),
+    seconds: String(seconds).padStart(2, "0"),
+  };
+}
+
 function SlideHeader({
   title,
   subtitle,
@@ -56,15 +70,72 @@ function SlideHeader({
 export default function PresentationPage() {
   const { data, isLoading, error, mutate } = useOpsSummary();
   const [slide, setSlide] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const router = useRouter();
+  const deadlineMs = useMemo(() => {
+    const parsed = Date.parse(LAUNCH_WINDOW_DEADLINE);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, []);
 
   const stageData = useMemo(
     () =>
       data?.stageCounts.map((row) => ({ stage: stageLabel(row.stage), count: row.count })) ?? [],
     [data?.stageCounts]
   );
+  const projectedLaunchMs = useMemo(() => {
+    if (!data?.launchProjection.projectedLaunchAt) return null;
+    const parsed = Date.parse(data.launchProjection.projectedLaunchAt);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [data?.launchProjection.projectedLaunchAt]);
+  const deadlineSecondsRemaining =
+    deadlineMs == null ? null : Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
+  const deadlineCountdown =
+    deadlineSecondsRemaining == null ? null : countdownParts(deadlineSecondsRemaining);
+  const deadlineReached = deadlineMs != null && deadlineSecondsRemaining === 0;
+  const projectedAfterDeadline =
+    projectedLaunchMs != null && deadlineMs != null && projectedLaunchMs > deadlineMs;
 
   const slides = [
+    {
+      key: "deadline",
+      title: "Launch Window Deadline",
+      subtitle: "Hard launch window cutoff for mission completion",
+      content: data ? (
+        <Card className="launch-card h-full border-slate-700 bg-slate-950 text-slate-100">
+          <CardHeader>
+            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-cyan-200/75">Deadline Clock</p>
+            <CardTitle className="text-cyan-50">May 1, 2026 00:00:00 EDT</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="launch-digit-glow font-mono text-5xl font-semibold tracking-[0.18em] text-cyan-100 md:text-7xl">
+              {deadlineReached || !deadlineCountdown
+                ? "WINDOW CLOSED"
+                : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`}
+            </p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Projected Launch</p>
+                <p className="mt-1 font-mono text-xl text-cyan-50">
+                  {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
+                </p>
+              </div>
+              <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Deadline Status</p>
+                <p className="mt-1 text-xl font-semibold text-cyan-50">
+                  {deadlineReached ? "Closed" : "Open"}
+                </p>
+              </div>
+              <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Trajectory</p>
+                <p className={`mt-1 text-xl font-semibold ${projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}`}>
+                  {projectedAfterDeadline ? "After Deadline" : "Inside Window"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null,
+    },
     {
       key: "launch",
       title: "Launch Readiness",
@@ -72,11 +143,7 @@ export default function PresentationPage() {
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <div className="md:col-span-3">
-            <LaunchCountdown
-              projection={data.launchProjection}
-              kpis={data.kpis}
-              deadlineAt={LAUNCH_WINDOW_DEADLINE}
-            />
+            <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} />
           </div>
           <div className="md:col-span-2 grid gap-4">
             <Card className="mission-panel">
@@ -306,6 +373,13 @@ export default function PresentationPage() {
   ];
 
   const totalSlides = slides.length;
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const id = window.setInterval(() => {
