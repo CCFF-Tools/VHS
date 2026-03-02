@@ -27,8 +27,8 @@ Options:
   -h, --help              Show this help
 
 Formats:
-  airtable  -> QT Filename,📼,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Content Type,Is City Council Meeting
-  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Content Type,Is City Council Meeting
+  airtable  -> QT Filename,📼,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT,Content Type,Is City Council Meeting
+  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Label RT,Label RT Source,Content Type,Is City Council Meeting
 
 Examples:
   ./export_quicktime_capture_csv.sh -r "/Volumes/Capture Drive/Session_2026_03_01"
@@ -212,6 +212,50 @@ infer_recording_date() {
   printf '\tmissing'
 }
 
+infer_label_runtime() {
+  local filename="$1"
+  local stem=""
+  local token=""
+  local selected=""
+  local h=""
+  local m=""
+  local s=""
+  local h_n=0
+  local m_n=0
+  local s_n=0
+
+  stem="${filename%.*}"
+  while IFS= read -r token; do
+    [ -z "$token" ] && continue
+    if [[ "$token" =~ ^([0-9]{1,4})[.:]([0-9]{1,2})[.:]([0-9]{1,2})$ ]]; then
+      h="${BASH_REMATCH[1]}"
+      m="${BASH_REMATCH[2]}"
+      s="${BASH_REMATCH[3]}"
+
+      h_n=$((10#$h))
+      m_n=$((10#$m))
+      s_n=$((10#$s))
+
+      # Ignore date-like triples such as 2000.10.23.
+      if [ "$h_n" -lt 100 ] && [ "$m_n" -ge 0 ] && [ "$m_n" -le 59 ] && [ "$s_n" -ge 0 ] && [ "$s_n" -le 59 ]; then
+        selected="$token"
+      fi
+    fi
+  done < <(echo "$stem" | grep -Eo '[0-9]{1,4}[.:][0-9]{1,2}[.:][0-9]{1,2}' || true)
+
+  if [ -z "$selected" ]; then
+    printf '\tmissing'
+    return
+  fi
+
+  IFS=':.' read -r h m s <<< "$selected"
+  h_n=$((10#$h))
+  m_n=$((10#$m))
+  s_n=$((10#$s))
+
+  printf '%d:%02d:%02d\tfilename_pattern' "$h_n" "$m_n" "$s_n"
+}
+
 infer_content_type() {
   local path="$1"
   local lowered_path=""
@@ -278,14 +322,15 @@ fi
 TMP_META="$(mktemp "/tmp/qt_export_meta.XXXXXX")"
 TMP_SORTED="$(mktemp "/tmp/qt_export_sorted.XXXXXX")"
 trap 'rm -f "$TMP_META" "$TMP_SORTED"' EXIT
+META_DELIM=$'\037'
 
 exec 3>"$OUTPUT"
 
 if [ "$FORMAT" = "airtable" ]; then
   id_field_escaped="${ID_FIELD//\"/\"\"}"
-  printf '"QT Filename","%s","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Content Type","Is City Council Meeting"\n' "$id_field_escaped" >&3
+  printf '"QT Filename","%s","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Label RT","Content Type","Is City Council Meeting"\n' "$id_field_escaped" >&3
 else
-  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Content Type","Is City Council Meeting"\n' >&3
+  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Label RT","Label RT Source","Content Type","Is City Council Meeting"\n' >&3
 fi
 
 FIND_ARGS=()
@@ -329,10 +374,13 @@ while IFS= read -r -d '' file; do
   recording_result="$(infer_recording_date "$filename")"
   recording_date="${recording_result%%$'\t'*}"
   recording_source="${recording_result#*$'\t'}"
+  label_rt_result="$(infer_label_runtime "$filename")"
+  label_rt="${label_rt_result%%$'\t'*}"
+  label_rt_source="${label_rt_result#*$'\t'}"
   content_type="$(infer_content_type "$file")"
   city_flag="$(is_city_flag "$content_type")"
 
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  printf '%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n' \
     "$filename" \
     "$file" \
     "$created_at" \
@@ -344,6 +392,8 @@ while IFS= read -r -d '' file; do
     "$tape_span_source" \
     "$recording_date" \
     "$recording_source" \
+    "$label_rt" \
+    "$label_rt_source" \
     "$content_type" \
     "$city_flag" \
     "$primary_id" >> "$TMP_META"
@@ -357,12 +407,12 @@ if [ "$count" -eq 0 ]; then
 fi
 
 if [ "$SEQUENCE_BY" = "name" ]; then
-  sort -t "$(printf '\t')" -k1,1 "$TMP_META" > "$TMP_SORTED"
+  sort -t "$META_DELIM" -k1,1 "$TMP_META" > "$TMP_SORTED"
 else
-  sort -t "$(printf '\t')" -k4,4n -k1,1 "$TMP_META" > "$TMP_SORTED"
+  sort -t "$META_DELIM" -k4,4n -k1,1 "$TMP_META" > "$TMP_SORTED"
 fi
 
-while IFS="$(printf '\t')" read -r filename file created_at created_epoch source series_name tape_sequence tapes_in_sequence tape_span_source recording_date recording_source content_type city_flag primary_id; do
+while IFS="$META_DELIM" read -r filename file created_at created_epoch source series_name tape_sequence tapes_in_sequence tape_span_source recording_date recording_source label_rt label_rt_source content_type city_flag primary_id; do
 
   if [ "$FORMAT" = "airtable" ]; then
     csv_escape "$filename" >&3
@@ -380,6 +430,8 @@ while IFS="$(printf '\t')" read -r filename file created_at created_epoch source
     csv_escape "$tapes_in_sequence" >&3
     printf ',' >&3
     csv_escape "$recording_date" >&3
+    printf ',' >&3
+    csv_escape "$label_rt" >&3
     printf ',' >&3
     csv_escape "$content_type" >&3
     printf ',' >&3
@@ -409,6 +461,10 @@ while IFS="$(printf '\t')" read -r filename file created_at created_epoch source
     csv_escape "$recording_date" >&3
     printf ',' >&3
     csv_escape "$recording_source" >&3
+    printf ',' >&3
+    csv_escape "$label_rt" >&3
+    printf ',' >&3
+    csv_escape "$label_rt_source" >&3
     printf ',' >&3
     csv_escape "$content_type" >&3
     printf ',' >&3

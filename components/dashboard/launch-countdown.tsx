@@ -57,11 +57,13 @@ export function LaunchCountdown({
   kpis,
   deadlineAt,
   className,
+  showFrameHeader = true,
 }: {
   projection: LaunchProjection;
   kpis: DashboardKpis;
   deadlineAt?: string;
   className?: string;
+  showFrameHeader?: boolean;
 }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -116,11 +118,19 @@ export function LaunchCountdown({
         className
       )}
     >
-      <CardHeader className="relative pb-1">
-        <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-cyan-200/80">Artemis Archive Program</p>
-        <CardTitle className="mt-2 text-2xl font-bold tracking-wide text-white md:text-3xl">Countdown to Launch</CardTitle>
-        <p className="mt-1 text-xs text-cyan-100/80">Projected from live tape completion velocity and queue depth.</p>
-      </CardHeader>
+      {showFrameHeader && (
+        <CardHeader className="relative pb-1">
+          <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-cyan-200/80">
+            Artemis Archive Program
+          </p>
+          <CardTitle className="mt-2 text-2xl font-bold tracking-wide text-white md:text-3xl">
+            Countdown to Launch
+          </CardTitle>
+          <p className="mt-1 text-xs text-cyan-100/80">
+            Projected from live tape completion velocity and queue depth.
+          </p>
+        </CardHeader>
+      )}
 
       <CardContent className="relative space-y-5">
         <div className="rounded-md border border-cyan-300/25 bg-slate-950/65 p-4">

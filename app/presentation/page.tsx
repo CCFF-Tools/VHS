@@ -9,6 +9,7 @@ import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
 import { AcquisitionChart } from "@/components/charts/acquisition-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
 import { LaunchCountdown } from "@/components/dashboard/launch-countdown";
+import { SpaceshipAssemblySlide } from "@/components/presentation/spaceship-assembly-slide";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
@@ -165,7 +166,12 @@ export default function PresentationPage() {
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <div className="md:col-span-3">
-            <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} className="h-full" />
+            <LaunchCountdown
+              projection={data.launchProjection}
+              kpis={data.kpis}
+              className="h-full"
+              showFrameHeader={false}
+            />
           </div>
           <div className="md:col-span-2 grid gap-4 sm:grid-cols-2 md:grid-cols-1 [@media(min-width:2800px)]:grid-cols-2">
             <Card className="mission-panel">
@@ -313,6 +319,12 @@ export default function PresentationPage() {
           </Card>
         </div>
       ) : null,
+    },
+    {
+      key: "assembly",
+      title: "Orbiter Assembly Progress",
+      subtitle: "Kerbel-style build states mapped to live workflow stages",
+      content: data ? <SpaceshipAssemblySlide kpis={data.kpis} stageCounts={data.stageCounts} /> : null,
     },
     {
       key: "runtime",
