@@ -13,7 +13,7 @@ import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
-const SLIDE_INTERVAL_MS = 12000;
+const SLIDE_INTERVAL_MS = 20000;
 const LAUNCH_WINDOW_DEADLINE = "2026-05-01T00:00:00-04:00";
 
 function formatFeedDate(acquiredAt?: string, receivedDate?: string, updatedTime?: string) {

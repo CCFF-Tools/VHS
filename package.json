@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "airtable:upsert-capture": "node scripts/upsert_capture_csv_to_airtable.mjs"
   },
   "dependencies": {
     "airtable": "^0.12.2",
