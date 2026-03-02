@@ -68,78 +68,126 @@ function assemblyPhase(progress: number) {
   return ASSEMBLY_PHASES.find((phase) => progress >= phase.min) ?? ASSEMBLY_PHASES[ASSEMBLY_PHASES.length - 1];
 }
 
-function BlueprintWorker({
+function KerbalCrew({
   x,
   y,
   progress,
-  suit,
-  accent,
   label,
-  tool,
+  role,
 }: {
   x: number;
   y: number;
   progress: number;
-  suit: string;
-  accent: string;
   label: string;
-  tool: "wrench" | "tablet" | "torch";
+  role: "eva" | "marshal" | "scientist";
 }) {
   const opacity = workerOpacity(progress);
 
   return (
     <g transform={`translate(${x} ${y})`} opacity={opacity}>
-      <ellipse cx="0" cy="23" rx="19" ry="6" fill="rgba(5, 14, 38, 0.45)" />
+      <ellipse cx="0" cy="47" rx="34" ry="10" fill="rgba(5, 14, 38, 0.45)" />
 
-      <circle cx="0" cy="-40" r="17" fill="#90d85a" stroke="#e3f8ce" strokeWidth="2.2" />
-      <circle cx="-6.2" cy="-42" r="4.7" fill="#fff" />
-      <circle cx="6.2" cy="-42" r="4.7" fill="#fff" />
-      <circle cx="-5.8" cy="-41.8" r="2.2" fill="#17203f" />
-      <circle cx="6.6" cy="-41.8" r="2.2" fill="#17203f" />
-      <path d="M -6 -32 C -2 -27 2 -27 6 -32" fill="none" stroke="#163118" strokeWidth="1.8" strokeLinecap="round" />
-
-      <path
-        d="M -19 -42 C -17 -57 17 -57 19 -42 L 16 -49 C 9 -57 -9 -57 -16 -49 Z"
-        fill="#eef4ff"
-        stroke="#9cb8de"
-        strokeWidth="1.4"
-      />
-      <rect x="-13" y="-24" width="26" height="31" rx="8" fill={suit} stroke="#d5ecff" strokeWidth="1.2" />
-      <rect x="-12" y="-24" width="24" height="7" rx="3" fill={accent} opacity="0.9" />
-
-      <rect x="-20" y="-17" width="7" height="17" rx="3.5" fill="#f1f8ff" stroke="#9bb9da" strokeWidth="1" />
-      <rect x="13" y="-17" width="7" height="17" rx="3.5" fill="#f1f8ff" stroke="#9bb9da" strokeWidth="1" />
-
-      <rect x="-11" y="7" width="8" height="17" rx="3" fill="#eef4ff" stroke="#9bb9da" strokeWidth="1" />
-      <rect x="3" y="7" width="8" height="17" rx="3" fill="#eef4ff" stroke="#9bb9da" strokeWidth="1" />
-
-      {tool === "wrench" && (
+      {role === "eva" && (
         <g>
-          <line x1="19" y1="-9" x2="36" y2="-20" stroke="#c6ddf6" strokeWidth="2.4" strokeLinecap="round" />
-          <circle cx="38.5" cy="-21.5" r="3.4" fill="none" stroke="#c6ddf6" strokeWidth="2" />
-        </g>
-      )}
-      {tool === "tablet" && (
-        <g>
-          <rect x="17" y="-12" width="13" height="16" rx="2.5" fill="#1f355f" stroke="#8fc6ff" strokeWidth="1.3" />
-          <circle cx="23.5" cy="0.5" r="1" fill="#8fc6ff" />
-        </g>
-      )}
-      {tool === "torch" && (
-        <g>
-          <line x1="18" y1="-10" x2="35" y2="-14" stroke="#c6ddf6" strokeWidth="2.2" strokeLinecap="round" />
-          <path d="M 35 -14 L 42 -17" stroke="#ffd27a" strokeWidth="2" strokeLinecap="round" />
+          <ellipse cx="0" cy="-30" rx="42" ry="42" fill="url(#helmetShell)" stroke="#f6f9ff" strokeWidth="2.4" />
+          <ellipse cx="0" cy="-30" rx="34" ry="33" fill="url(#helmetVisor)" stroke="#d8e8ff" strokeWidth="1.4" />
+          <ellipse cx="0" cy="8" rx="38" ry="6.5" fill="url(#helmetRim)" stroke="#dce7f9" strokeWidth="1.2" />
         </g>
       )}
 
-      <rect x="-39" y="-63" width="78" height="14" rx="6" fill="rgba(9, 27, 67, 0.82)" stroke="rgba(206, 233, 255, 0.55)" />
+      <g>
+        <rect x="-20" y="-56" width="40" height="56" rx="18" fill="url(#kerbalSkin)" stroke="#dcf3bf" strokeWidth="2" />
+        {role === "marshal" && <path d="M -20 -55 Q 0 -70 20 -55 L 20 -49 Q 0 -60 -20 -49 Z" fill="url(#kerbalHair)" />}
+        {role === "scientist" && <path d="M -20 -55 Q -2 -68 20 -55 L 20 -45 Q 0 -54 -20 -44 Z" fill="#5f442c" />}
+
+        <circle cx="-8.5" cy="-32" r="8.5" fill="#fff" />
+        <circle cx="8.5" cy="-32" r="8.5" fill="#fff" />
+        <circle cx="-6.5" cy="-31" r="3.2" fill="#121928" />
+        <circle cx="10" cy="-31" r="3.2" fill="#121928" />
+
+        {role === "scientist" && (
+          <g fill="none" stroke="#131927" strokeWidth="1.7">
+            <circle cx="-8.5" cy="-32" r="11.5" />
+            <circle cx="8.5" cy="-32" r="11.5" />
+            <line x1="-0.5" y1="-32" x2="0.5" y2="-32" />
+          </g>
+        )}
+
+        {role === "marshal" && (
+          <path
+            d="M -7 -17 Q -1 -19 7 -17"
+            fill="none"
+            stroke="#2f3d1d"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        )}
+        {role === "eva" && <path d="M -8 -18 Q -1 -11 8 -18" fill="none" stroke="#243318" strokeWidth="1.6" strokeLinecap="round" />}
+        {role === "scientist" && (
+          <path
+            d="M -8 -18 Q -1 -9 8 -18"
+            fill="none"
+            stroke="#243318"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        )}
+      </g>
+
+      {role === "eva" && (
+        <g>
+          <rect x="-24" y="-2" width="48" height="52" rx="13" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.6" />
+          <rect x="-6" y="2" width="12" height="44" rx="5" fill="#243554" />
+          <rect x="-33" y="5" width="11" height="24" rx="5.5" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.2" />
+          <rect x="22" y="5" width="11" height="24" rx="5.5" fill="url(#evaSuit)" stroke="#ffd596" strokeWidth="1.2" />
+          <rect x="-18" y="50" width="13" height="24" rx="5" fill="url(#suitShadow)" />
+          <rect x="5" y="50" width="13" height="24" rx="5" fill="url(#suitShadow)" />
+          <ellipse cx="-12" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+          <ellipse cx="12" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+        </g>
+      )}
+
+      {role === "marshal" && (
+        <g>
+          <rect x="-22" y="-2" width="44" height="49" rx="12" fill="#2a3549" />
+          <path d="M -22 8 H 22 V 30 H -22 Z" fill="url(#vestLime)" />
+          <path d="M -7 8 H -2 V 47 H -7 Z M 2 8 H 7 V 47 H 2 Z" fill="#ebffd0" opacity="0.75" />
+          <rect x="-30" y="5" width="10" height="23" rx="5" fill="#27344c" />
+          <rect x="20" y="5" width="10" height="23" rx="5" fill="#27344c" />
+          <rect x="-17" y="47" width="12" height="24" rx="4.5" fill="#1d2231" />
+          <rect x="5" y="47" width="12" height="24" rx="4.5" fill="#1d2231" />
+          <ellipse cx="-11" cy="71" rx="12" ry="6" fill="url(#bootDark)" />
+          <ellipse cx="11" cy="71" rx="12" ry="6" fill="url(#bootDark)" />
+          <rect x="-36" y="10" width="5" height="21" rx="2.2" fill="#ff7a35" />
+          <rect x="31" y="10" width="5" height="21" rx="2.2" fill="#ff7a35" />
+        </g>
+      )}
+
+      {role === "scientist" && (
+        <g>
+          <rect x="-22" y="-2" width="44" height="14" rx="7" fill="#91b7ff" />
+          <rect x="-24" y="8" width="48" height="45" rx="12" fill="url(#labCoat)" stroke="#e7f4ff" strokeWidth="1.2" />
+          <rect x="-5" y="9" width="10" height="38" rx="4" fill="#94adcc" />
+          <circle cx="0" cy="18" r="1.2" fill="#5b6f8c" />
+          <circle cx="0" cy="25" r="1.2" fill="#5b6f8c" />
+          <circle cx="0" cy="32" r="1.2" fill="#5b6f8c" />
+          <rect x="-31" y="8" width="10" height="22" rx="5" fill="#eff8ff" stroke="#d8eaf8" strokeWidth="1.1" />
+          <rect x="21" y="8" width="10" height="22" rx="5" fill="#eff8ff" stroke="#d8eaf8" strokeWidth="1.1" />
+          <rect x="-17" y="52" width="12" height="22" rx="4.5" fill="#453324" />
+          <rect x="5" y="52" width="12" height="22" rx="4.5" fill="#453324" />
+          <ellipse cx="-11" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+          <ellipse cx="11" cy="74" rx="12" ry="6" fill="url(#bootDark)" />
+        </g>
+      )}
+
+      <rect x="-46" y="-83" width="92" height="15" rx="7" fill="rgba(9, 27, 67, 0.82)" stroke="rgba(206, 233, 255, 0.55)" />
       <text
         x="0"
-        y="-54"
+        y="-73"
         textAnchor="middle"
         fill="#dff5ff"
-        fontSize="7.5"
-        letterSpacing="0.8"
+        fontSize="8"
+        letterSpacing="0.9"
         style={{ fontFamily: "'IBM Plex Mono', monospace" }}
       >
         {label}
@@ -263,6 +311,46 @@ export function SpaceshipAssemblySlide({
                   <stop offset="52%" stopColor="#ff9f45" />
                   <stop offset="100%" stopColor="rgba(255, 136, 57, 0)" />
                 </linearGradient>
+                <linearGradient id="kerbalSkin" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#b9e87c" />
+                  <stop offset="100%" stopColor="#8db55d" />
+                </linearGradient>
+                <linearGradient id="kerbalHair" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#544132" />
+                  <stop offset="100%" stopColor="#2a2019" />
+                </linearGradient>
+                <linearGradient id="helmetShell" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#c4cfde" />
+                </linearGradient>
+                <linearGradient id="helmetRim" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#b6c3d8" />
+                  <stop offset="100%" stopColor="#7f8da3" />
+                </linearGradient>
+                <linearGradient id="helmetVisor" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(16, 24, 38, 0.82)" />
+                  <stop offset="100%" stopColor="rgba(28, 41, 66, 0.58)" />
+                </linearGradient>
+                <linearGradient id="evaSuit" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ffa942" />
+                  <stop offset="100%" stopColor="#d47a16" />
+                </linearGradient>
+                <linearGradient id="suitShadow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#444c63" />
+                  <stop offset="100%" stopColor="#21293b" />
+                </linearGradient>
+                <linearGradient id="labCoat" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f8fcff" />
+                  <stop offset="100%" stopColor="#dfeaf5" />
+                </linearGradient>
+                <linearGradient id="vestLime" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#97f25b" />
+                  <stop offset="100%" stopColor="#62b93e" />
+                </linearGradient>
+                <linearGradient id="bootDark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1f2638" />
+                  <stop offset="100%" stopColor="#0f131f" />
+                </linearGradient>
                 <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
                   <feGaussianBlur stdDeviation="3" result="blur" />
                   <feMerge>
@@ -324,32 +412,26 @@ export function SpaceshipAssemblySlide({
               <line x1="500" y1="145" x2="500" y2="462" stroke="rgba(223,247,255,0.18)" strokeWidth="2" strokeDasharray="5 10" />
               <line x1="330" y1="445" x2="670" y2="445" stroke="rgba(223,247,255,0.18)" strokeWidth="2" strokeDasharray="5 10" />
 
-              <BlueprintWorker
+              <KerbalCrew
                 x={344}
                 y={426}
                 progress={captureOrBetter}
-                suit="#5fc6ff"
-                accent="#fee48a"
-                label="Bolt Crew"
-                tool="wrench"
+                label="EVA Tech"
+                role="eva"
               />
-              <BlueprintWorker
+              <KerbalCrew
                 x={656}
                 y={400}
                 progress={combineOrBetter}
-                suit="#f2a2ff"
-                accent="#a9ffe0"
-                label="Nav Crew"
-                tool="tablet"
+                label="Runway Marshal"
+                role="marshal"
               />
-              <BlueprintWorker
+              <KerbalCrew
                 x={500}
                 y={516}
                 progress={trimOrBetter}
-                suit="#7fe8b9"
-                accent="#ffd0a8"
-                label="Engine Crew"
-                tool="torch"
+                label="Science Lead"
+                role="scientist"
               />
 
               <circle cx="240" cy="116" r="4" fill="#f8fdff" />
