@@ -96,6 +96,21 @@ export function SpaceshipAssemblySlide({
     { label: "Archive Seal", value: archivedRatio, hint: "Archived" },
   ];
 
+  const technicalCallouts = [
+    { label: "Hull Weld", value: captureOrBetter },
+    { label: "Engine Bus", value: trimOrBetter },
+    { label: "Guidance Link", value: combineOrBetter },
+    { label: "Payload Seal", value: archivedRatio },
+  ];
+
+  const dockTicks = [
+    { label: "320m", top: "5%" },
+    { label: "240m", top: "27%" },
+    { label: "160m", top: "50%" },
+    { label: "80m", top: "72%" },
+    { label: "0m", top: "92%" },
+  ];
+
   return (
     <div className="grid h-full gap-4 md:grid-cols-5">
       <Card className="mission-panel flex h-full flex-col md:col-span-3">
@@ -126,6 +141,28 @@ export function SpaceshipAssemblySlide({
         </CardHeader>
         <CardContent className="min-h-0 flex-1">
           <div className="relative h-full min-h-[330px] rounded-xl border border-cyan-300/25 bg-[radial-gradient(circle_at_20%_12%,hsl(190_92%_65%_/_0.16),transparent_40%),radial-gradient(circle_at_84%_14%,hsl(39_100%_67%_/_0.18),transparent_38%),linear-gradient(175deg,hsl(224_45%_11%_/_0.95),hsl(228_48%_8%_/_0.98))]">
+            <div className="absolute left-3 top-3 hidden w-[160px] rounded-md border border-cyan-200/25 bg-slate-950/70 p-2 text-[10px] text-cyan-100/75 lg:block">
+              <p className="font-mono uppercase tracking-[0.16em] text-cyan-50">Dock Telemetry</p>
+              {technicalCallouts.map((callout) => (
+                <div key={callout.label} className="mt-1.5 flex items-center justify-between font-mono">
+                  <span className="uppercase tracking-[0.12em]">{callout.label}</span>
+                  <span className="text-cyan-50">{percent(callout.value)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute right-3 top-3 hidden h-[290px] w-[44px] lg:block">
+              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-cyan-100/25" />
+              {dockTicks.map((tick) => (
+                <div key={tick.label} className="absolute left-0 right-0" style={{ top: tick.top }}>
+                  <div className="mx-auto h-px w-8 bg-cyan-100/25" />
+                  <p className="mt-0.5 text-center font-mono text-[9px] uppercase tracking-[0.1em] text-cyan-100/70">
+                    {tick.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
             <div className="absolute inset-x-4 top-4 h-px bg-cyan-100/18" />
             <div className="absolute inset-x-4 bottom-8 h-px bg-cyan-100/16" />
             <div className="absolute inset-y-3 left-1/2 w-px -translate-x-1/2 bg-cyan-100/14" />
@@ -138,12 +175,24 @@ export function SpaceshipAssemblySlide({
               </div>
 
               <div
+                className="absolute left-1/2 top-[64px] h-2 w-[126px] -translate-x-1/2 rounded-full bg-cyan-300/30"
+                style={{ opacity: partOpacity(combineOrBetter) }}
+              />
+
+              <div
                 className="absolute left-1/2 top-[70px] h-[178px] w-[130px] -translate-x-1/2 rounded-[28px] border border-cyan-100/30 bg-gradient-to-b from-slate-100 via-slate-300 to-slate-500 shadow-[inset_0_1px_0_hsl(0_0%_100%_/_0.52)]"
                 style={{ opacity: partOpacity(captureOrBetter) }}
               >
                 <div className="absolute inset-y-3 left-1/2 w-px -translate-x-1/2 bg-slate-700/40" />
                 <div className="absolute inset-x-4 top-8 h-1 rounded-full bg-slate-700/35" />
                 <div className="absolute inset-x-4 top-14 h-1 rounded-full bg-slate-700/35" />
+              </div>
+
+              <div className="absolute left-1/2 top-[152px] h-[96px] w-[162px] -translate-x-1/2 rounded-[20px] border border-cyan-200/20">
+                <div className="absolute left-[14px] top-[14px] h-px w-[36px] bg-cyan-200/30" />
+                <div className="absolute right-[14px] top-[14px] h-px w-[36px] bg-cyan-200/30" />
+                <div className="absolute left-[14px] bottom-[14px] h-px w-[36px] bg-cyan-200/30" />
+                <div className="absolute right-[14px] bottom-[14px] h-px w-[36px] bg-cyan-200/30" />
               </div>
 
               <div
@@ -157,6 +206,11 @@ export function SpaceshipAssemblySlide({
 
               <div
                 className="absolute left-1/2 top-[238px] h-[56px] w-[104px] -translate-x-1/2 rounded-b-[24px] rounded-t-[16px] border border-cyan-100/30 bg-gradient-to-b from-slate-300 via-slate-500 to-slate-700"
+                style={{ opacity: partOpacity(trimOrBetter) }}
+              />
+
+              <div
+                className="absolute left-1/2 top-[250px] h-[6px] w-[118px] -translate-x-1/2 rounded-full bg-cyan-100/35"
                 style={{ opacity: partOpacity(trimOrBetter) }}
               />
 
@@ -181,10 +235,49 @@ export function SpaceshipAssemblySlide({
               </div>
             </div>
 
+            <div
+              className="absolute left-[74px] top-[178px] hidden h-[92px] w-[44px] lg:block"
+              style={{ opacity: partOpacity(captureOrBetter) }}
+            >
+              <div className="absolute left-1/2 top-0 h-7 w-7 -translate-x-1/2 rounded-full border border-amber-200/55 bg-lime-300/90" />
+              <div className="absolute left-1/2 top-[-5px] h-8 w-8 -translate-x-1/2 rounded-full border border-amber-100/65" />
+              <div className="absolute left-1/2 top-7 h-10 w-5 -translate-x-1/2 rounded-[8px] bg-sky-300/75" />
+              <div className="absolute left-[2px] top-11 h-7 w-1 rotate-[28deg] rounded-full bg-amber-200/80" />
+              <div className="absolute right-[2px] top-11 h-7 w-1 -rotate-[28deg] rounded-full bg-amber-200/80" />
+              <div className="absolute left-1/2 top-[54px] h-9 w-1 -translate-x-[6px] rotate-[12deg] rounded-full bg-slate-200/90" />
+              <div className="absolute left-1/2 top-[56px] h-9 w-1 translate-x-[4px] -rotate-[12deg] rounded-full bg-slate-200/90" />
+              <div className="absolute right-[-18px] top-0 rounded border border-cyan-200/35 bg-slate-950/85 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-cyan-100/80">
+                Bolt!
+              </div>
+            </div>
+
+            <div
+              className="absolute right-[74px] top-[154px] hidden h-[100px] w-[44px] lg:block"
+              style={{ opacity: partOpacity(combineOrBetter) }}
+            >
+              <div className="absolute left-1/2 top-0 h-7 w-7 -translate-x-1/2 rounded-full border border-amber-200/55 bg-lime-300/90" />
+              <div className="absolute left-1/2 top-[-5px] h-8 w-8 -translate-x-1/2 rounded-full border border-amber-100/65" />
+              <div className="absolute left-1/2 top-7 h-10 w-5 -translate-x-1/2 rounded-[8px] bg-fuchsia-300/70" />
+              <div className="absolute left-[-26px] top-[57px] h-1 w-[72px] rotate-[12deg] rounded-full bg-cyan-200/45" />
+              <div className="absolute left-[-30px] top-[54px] rounded border border-cyan-200/35 bg-slate-950/85 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-cyan-100/80">
+                Torque
+              </div>
+            </div>
+
+            <div
+              className="absolute left-1/2 bottom-[26px] h-[66px] w-[52px] -translate-x-1/2"
+              style={{ opacity: partOpacity(trimOrBetter) }}
+            >
+              <div className="absolute left-1/2 top-0 h-6 w-6 -translate-x-1/2 rounded-full border border-amber-200/55 bg-lime-300/90" />
+              <div className="absolute left-1/2 top-[-5px] h-7 w-7 -translate-x-1/2 rounded-full border border-amber-100/65" />
+              <div className="absolute left-1/2 top-6 h-8 w-4 -translate-x-1/2 rounded-[7px] bg-emerald-300/70" />
+              <div className="absolute left-[4px] top-[29px] h-6 w-1 rotate-[20deg] rounded-full bg-slate-200/90" />
+              <div className="absolute right-[4px] top-[29px] h-6 w-1 -rotate-[20deg] rounded-full bg-slate-200/90" />
+            </div>
+
+            <div className="absolute left-1/2 top-[214px] h-[2px] w-[220px] -translate-x-1/2 bg-cyan-200/16" />
+            <div className="absolute left-1/2 top-[232px] h-[2px] w-[220px] -translate-x-1/2 bg-cyan-200/16" />
             <div className="absolute inset-x-8 bottom-5 h-4 rounded-full bg-cyan-400/20 blur-sm" />
-            <p className="absolute bottom-2 right-3 text-[11px] uppercase tracking-[0.2em] text-cyan-100/65">
-              Kerbel-style assembly dock
-            </p>
           </div>
         </CardContent>
       </Card>
