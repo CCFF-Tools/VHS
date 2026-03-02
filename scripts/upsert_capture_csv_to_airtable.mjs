@@ -10,6 +10,7 @@ function usage() {
 Options:
   --env-file PATH        Load env vars from file (default: .env.local, fallback: .env)
   --no-env-file          Do not load env vars from file
+  --schema-csv PATH      CSV file used as Airtable schema reference (default: AIRTABLE_SCHEMA_CSV)
   --key-field NAME       Unique key field used for upsert (default: AIRTABLE_TAPE_ID_FIELD or "📼")
   --captured-field NAME  Captured checkbox field name (default: AIRTABLE_CAPTURED_FIELD or "Captured")
   --captured-value VALUE Forced value for captured field (default: AIRTABLE_CAPTURED_VALUE or "true")
@@ -27,6 +28,7 @@ Options:
 
 Examples:
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv
+  node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --schema-csv "/Users/me/Downloads/Titled Table-Grid view.csv"
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --fields "📼,QT Filename,Captured At,Sequence Number,Original Recording Date,Content Type,Is City Council Meeting"
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --captured-field "Captured" --captured-value "Yes"
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --dry-run
@@ -96,6 +98,7 @@ async function maybeLoadEnvFromFile(argv) {
 function parseArgs(argv) {
   const options = {
     csvPath: "",
+    schemaCsvPath: process.env.AIRTABLE_SCHEMA_CSV || "",
     keyField: process.env.AIRTABLE_TAPE_ID_FIELD || "📼",
     capturedField: process.env.AIRTABLE_CAPTURED_FIELD || "Captured",
     capturedValue: process.env.AIRTABLE_CAPTURED_VALUE || "true",
@@ -120,6 +123,9 @@ function parseArgs(argv) {
     }
 
     switch (arg) {
+      case "--schema-csv":
+        options.schemaCsvPath = argv[++i];
+        break;
       case "--key-field":
         options.keyField = argv[++i];
         break;
@@ -292,6 +298,11 @@ const BOOLEAN_FIELDS = new Set(["Captured", "Is City Council Meeting"]);
 const NUMBER_FIELDS = new Set(["Sequence Number", "Series Count"]);
 const DATETIME_FIELDS = new Set(["Captured At"]);
 const DATE_FIELDS = new Set(["Original Recording Date"]);
+const FIELD_ALIASES = new Map([
+  ["Sequence Number", "Tape Sequence"],
+  ["Series Count", "Tapes in Sequence"],
+  ["Original Recording Date", "Rec Date"],
+]);
 
 function coerceValue(fieldName, rawValue) {
   const value = String(rawValue).trim();
@@ -325,6 +336,60 @@ function normalizeCapturedValue(value) {
   if (lowered === "true" || lowered === "1") return true;
   if (lowered === "false" || lowered === "0") return false;
   return raw;
+}
+
+function resolveUploadFields(csvHeaders, requestedFields, schemaHeaders) {
+  const sourceFields = (requestedFields && requestedFields.length > 0 ? requestedFields : csvHeaders).filter(
+    (name) => name !== "__rowNumber"
+  );
+
+  if (!schemaHeaders || schemaHeaders.length === 0) {
+    const passthrough = sourceFields.map((source) => ({ source, target: source }));
+    return {
+      sourceTargetPairs: passthrough,
+      skippedSourceFields: [],
+      aliasMappings: [],
+      targetFields: Array.from(new Set(passthrough.map((pair) => pair.target))),
+    };
+  }
+
+  const schemaSet = new Set(schemaHeaders);
+  const sourceTargetPairs = [];
+  const skippedSourceFields = [];
+  const aliasMappings = [];
+  const usedTargets = new Set();
+
+  for (const sourceField of sourceFields) {
+    let targetField = null;
+
+    if (schemaSet.has(sourceField)) {
+      targetField = sourceField;
+    } else {
+      const alias = FIELD_ALIASES.get(sourceField);
+      if (alias && schemaSet.has(alias)) {
+        targetField = alias;
+        aliasMappings.push(`${sourceField} -> ${alias}`);
+      }
+    }
+
+    if (!targetField) {
+      skippedSourceFields.push(sourceField);
+      continue;
+    }
+
+    if (usedTargets.has(targetField)) {
+      continue;
+    }
+    usedTargets.add(targetField);
+    sourceTargetPairs.push({ source: sourceField, target: targetField });
+  }
+
+  return {
+    sourceTargetPairs,
+    skippedSourceFields,
+    aliasMappings,
+    targetFields: Array.from(usedTargets),
+  };
 }
 
 function chunk(array, size) {
@@ -395,7 +460,7 @@ async function loadCsvRows(csvPath) {
   return { headers, rows: objects };
 }
 
-function buildPayloadRows(rows, keyField, includeEmpty, fieldFilter, capturedField, markCaptured, capturedValue) {
+function buildPayloadRows(rows, keyField, includeEmpty, sourceTargetPairs, capturedField, markCaptured, capturedValue) {
   const filteredRows = [];
   let skippedMissingKey = 0;
 
@@ -408,19 +473,19 @@ function buildPayloadRows(rows, keyField, includeEmpty, fieldFilter, capturedFie
     }
 
     const fields = {};
-    const fieldNames = fieldFilter && fieldFilter.length > 0 ? fieldFilter : Object.keys(row);
 
-    for (const fieldName of fieldNames) {
-      if (fieldName === "__rowNumber") continue;
-      if (!(fieldName in row)) continue;
+    for (const pair of sourceTargetPairs) {
+      const sourceField = pair.source;
+      const targetField = pair.target;
+      if (!(sourceField in row)) continue;
 
-      const rawValue = row[fieldName];
+      const rawValue = row[sourceField];
       const value = String(rawValue ?? "");
       if (!includeEmpty && value.trim() === "") {
         continue;
       }
 
-      fields[fieldName] = coerceValue(fieldName, value);
+      fields[targetField] = coerceValue(sourceField, value);
     }
 
     if (!(keyField in fields)) {
@@ -468,11 +533,32 @@ async function run() {
     const envFileUsed = await maybeLoadEnvFromFile(process.argv.slice(2));
     const options = parseArgs(process.argv.slice(2));
     const { headers, rows } = await loadCsvRows(options.csvPath);
+
+    let schemaHeaders = [];
+    let schemaCsvUsed = "";
+    if (options.schemaCsvPath && String(options.schemaCsvPath).trim()) {
+      const schemaCsv = await loadCsvRows(options.schemaCsvPath);
+      schemaHeaders = schemaCsv.headers;
+      schemaCsvUsed = options.schemaCsvPath;
+    }
+
+    if (schemaHeaders.length > 0 && !schemaHeaders.includes(options.keyField)) {
+      throw new Error(
+        `Key field "${options.keyField}" is not present in schema CSV: ${schemaCsvUsed}`
+      );
+    }
+    if (schemaHeaders.length > 0 && options.markCaptured && !schemaHeaders.includes(options.capturedField)) {
+      throw new Error(
+        `Captured field "${options.capturedField}" is not present in schema CSV: ${schemaCsvUsed}`
+      );
+    }
+
+    const fieldResolution = resolveUploadFields(headers, options.fieldFilter, schemaHeaders);
     const { payloadRows, skippedMissingKey } = buildPayloadRows(
       rows,
       options.keyField,
       options.includeEmpty,
-      options.fieldFilter,
+      fieldResolution.sourceTargetPairs,
       options.capturedField,
       options.markCaptured,
       options.capturedValue
@@ -497,8 +583,20 @@ async function run() {
     const dedupedRows = Array.from(dedupedByKey.values());
 
     console.log(`CSV headers: ${headers.join(", ")}`);
+    if (schemaCsvUsed) {
+      console.log(`Schema CSV: ${schemaCsvUsed}`);
+    }
     console.log(`Input rows: ${rows.length}`);
     console.log(`Rows with key (${options.keyField}): ${payloadRows.length}`);
+    if (fieldResolution.aliasMappings.length > 0) {
+      console.log(`Mapped fields: ${fieldResolution.aliasMappings.join("; ")}`);
+    }
+    if (fieldResolution.skippedSourceFields.length > 0) {
+      console.log(`Skipped non-schema fields: ${fieldResolution.skippedSourceFields.join(", ")}`);
+    }
+    if (fieldResolution.targetFields.length > 0) {
+      console.log(`Upload fields: ${fieldResolution.targetFields.join(", ")}`);
+    }
     if (skippedMissingKey > 0) {
       console.log(`Skipped rows with empty key: ${skippedMissingKey}`);
     }

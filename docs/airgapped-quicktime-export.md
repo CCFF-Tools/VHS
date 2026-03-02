@@ -65,6 +65,7 @@ On the connected machine, set credentials in `.env.local` (or export them in she
 - `AIRTABLE_API_KEY`
 - `AIRTABLE_BASE_ID`
 - `AIRTABLE_TABLE_NAME`
+- Optional: `AIRTABLE_SCHEMA_CSV=/path/to/Titled Table-Grid view.csv` to auto-limit uploads to real table fields
 - Optional: `AIRTABLE_CAPTURED_VALUE=Yes` if your `Captured` field expects text/select instead of checkbox boolean
 
 Dry-run first (no Airtable writes):
@@ -79,6 +80,14 @@ Run real upsert (create new rows, update existing rows by `📼` / `VHS-XXX`):
 npm run airtable:upsert-capture -- "/Volumes/USB/capture_export_2026_03_01.csv"
 ```
 
+Schema-guided run (recommended when field names drift):
+
+```bash
+npm run airtable:upsert-capture -- "/Volumes/USB/capture_export_2026_03_01.csv" \
+  --schema-csv "/Users/operator/Downloads/Titled Table-Grid view.csv" \
+  --captured-value "yes"
+```
+
 By default, this import step forces `Captured` for every row (default value: boolean `true`).  
 If your Airtable field expects text/single-select, pass `--captured-value "Yes"`.
 
@@ -87,6 +96,7 @@ Useful options:
 - `--fields "📼,QT Filename,Captured At,Sequence Number,Series Count,Original Recording Date,Content Type,Is City Council Meeting"` (import only these columns)
 - `--include-empty` (allow blank CSV values to clear Airtable fields)
 - `--env-file /path/to/.env.local` (explicit env file path)
+- `--schema-csv /path/to/Titled Table-Grid view.csv` (only upload fields that exist in that schema CSV)
 - `--captured-field "Captured"` (if your checkbox field has a different name)
 - `--captured-value "Yes"` (set captured using text/single-select value)
 - `--no-mark-captured` (disable forced captured field updates)
