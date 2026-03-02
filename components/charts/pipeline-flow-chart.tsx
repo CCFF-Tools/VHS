@@ -1,6 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { cn } from "@/lib/utils";
 
 type StageBarDatum = { stage: string; count: number; stageRaw?: string };
 
@@ -9,11 +10,13 @@ export function PipelineFlowChart({
   onBarClick,
   activeStageRaw,
   theme = "default",
+  className,
 }: {
   data: StageBarDatum[];
   onBarClick?: (datum: StageBarDatum) => void;
   activeStageRaw?: string;
   theme?: "default" | "mission";
+  className?: string;
 }) {
   const mission = theme === "mission";
   const tickStyle = mission ? { fontSize: 11, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
@@ -33,7 +36,7 @@ export function PipelineFlowChart({
     : {};
 
   return (
-    <div className="h-[250px] w-full">
+    <div className={cn("h-[250px] w-full", className)}>
       <ResponsiveContainer>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />

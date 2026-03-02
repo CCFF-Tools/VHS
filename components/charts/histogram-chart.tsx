@@ -1,6 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { cn } from "@/lib/utils";
 
 type BucketDatum = { bucket: string; count: number };
 
@@ -9,11 +10,13 @@ export function HistogramChart({
   onBarClick,
   activeBucket,
   theme = "default",
+  className,
 }: {
   data: BucketDatum[];
   onBarClick?: (datum: BucketDatum) => void;
   activeBucket?: string;
   theme?: "default" | "mission";
+  className?: string;
 }) {
   const mission = theme === "mission";
   const tickStyle = mission ? { fontSize: 11, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
@@ -33,7 +36,7 @@ export function HistogramChart({
     : {};
 
   return (
-    <div className="h-[260px] w-full">
+    <div className={cn("h-[260px] w-full", className)}>
       <ResponsiveContainer>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />

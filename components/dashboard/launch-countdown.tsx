@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { DashboardKpis, LaunchProjection } from "@/lib/types";
 
 function formatProjectionTime(value?: string) {
@@ -55,10 +56,12 @@ export function LaunchCountdown({
   projection,
   kpis,
   deadlineAt,
+  className,
 }: {
   projection: LaunchProjection;
   kpis: DashboardKpis;
   deadlineAt?: string;
+  className?: string;
 }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -107,7 +110,12 @@ export function LaunchCountdown({
   ];
 
   return (
-    <Card className="launch-card border-slate-700 bg-slate-950 text-slate-100 shadow-[0_24px_54px_hsl(220_45%_5%_/_0.55)]">
+    <Card
+      className={cn(
+        "launch-card border-slate-700 bg-slate-950 text-slate-100 shadow-[0_24px_54px_hsl(220_45%_5%_/_0.55)]",
+        className
+      )}
+    >
       <CardHeader className="relative pb-1">
         <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-cyan-200/80">Artemis Archive Program</p>
         <CardTitle className="mt-2 text-2xl font-bold tracking-wide text-white md:text-3xl">Countdown to Launch</CardTitle>

@@ -15,6 +15,10 @@ import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 const SLIDE_INTERVAL_MS = 20000;
 const LAUNCH_WINDOW_DEADLINE = "2026-05-01T00:00:00-04:00";
+const MISSION_CHART_CLASS =
+  "h-[220px] md:h-[240px] lg:h-[280px] xl:h-[320px] 2xl:h-[380px] [@media(min-width:2800px)]:h-[520px]";
+const MISSION_PIPELINE_CHART_CLASS =
+  "h-[260px] lg:h-[320px] xl:h-[380px] 2xl:h-[460px] [@media(min-width:2800px)]:h-[620px]";
 
 function formatFeedDate(acquiredAt?: string, receivedDate?: string, updatedTime?: string) {
   const source = acquiredAt ?? receivedDate ?? updatedTime;
@@ -53,15 +57,21 @@ function SlideHeader({
   subtitle?: string;
 }) {
   return (
-    <header className="mb-4 flex items-center justify-between">
+    <header className="mb-3 flex items-center justify-between gap-4 lg:mb-4">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.32em] text-cyan-200/70">VHS Mission Control</p>
-        <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-white">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-cyan-100/80">{subtitle}</p> : null}
+        <p className="font-mono text-[clamp(0.66rem,0.52vw,1rem)] uppercase tracking-[0.32em] text-cyan-200/70">
+          VHS Mission Control
+        </p>
+        <h1 className="mt-1 text-[clamp(2rem,2.5vw,4.5rem)] font-extrabold tracking-tight text-white">{title}</h1>
+        {subtitle ? <p className="mt-1 text-[clamp(0.85rem,0.76vw,1.4rem)] text-cyan-100/80">{subtitle}</p> : null}
       </div>
       <div className="text-right text-cyan-50">
-        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cyan-200/70">Live Telemetry</p>
-        <p className="font-mono text-xs opacity-80">{format(new Date(), "yyyy-MM-dd HH:mm:ss")}</p>
+        <p className="font-mono text-[clamp(0.66rem,0.52vw,1rem)] uppercase tracking-[0.22em] text-cyan-200/70">
+          Live Telemetry
+        </p>
+        <p className="font-mono text-[clamp(0.76rem,0.6vw,1.15rem)] opacity-80">
+          {format(new Date(), "yyyy-MM-dd HH:mm:ss")}
+        </p>
       </div>
     </header>
   );
@@ -94,6 +104,10 @@ export default function PresentationPage() {
   const deadlineReached = deadlineMs != null && deadlineSecondsRemaining === 0;
   const projectedAfterDeadline =
     projectedLaunchMs != null && deadlineMs != null && projectedLaunchMs > deadlineMs;
+  const deadlineClockLabel =
+    deadlineReached || !deadlineCountdown
+      ? "WINDOW CLOSED"
+      : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`;
 
   const slides = [
     {
@@ -101,33 +115,41 @@ export default function PresentationPage() {
       title: "Launch Window Deadline",
       subtitle: "Hard launch window cutoff for mission completion",
       content: data ? (
-        <Card className="launch-card h-full border-slate-700 bg-slate-950 text-slate-100">
-          <CardHeader>
-            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-cyan-200/75">Deadline Clock</p>
-            <CardTitle className="text-cyan-50">May 1, 2026 00:00:00 EDT</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="launch-digit-glow font-mono text-5xl font-semibold tracking-[0.18em] text-cyan-100 md:text-7xl">
-              {deadlineReached || !deadlineCountdown
-                ? "WINDOW CLOSED"
-                : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`}
+        <Card className="launch-card flex h-full flex-col border-slate-700 bg-slate-950 text-slate-100">
+          <CardHeader className="pb-3">
+            <p className="text-[clamp(0.66rem,0.52vw,1rem)] font-mono uppercase tracking-[0.3em] text-cyan-200/75">
+              Deadline Clock
             </p>
-            <div className="grid gap-3 md:grid-cols-3">
+            <CardTitle className="text-[clamp(1.1rem,1.2vw,2rem)] text-cyan-50">May 1, 2026 00:00:00 EDT</CardTitle>
+          </CardHeader>
+          <CardContent className="flex min-h-0 flex-1 flex-col justify-between gap-8">
+            <p className="launch-digit-glow text-center font-mono text-[clamp(3.8rem,10vw,15rem)] font-semibold leading-none tracking-[0.1em] text-cyan-100">
+              {deadlineClockLabel}
+            </p>
+            <div className="grid gap-3 xl:gap-5 lg:grid-cols-3">
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Projected Launch</p>
-                <p className="mt-1 font-mono text-xl text-cyan-50">
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
+                  Projected Launch
+                </p>
+                <p className="mt-1 font-mono text-[clamp(1rem,0.95vw,1.6rem)] text-cyan-50">
                   {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
                 </p>
               </div>
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Deadline Status</p>
-                <p className="mt-1 text-xl font-semibold text-cyan-50">
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
+                  Deadline Status
+                </p>
+                <p className="mt-1 text-[clamp(1.4rem,1.35vw,2.4rem)] font-semibold text-cyan-50">
                   {deadlineReached ? "Closed" : "Open"}
                 </p>
               </div>
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Trajectory</p>
-                <p className={`mt-1 text-xl font-semibold ${projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}`}>
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
+                  Trajectory
+                </p>
+                <p
+                  className={`mt-1 text-[clamp(1.4rem,1.35vw,2.4rem)] font-semibold ${projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}`}
+                >
                   {projectedAfterDeadline ? "After Deadline" : "Inside Window"}
                 </p>
               </div>
@@ -143,41 +165,51 @@ export default function PresentationPage() {
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <div className="md:col-span-3">
-            <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} />
+            <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} className="h-full" />
           </div>
-          <div className="md:col-span-2 grid gap-4">
+          <div className="md:col-span-2 grid gap-4 sm:grid-cols-2 md:grid-cols-1 [@media(min-width:2800px)]:grid-cols-2">
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Projected Launch Window</p>
-                <p className="mt-1 font-mono text-lg font-semibold text-cyan-50">
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                  Projected Launch Window
+                </p>
+                <p className="mt-1 font-mono text-[clamp(1rem,0.95vw,1.6rem)] font-semibold text-cyan-50">
                   {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
                 </p>
               </CardContent>
             </Card>
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Completion Status</p>
-                <p className="mt-1 text-3xl font-bold leading-none text-white">
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                  Completion Status
+                </p>
+                <p className="mt-1 text-[clamp(1.6rem,1.8vw,3.2rem)] font-bold leading-none text-white">
                   {data.launchProjection.completedCount}/{data.kpis.totalTapes}
                 </p>
               </CardContent>
             </Card>
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Velocity</p>
-                <p className="mt-1 font-mono text-3xl font-bold leading-none text-white">
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                  Velocity
+                </p>
+                <p className="mt-1 font-mono text-[clamp(1.6rem,1.8vw,3.2rem)] font-bold leading-none text-white">
                   {data.launchProjection.throughputPerDay.toFixed(2)}
                 </p>
-                <p className="mt-1 text-xs text-cyan-100/65">tapes/day ({data.launchProjection.source})</p>
+                <p className="mt-1 text-[clamp(0.66rem,0.5vw,0.92rem)] text-cyan-100/65">
+                  tapes/day ({data.launchProjection.source})
+                </p>
               </CardContent>
             </Card>
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">Confidence</p>
-                <p className="mt-1 text-3xl font-bold uppercase leading-none text-white">
+                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                  Confidence
+                </p>
+                <p className="mt-1 text-[clamp(1.6rem,1.8vw,3.2rem)] font-bold uppercase leading-none text-white">
                   {data.launchProjection.confidence}
                 </p>
-                <p className="mt-1 text-xs text-cyan-100/65">
+                <p className="mt-1 text-[clamp(0.66rem,0.5vw,0.92rem)] text-cyan-100/65">
                   Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}%
                 </p>
               </CardContent>
@@ -188,8 +220,8 @@ export default function PresentationPage() {
     },
     {
       key: "overview",
-      title: "VHS Mission Control",
-      subtitle: "Project pulse for wall display",
+      title: "Stage Distribution",
+      subtitle: undefined,
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <Card className="mission-panel md:col-span-3">
@@ -197,10 +229,10 @@ export default function PresentationPage() {
               <CardTitle className="text-cyan-50">Stage Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <PipelineFlowChart data={stageData} theme="mission" />
+              <PipelineFlowChart data={stageData} theme="mission" className={MISSION_PIPELINE_CHART_CLASS} />
             </CardContent>
           </Card>
-          <div className="md:col-span-2 grid gap-4">
+          <div className="md:col-span-2 grid gap-3 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
             {[
               ["Total Tapes", data.kpis.totalTapes],
               ["Awaiting Capture", data.kpis.awaitingCaptureCount],
@@ -212,8 +244,10 @@ export default function PresentationPage() {
             ].map(([label, value]) => (
               <Card key={label} className="mission-panel">
                 <CardContent className="py-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/65">{label}</p>
-                  <p className="text-4xl font-bold leading-none text-white">{value}</p>
+                  <p className="text-[clamp(0.66rem,0.5vw,0.92rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                    {label}
+                  </p>
+                  <p className="text-[clamp(1.7rem,2vw,3.3rem)] font-bold leading-none text-white">{value}</p>
                 </CardContent>
               </Card>
             ))}
@@ -227,17 +261,17 @@ export default function PresentationPage() {
       subtitle: "Last 30 days",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-3">
-          <Card className="mission-panel">
+          <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
               <CardTitle className="text-cyan-50">Captured Per Day</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex min-h-0 flex-1 flex-col">
               {data.capturedDateCoveragePercent > 0 ? (
                 <>
-                  <p className="mb-2 text-xs text-cyan-100/65">
+                  <p className="mb-2 text-[clamp(0.66rem,0.5vw,0.92rem)] text-cyan-100/65">
                     Coverage: {data.capturedDateCoveragePercent}% have capture timestamps
                   </p>
-                  <AcquisitionChart data={data.capturedDaily} theme="mission" />
+                  <AcquisitionChart data={data.capturedDaily} theme="mission" className={MISSION_CHART_CLASS} />
                 </>
               ) : (
                 <div className="flex h-[260px] items-center justify-center text-center text-sm text-cyan-100/65">
@@ -246,25 +280,29 @@ export default function PresentationPage() {
               )}
             </CardContent>
           </Card>
-          <Card className="mission-panel">
+          <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
               <CardTitle className="text-cyan-50">Cataloged Per Day</CardTitle>
             </CardHeader>
-            <CardContent>
-              <AcquisitionChart data={data.acquisitionDaily} theme="mission" />
+            <CardContent className="flex min-h-0 flex-1 flex-col">
+              <AcquisitionChart data={data.acquisitionDaily} theme="mission" className={MISSION_CHART_CLASS} />
             </CardContent>
           </Card>
-          <Card className="mission-panel">
+          <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
               <CardTitle className="text-cyan-50">Projected Source Recording Timeline</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex min-h-0 flex-1 flex-col">
               {data.contentRecordedCoveragePercent > 0 ? (
                 <>
-                  <p className="mb-2 text-xs text-cyan-100/65">
+                  <p className="mb-2 text-[clamp(0.66rem,0.5vw,0.92rem)] text-cyan-100/65">
                     Coverage: {data.contentRecordedCoveragePercent}% have content recorded dates
                   </p>
-                  <AcquisitionChart data={data.contentRecordedDaily} theme="mission" />
+                  <AcquisitionChart
+                    data={data.contentRecordedDaily}
+                    theme="mission"
+                    className={MISSION_CHART_CLASS}
+                  />
                 </>
               ) : (
                 <div className="flex h-[260px] items-center justify-center text-center text-sm text-cyan-100/65">
@@ -282,28 +320,28 @@ export default function PresentationPage() {
       subtitle: "Distribution by source/output runtime fields",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-3">
-          <Card className="mission-panel">
+          <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
               <CardTitle className="text-cyan-50">Meeting Runtime Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
-              <HistogramChart data={data.runtimeHistograms.labelRuntime} theme="mission" />
+            <CardContent className="flex min-h-0 flex-1 flex-col">
+              <HistogramChart data={data.runtimeHistograms.labelRuntime} theme="mission" className={MISSION_CHART_CLASS} />
             </CardContent>
           </Card>
-          <Card className="mission-panel">
+          <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
               <CardTitle className="text-cyan-50">QT Runtime Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
-              <HistogramChart data={data.runtimeHistograms.qtRuntime} theme="mission" />
+            <CardContent className="flex min-h-0 flex-1 flex-col">
+              <HistogramChart data={data.runtimeHistograms.qtRuntime} theme="mission" className={MISSION_CHART_CLASS} />
             </CardContent>
           </Card>
-          <Card className="mission-panel">
+          <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
               <CardTitle className="text-cyan-50">Final Runtime Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
-              <HistogramChart data={data.runtimeHistograms.finalRuntime} theme="mission" />
+            <CardContent className="flex min-h-0 flex-1 flex-col">
+              <HistogramChart data={data.runtimeHistograms.finalRuntime} theme="mission" className={MISSION_CHART_CLASS} />
             </CardContent>
           </Card>
         </div>
@@ -314,18 +352,18 @@ export default function PresentationPage() {
       title: "Recent Cataloged Feed",
       subtitle: "Newest records with runtime + progression flags",
       content: data ? (
-        <Card className="mission-panel h-full text-cyan-50">
+        <Card className="mission-panel flex h-full flex-col text-cyan-50">
           <CardHeader>
             <CardTitle className="text-cyan-50">Top 30 Most Recent</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex min-h-0 flex-1 flex-col">
             <div className="mb-3 grid grid-cols-4 gap-2 text-xs text-cyan-100/70">
               <p>Avg Label RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</span></p>
               <p>Avg QT RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</span></p>
               <p>Avg Final RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</span></p>
               <p>Avg Drift: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span></p>
             </div>
-            <div className="overflow-auto" style={{ maxHeight: "42vh" }}>
+            <div className="min-h-0 flex-1 overflow-auto">
               <table className="w-full text-sm text-cyan-50">
                 <thead className="sticky top-0 bg-slate-950/90 backdrop-blur-sm">
                   <tr className="text-left text-cyan-100/70">
@@ -402,12 +440,39 @@ export default function PresentationPage() {
   const current = slides[slide];
 
   return (
-    <div className="presentation-mission-bg min-h-screen p-6 text-white">
-      <div className="relative z-10 mx-auto max-w-[1800px]">
+    <div className="presentation-mission-bg h-screen overflow-hidden p-3 text-white md:p-5 xl:p-7 [@media(min-width:2800px)]:p-10">
+      <div className="relative z-10 mx-auto flex h-full w-full flex-col">
         <SlideHeader
           title={current.title}
           subtitle={current.subtitle}
         />
+
+        {data && current.key !== "deadline" && (
+          <div className="mission-alert-box mb-3 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6 lg:py-4 [@media(min-width:2800px)]:px-8 [@media(min-width:2800px)]:py-5">
+            <div>
+              <p className="text-[clamp(0.66rem,0.5vw,0.96rem)] font-mono uppercase tracking-[0.22em] text-cyan-100/70">
+                Launch Window
+              </p>
+              <p className="font-mono text-[clamp(0.74rem,0.56vw,1.06rem)] text-cyan-50">
+                Deadline: May 1, 2026 00:00:00 EDT
+              </p>
+            </div>
+            <p className="launch-digit-glow font-mono text-[clamp(1.5rem,2.2vw,4.5rem)] font-semibold tracking-[0.13em] text-cyan-100">
+              {deadlineClockLabel}
+            </p>
+            <div className="text-right text-[clamp(0.68rem,0.5vw,0.96rem)] text-cyan-100/70">
+              <p>
+                Projected launch:{" "}
+                <span className="font-mono text-cyan-50">
+                  {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
+                </span>
+              </p>
+              <p className={projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}>
+                {projectedAfterDeadline ? "Projected after deadline" : "Projected inside launch window"}
+              </p>
+            </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="mission-alert-box p-8 text-center text-cyan-50">
@@ -421,9 +486,9 @@ export default function PresentationPage() {
           </div>
         )}
 
-        {data && <div className="aspect-video w-full animate-floatIn">{current.content}</div>}
+        {data && <div className="min-h-0 flex-1 animate-floatIn">{current.content}</div>}
 
-        <footer className="mt-4 flex items-center justify-between text-xs text-cyan-100/85">
+        <footer className="mt-3 flex items-center justify-between text-[clamp(0.68rem,0.5vw,0.98rem)] text-cyan-100/85">
           <div className="flex gap-2">
             {slides.map((s, idx) => (
               <button
