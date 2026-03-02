@@ -134,11 +134,13 @@ export function LaunchCountdown({
 
       <CardContent className="relative space-y-5">
         <div className="rounded-md border border-cyan-300/25 bg-slate-950/65 p-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-100/75">Mission Clock</p>
-          <p className="launch-digit-glow mt-2 font-mono text-3xl font-semibold tracking-[0.16em] text-cyan-100 md:text-5xl">
+          <p className="font-mono text-[clamp(0.78rem,0.64vw,1.18rem)] uppercase tracking-[0.3em] text-cyan-100/75">
+            Mission Clock
+          </p>
+          <p className="launch-digit-glow mt-2 font-mono text-[clamp(2.2rem,2.8vw,5.1rem)] font-semibold tracking-[0.14em] text-cyan-100">
             {missionClock}
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[clamp(0.78rem,0.64vw,1.1rem)]">
             <span
               className={`inline-flex rounded-full border px-2.5 py-1 font-mono uppercase tracking-[0.18em] ${confidenceClass(projection.confidence)}`}
             >
@@ -148,17 +150,17 @@ export function LaunchCountdown({
               {projection.status === "counting" ? "Go for launch" : projection.status === "launched" ? "Mission complete" : "Waiting for telemetry"}
             </span>
           </div>
-          <p className="mt-3 text-xs text-slate-300">
+          <p className="mt-3 text-[clamp(0.8rem,0.66vw,1.16rem)] text-slate-300">
             Projected launch window:{" "}
             <span className="font-mono text-slate-100">{formatProjectionTime(projection.projectedLaunchAt)}</span>
           </p>
           {deadlineMs != null && (
             <>
-              <p className="mt-2 text-xs text-slate-300">
+              <p className="mt-2 text-[clamp(0.8rem,0.66vw,1.16rem)] text-slate-300">
                 Launch window deadline:{" "}
                 <span className="font-mono text-slate-100">{formatDeadlineTime(deadlineAt)}</span>
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[clamp(0.78rem,0.64vw,1.1rem)]">
                 <span className="rounded-full border border-cyan-300/35 bg-cyan-500/15 px-2.5 py-1 font-mono uppercase tracking-[0.18em] text-cyan-100">
                   {deadlineReached || !deadlineCountdown
                     ? "Window closed"
@@ -176,16 +178,16 @@ export function LaunchCountdown({
 
         <div className="grid gap-3 md:grid-cols-3">
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Backlog</p>
-            <p className="mt-1 font-mono text-2xl text-white">{projection.backlogCount}</p>
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">Backlog</p>
+            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{projection.backlogCount}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Velocity</p>
-            <p className="mt-1 font-mono text-2xl text-white">{projection.throughputPerDay.toFixed(2)} tapes/day</p>
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">Velocity</p>
+            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{projection.throughputPerDay.toFixed(2)} tapes/day</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">ETA</p>
-            <p className="mt-1 font-mono text-2xl text-white">
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">ETA</p>
+            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">
               {projection.estimatedDaysRemaining != null ? `${projection.estimatedDaysRemaining} days` : "TBD"}
             </p>
           </div>
@@ -193,8 +195,10 @@ export function LaunchCountdown({
 
         <div className="space-y-3 rounded-md border border-slate-700/70 bg-slate-950/70 p-4">
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[11px] uppercase tracking-[0.26em] text-slate-300">Subsystem Readiness</p>
-            <p className="text-[11px] text-slate-400">
+            <p className="font-mono text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.26em] text-slate-300">
+              Subsystem Readiness
+            </p>
+            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] text-slate-400">
               Recent completions: <span className="font-mono text-slate-200">{projection.recentCompletions}</span>
             </p>
           </div>
@@ -202,7 +206,7 @@ export function LaunchCountdown({
             const pct = Math.max(0, Math.min(100, (phase.count / total) * 100));
             return (
               <div key={phase.label} className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-slate-300">
+                <div className="flex items-center justify-between text-[clamp(0.78rem,0.64vw,1.1rem)] text-slate-300">
                   <span className="font-mono uppercase tracking-[0.14em]">{phase.label}</span>
                   <span className="font-mono text-slate-100">
                     {phase.count}/{kpis.totalTapes}
@@ -217,7 +221,7 @@ export function LaunchCountdown({
               </div>
             );
           })}
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] text-slate-400">
             Basis: <span className="font-mono text-slate-300">{projectionBasis(projection)}</span> | Completion-date
             coverage: <span className="font-mono text-slate-300">{projection.completionDateCoveragePercent}%</span>
           </p>

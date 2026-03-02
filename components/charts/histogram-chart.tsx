@@ -19,7 +19,7 @@ export function HistogramChart({
   className?: string;
 }) {
   const mission = theme === "mission";
-  const tickStyle = mission ? { fontSize: 11, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
+  const tickStyle = mission ? { fontSize: 13, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
   const gridStroke = mission ? "hsl(196 63% 30% / 0.55)" : "hsl(35 18% 83%)";
   const activeFill = mission ? "hsl(41 95% 61%)" : "hsl(171 45% 34%)";
   const defaultFill = mission ? "hsl(190 81% 48%)" : "hsl(38 84% 57%)";

@@ -266,17 +266,17 @@ export function SpaceshipAssemblySlide({
         <CardHeader className="pb-2">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[clamp(0.66rem,0.5vw,0.92rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+              <p className="text-[clamp(0.78rem,0.62vw,1.08rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                 Assembly Phase
               </p>
-              <CardTitle className="mt-1 text-[clamp(1.25rem,1.4vw,2.2rem)] text-cyan-50">{phase.name}</CardTitle>
-              <p className="mt-1 text-[clamp(0.7rem,0.56vw,0.98rem)] text-cyan-100/75">{phase.detail}</p>
+              <CardTitle className="mt-1 text-[clamp(1.45rem,1.6vw,2.5rem)] text-cyan-50">{phase.name}</CardTitle>
+              <p className="mt-1 text-[clamp(0.82rem,0.66vw,1.16rem)] text-cyan-100/75">{phase.detail}</p>
             </div>
             <div className="rounded-md border border-cyan-300/30 bg-slate-900/80 px-4 py-2 text-right">
-              <p className="text-[clamp(0.62rem,0.46vw,0.84rem)] uppercase tracking-[0.16em] text-cyan-100/60">
+              <p className="text-[clamp(0.74rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/60">
                 Overall Build
               </p>
-              <p className="font-mono text-[clamp(1.25rem,1.5vw,2.3rem)] font-semibold text-cyan-50">
+              <p className="font-mono text-[clamp(1.45rem,1.7vw,2.6rem)] font-semibold text-cyan-50">
                 {percent(overallProgress)}
               </p>
             </div>
@@ -445,9 +445,9 @@ export function SpaceshipAssemblySlide({
                 key={callout.title}
                 className={`absolute max-w-[220px] rounded-md border border-cyan-100/45 bg-[#082968]/80 px-3 py-2 text-cyan-50 ${callout.className}`}
               >
-                <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-100/80">{callout.title}</p>
-                <p className="mt-1 font-mono text-[11px] text-cyan-50">{percent(callout.value)}</p>
-                <p className="mt-1 text-[10px] leading-snug text-cyan-100/80">{callout.detail}</p>
+                <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.16em] text-cyan-100/80">{callout.title}</p>
+                <p className="mt-1 font-mono text-[clamp(0.78rem,0.6vw,1.04rem)] text-cyan-50">{percent(callout.value)}</p>
+                <p className="mt-1 text-[clamp(0.68rem,0.5vw,0.9rem)] leading-snug text-cyan-100/80">{callout.detail}</p>
                 <div
                   className={`mt-1 h-px w-12 bg-cyan-100/60 ${callout.align === "right" ? "ml-auto" : "mr-auto"}`}
                 />
@@ -456,16 +456,16 @@ export function SpaceshipAssemblySlide({
 
             <div className="absolute inset-x-2 bottom-2 grid grid-cols-12 gap-2 text-cyan-50">
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
-                <p className="mt-1 text-[10px] leading-snug text-cyan-100/80">
+                <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
+                <p className="mt-1 text-[clamp(0.68rem,0.5vw,0.9rem)] leading-snug text-cyan-100/80">
                   Live workflow stages are mapped to module completion, crew activity, and launch stack readiness in real time.
                 </p>
               </div>
               <div className="col-span-5 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-cyan-100/85">Crewed Build Index</p>
-                <p className="mt-1 font-mono text-[10px] text-cyan-100/85">Capture+ {percent(captureOrBetter)}</p>
-                <p className="font-mono text-[10px] text-cyan-100/85">Trim+ {percent(trimOrBetter)}</p>
-                <p className="font-mono text-[10px] text-cyan-100/85">Archived {percent(archivedRatio)}</p>
+                <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/85">Crewed Build Index</p>
+                <p className="mt-1 font-mono text-[clamp(0.68rem,0.5vw,0.9rem)] text-cyan-100/85">Capture+ {percent(captureOrBetter)}</p>
+                <p className="font-mono text-[clamp(0.68rem,0.5vw,0.9rem)] text-cyan-100/85">Trim+ {percent(trimOrBetter)}</p>
+                <p className="font-mono text-[clamp(0.68rem,0.5vw,0.9rem)] text-cyan-100/85">Archived {percent(archivedRatio)}</p>
               </div>
             </div>
           </div>
@@ -480,7 +480,7 @@ export function SpaceshipAssemblySlide({
           <CardContent className="space-y-3">
             {milestoneRows.map((milestone) => (
               <div key={milestone.label} className="space-y-1">
-                <div className="flex items-center justify-between text-[clamp(0.66rem,0.5vw,0.9rem)] text-cyan-100/80">
+                <div className="flex items-center justify-between text-[clamp(0.78rem,0.62vw,1.05rem)] text-cyan-100/80">
                   <p className="font-mono uppercase tracking-[0.12em]">{milestone.label}</p>
                   <p className="font-mono text-cyan-50">
                     {percent(milestone.value)} <span className="text-cyan-100/60">({milestone.hint})</span>
@@ -503,17 +503,17 @@ export function SpaceshipAssemblySlide({
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-md border border-cyan-300/20 bg-slate-900/70 p-3">
-              <p className="text-[clamp(0.64rem,0.48vw,0.82rem)] uppercase tracking-[0.15em] text-cyan-100/60">
+              <p className="text-[clamp(0.76rem,0.58vw,0.98rem)] uppercase tracking-[0.15em] text-cyan-100/60">
                 Cataloged Today
               </p>
-              <p className="mt-1 text-[clamp(1.15rem,1.2vw,1.8rem)] font-semibold text-cyan-50">{kpis.receivedToday}</p>
+              <p className="mt-1 text-[clamp(1.35rem,1.45vw,2.1rem)] font-semibold text-cyan-50">{kpis.receivedToday}</p>
             </div>
             {stageRows.map((stage) => {
               const count = counts[stage];
               const share = ratio(count, total);
               return (
                 <div key={stage} className="space-y-1">
-                  <div className="flex items-center justify-between text-[clamp(0.66rem,0.5vw,0.9rem)] text-cyan-100/80">
+                  <div className="flex items-center justify-between text-[clamp(0.78rem,0.62vw,1.05rem)] text-cyan-100/80">
                     <p className="font-mono uppercase tracking-[0.12em]">{stageLabel(stage)}</p>
                     <p className="font-mono text-cyan-50">
                       {count} <span className="text-cyan-100/60">({percent(share)})</span>
