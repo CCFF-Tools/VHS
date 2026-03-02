@@ -75,6 +75,8 @@ function KerbalCrew({
   name,
   title,
   role,
+  badgeDx = 0,
+  badgeDy = 0,
 }: {
   x: number;
   y: number;
@@ -82,6 +84,8 @@ function KerbalCrew({
   name: string;
   title: string;
   role: "eva" | "marshal" | "scientist";
+  badgeDx?: number;
+  badgeDy?: number;
 }) {
   const opacity = workerOpacity(progress);
 
@@ -183,18 +187,46 @@ function KerbalCrew({
       )}
 
       <rect
-        x="-65"
-        y="-90"
-        width="130"
-        height="33"
+        x={-74 + badgeDx}
+        y={-100 + badgeDy}
+        width="148"
+        height="38"
         rx="8"
-        fill="rgba(7, 25, 66, 0.9)"
-        stroke="rgba(214, 237, 255, 0.72)"
+        fill="rgba(4, 17, 45, 0.98)"
+        stroke="rgba(228, 246, 255, 0.94)"
+        strokeWidth="1.3"
       />
-      <line x1="0" y1="-57" x2="0" y2="-50" stroke="rgba(214, 237, 255, 0.72)" strokeWidth="1.3" />
+      <rect
+        x={-68 + badgeDx}
+        y={-94 + badgeDy}
+        width="136"
+        height="12"
+        rx="5"
+        fill="rgba(169, 219, 255, 0.16)"
+      />
+      <line
+        x1={badgeDx}
+        y1={-62 + badgeDy}
+        x2={0}
+        y2={-45}
+        stroke="rgba(214, 237, 255, 0.9)"
+        strokeWidth="1.4"
+      />
+      <circle cx={0} cy={-45} r="2.1" fill="rgba(214, 237, 255, 0.96)" />
       <text
-        x="0"
-        y="-76"
+        x={badgeDx}
+        y={-79 + badgeDy}
+        textAnchor="middle"
+        fill="rgba(0, 0, 0, 0.65)"
+        fontSize="9.2"
+        letterSpacing="0.4"
+        style={{ fontFamily: "'Manrope', 'IBM Plex Mono', sans-serif", fontWeight: 700 }}
+      >
+        {name}
+      </text>
+      <text
+        x={badgeDx}
+        y={-80 + badgeDy}
         textAnchor="middle"
         fill="#f4fcff"
         fontSize="9.2"
@@ -204,8 +236,19 @@ function KerbalCrew({
         {name}
       </text>
       <text
-        x="0"
-        y="-65"
+        x={badgeDx}
+        y={-67 + badgeDy}
+        textAnchor="middle"
+        fill="rgba(0, 0, 0, 0.65)"
+        fontSize="7.1"
+        letterSpacing="1"
+        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        {title}
+      </text>
+      <text
+        x={badgeDx}
+        y={-68 + badgeDy}
         textAnchor="middle"
         fill="#c8eaff"
         fontSize="7.1"
@@ -280,6 +323,15 @@ export function SpaceshipAssemblySlide({
       className: "right-4 top-[136px] text-right",
       align: "right" as const,
     },
+  ];
+
+  const assemblySteps = [
+    { label: "Frame & Couplers", minProgress: 0.18 },
+    { label: "Engine Mounting", minProgress: 0.38 },
+    { label: "Reticulating Splines", minProgress: 0.56 },
+    { label: "Guidance Wiring", minProgress: 0.68 },
+    { label: "Payload Integration", minProgress: 0.82 },
+    { label: "Archive Seal", minProgress: 0.95 },
   ];
 
   return (
@@ -387,6 +439,132 @@ export function SpaceshipAssemblySlide({
               <line x1="780" y1="116" x2="570" y2="158" stroke="rgba(220,243,255,0.92)" strokeWidth="3" />
               <line x1="785" y1="248" x2="570" y2="292" stroke="rgba(220,243,255,0.92)" strokeWidth="3" />
 
+              <text
+                x="84"
+                y="98"
+                fill="rgba(0,0,0,0.5)"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                COMMAND CAPSULE
+              </text>
+              <text
+                x="84"
+                y="96"
+                fill="#eefbff"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                COMMAND CAPSULE
+              </text>
+              <text
+                x="84"
+                y="122"
+                fill="#d7efff"
+                fontSize="14"
+                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
+              >
+                {percent(combineOrBetter)}
+              </text>
+
+              <text
+                x="84"
+                y="230"
+                fill="rgba(0,0,0,0.5)"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                MAIN AIRFRAME
+              </text>
+              <text
+                x="84"
+                y="228"
+                fill="#eefbff"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                MAIN AIRFRAME
+              </text>
+              <text
+                x="84"
+                y="254"
+                fill="#d7efff"
+                fontSize="14"
+                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
+              >
+                {percent(captureOrBetter)}
+              </text>
+
+              <text
+                x="916"
+                y="98"
+                textAnchor="end"
+                fill="rgba(0,0,0,0.5)"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                BOOSTER PAIR
+              </text>
+              <text
+                x="916"
+                y="96"
+                textAnchor="end"
+                fill="#eefbff"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                BOOSTER PAIR
+              </text>
+              <text
+                x="916"
+                y="122"
+                textAnchor="end"
+                fill="#d7efff"
+                fontSize="14"
+                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
+              >
+                {percent(transferOrBetter)}
+              </text>
+
+              <text
+                x="916"
+                y="230"
+                textAnchor="end"
+                fill="rgba(0,0,0,0.5)"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                ENGINE CLUSTER
+              </text>
+              <text
+                x="916"
+                y="228"
+                textAnchor="end"
+                fill="#eefbff"
+                fontSize="22"
+                letterSpacing="1.1"
+                style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}
+              >
+                ENGINE CLUSTER
+              </text>
+              <text
+                x="916"
+                y="254"
+                textAnchor="end"
+                fill="#d7efff"
+                fontSize="14"
+                style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}
+              >
+                {percent(trimOrBetter)}
+              </text>
+
               <g opacity={partOpacity(combineOrBetter)}>
                 <path
                   d="M 500 74 L 542 145 Q 500 166 458 145 Z"
@@ -441,6 +619,8 @@ export function SpaceshipAssemblySlide({
                 name="Jebrin Kerman"
                 title="EVA TECHNICIAN"
                 role="eva"
+                badgeDx={-74}
+                badgeDy={-18}
               />
               <KerbalCrew
                 x={656}
@@ -449,6 +629,8 @@ export function SpaceshipAssemblySlide({
                 name="Valdo Kerman"
                 title="RUNWAY MARSHAL"
                 role="marshal"
+                badgeDx={84}
+                badgeDy={-12}
               />
               <KerbalCrew
                 x={500}
@@ -457,6 +639,8 @@ export function SpaceshipAssemblySlide({
                 name="Mira Kerman"
                 title="SCIENCE LEAD"
                 role="scientist"
+                badgeDx={0}
+                badgeDy={-44}
               />
 
               <circle cx="240" cy="116" r="4" fill="#f8fdff" />
@@ -470,9 +654,9 @@ export function SpaceshipAssemblySlide({
                 key={callout.title}
                 className={`absolute max-w-[220px] rounded-md border border-cyan-100/45 bg-[#082968]/80 px-3 py-2 text-cyan-50 ${callout.className}`}
               >
-                <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.16em] text-cyan-100/80">{callout.title}</p>
-                <p className="mt-1 font-mono text-[clamp(0.78rem,0.6vw,1.04rem)] text-cyan-50">{percent(callout.value)}</p>
-                <p className="mt-1 text-[clamp(0.68rem,0.5vw,0.9rem)] leading-snug text-cyan-100/80">{callout.detail}</p>
+                <p className="text-[clamp(0.84rem,0.68vw,1.26rem)] uppercase tracking-[0.12em] text-cyan-100/88">{callout.title}</p>
+                <p className="mt-1 font-mono text-[clamp(0.92rem,0.76vw,1.34rem)] text-cyan-50">{percent(callout.value)}</p>
+                <p className="mt-1 text-[clamp(0.74rem,0.56vw,1rem)] leading-snug text-cyan-100/86">{callout.detail}</p>
                 <div
                   className={`mt-1 h-px w-12 bg-cyan-100/60 ${callout.align === "right" ? "ml-auto" : "mr-auto"}`}
                 />
@@ -519,6 +703,33 @@ export function SpaceshipAssemblySlide({
                 </div>
               </div>
             ))}
+            <div className="rounded-md border border-cyan-200/30 bg-slate-900/70 p-3">
+              <p className="text-[clamp(0.82rem,0.66vw,1.16rem)] font-semibold uppercase tracking-[0.12em] text-cyan-100/88">
+                Assembly Steps
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {assemblySteps.map((step) => {
+                  const complete = overallProgress >= step.minProgress;
+                  return (
+                    <div
+                      key={step.label}
+                      className="flex items-center justify-between text-[clamp(0.8rem,0.63vw,1.08rem)]"
+                    >
+                      <p className={complete ? "font-semibold text-cyan-50" : "font-semibold text-cyan-100/70"}>
+                        {step.label}
+                      </p>
+                      <span
+                        className={`font-mono text-[clamp(0.7rem,0.54vw,0.92rem)] ${
+                          complete ? "text-emerald-200" : "text-amber-200/90"
+                        }`}
+                      >
+                        {complete ? "COMPLETE" : "IN WORK"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
