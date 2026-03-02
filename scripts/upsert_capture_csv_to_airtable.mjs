@@ -10,7 +10,9 @@ function usage() {
 Options:
   --env-file PATH        Load env vars from file (default: .env.local, fallback: .env)
   --no-env-file          Do not load env vars from file
-  --key-field NAME       Unique key field used for upsert (default: AIRTABLE_QT_FILENAME_FIELD or "QT Filename")
+  --key-field NAME       Unique key field used for upsert (default: AIRTABLE_TAPE_ID_FIELD or "📼")
+  --captured-field NAME  Captured checkbox field name (default: AIRTABLE_CAPTURED_FIELD or "Captured")
+  --no-mark-captured     Do not force captured field to true
   --table NAME           Airtable table name/id (default: AIRTABLE_TABLE_NAME)
   --base-id ID           Airtable base id (default: AIRTABLE_BASE_ID)
   --api-key KEY          Airtable token/key (default: AIRTABLE_API_KEY)
@@ -24,7 +26,8 @@ Options:
 
 Examples:
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv
-  node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --fields "QT Filename,📼,Captured At,Sequence Number,Original Recording Date,Content Type,Is City Council Meeting"
+  node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --fields "📼,QT Filename,Captured At,Sequence Number,Original Recording Date,Content Type,Is City Council Meeting"
+  node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --captured-field "Captured"
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --dry-run
 `);
 }
@@ -92,7 +95,9 @@ async function maybeLoadEnvFromFile(argv) {
 function parseArgs(argv) {
   const options = {
     csvPath: "",
-    keyField: process.env.AIRTABLE_QT_FILENAME_FIELD || "QT Filename",
+    keyField: process.env.AIRTABLE_TAPE_ID_FIELD || "📼",
+    capturedField: process.env.AIRTABLE_CAPTURED_FIELD || "Captured",
+    markCaptured: true,
     tableName: process.env.AIRTABLE_TABLE_NAME || "",
     baseId: process.env.AIRTABLE_BASE_ID || "",
     apiKey: process.env.AIRTABLE_API_KEY || "",
@@ -115,6 +120,12 @@ function parseArgs(argv) {
     switch (arg) {
       case "--key-field":
         options.keyField = argv[++i];
+        break;
+      case "--captured-field":
+        options.capturedField = argv[++i];
+        break;
+      case "--no-mark-captured":
+        options.markCaptured = false;
         break;
       case "--env-file":
         i += 1;
@@ -173,6 +184,9 @@ function parseArgs(argv) {
   }
   if (!options.keyField.trim()) {
     throw new Error("Missing key field (--key-field).");
+  }
+  if (options.markCaptured && !options.capturedField.trim()) {
+    throw new Error("Missing captured field name (--captured-field).");
   }
 
   return options;
@@ -368,7 +382,7 @@ async function loadCsvRows(csvPath) {
   return { headers, rows: objects };
 }
 
-function buildPayloadRows(rows, keyField, includeEmpty, fieldFilter) {
+function buildPayloadRows(rows, keyField, includeEmpty, fieldFilter, capturedField, markCaptured) {
   const filteredRows = [];
   let skippedMissingKey = 0;
 
@@ -398,6 +412,9 @@ function buildPayloadRows(rows, keyField, includeEmpty, fieldFilter) {
 
     if (!(keyField in fields)) {
       fields[keyField] = keyValue;
+    }
+    if (markCaptured) {
+      fields[capturedField] = true;
     }
 
     filteredRows.push({
@@ -442,7 +459,9 @@ async function run() {
       rows,
       options.keyField,
       options.includeEmpty,
-      options.fieldFilter
+      options.fieldFilter,
+      options.capturedField,
+      options.markCaptured
     );
 
     if (payloadRows.length === 0) {
@@ -471,6 +490,9 @@ async function run() {
     }
     if (duplicateInputRows > 0) {
       console.log(`Duplicate key rows in CSV: ${duplicateInputRows} (last row per key wins)`);
+    }
+    if (options.markCaptured) {
+      console.log(`Forcing "${options.capturedField}" = true on all upsert rows`);
     }
     if (envFileUsed) {
       console.log(`Loaded env from: ${envFileUsed}`);

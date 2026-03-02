@@ -72,17 +72,21 @@ Dry-run first (no Airtable writes):
 npm run airtable:upsert-capture -- "/Volumes/USB/capture_export_2026_03_01.csv" --dry-run
 ```
 
-Run real upsert (create new rows, update existing rows by `QT Filename`):
+Run real upsert (create new rows, update existing rows by `📼` / `VHS-XXX`):
 
 ```bash
 npm run airtable:upsert-capture -- "/Volumes/USB/capture_export_2026_03_01.csv"
 ```
 
+By default, this import step forces `Captured = Yes` for every row, since presence of a QuickTime file means capture is complete.
+
 Useful options:
-- `--key-field "QT Filename"` (change upsert key if needed)
-- `--fields "QT Filename,📼,Captured At,Sequence Number,Series Count,Original Recording Date,Content Type,Is City Council Meeting"` (import only these columns)
+- `--key-field "📼"` (default; change upsert key if needed)
+- `--fields "📼,QT Filename,Captured At,Sequence Number,Series Count,Original Recording Date,Content Type,Is City Council Meeting"` (import only these columns)
 - `--include-empty` (allow blank CSV values to clear Airtable fields)
 - `--env-file /path/to/.env.local` (explicit env file path)
+- `--captured-field "Captured"` (if your checkbox field has a different name)
+- `--no-mark-captured` (disable forced captured=yes behavior)
 
 ## 4) Airtable field setup
 
@@ -102,7 +106,7 @@ Recommended table fields:
 
 If API automation is unavailable, use Airtable’s CSV import UI:
 - New table: ingest CSV directly.
-- Existing table: import and merge on `QT Filename`.
+- Existing table: import and merge on `📼` (or `QT Filename` if your IDs are incomplete).
 
 ## Notes
 
