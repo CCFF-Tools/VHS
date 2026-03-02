@@ -14,6 +14,7 @@ import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 const SLIDE_INTERVAL_MS = 12000;
+const LAUNCH_WINDOW_DEADLINE = "2026-05-01T00:00:00-04:00";
 
 function formatFeedDate(acquiredAt?: string, receivedDate?: string, updatedTime?: string) {
   const source = acquiredAt ?? receivedDate ?? updatedTime;
@@ -71,7 +72,11 @@ export default function PresentationPage() {
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <div className="md:col-span-3">
-            <LaunchCountdown projection={data.launchProjection} kpis={data.kpis} />
+            <LaunchCountdown
+              projection={data.launchProjection}
+              kpis={data.kpis}
+              deadlineAt={LAUNCH_WINDOW_DEADLINE}
+            />
           </div>
           <div className="md:col-span-2 grid gap-4">
             <Card className="mission-panel">

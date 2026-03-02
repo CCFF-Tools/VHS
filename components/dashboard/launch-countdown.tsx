@@ -44,28 +44,52 @@ function projectionBasis(projection: LaunchProjection) {
   return "Insufficient completed records";
 }
 
-export function LaunchCountdown({ projection, kpis }: { projection: LaunchProjection; kpis: DashboardKpis }) {
+function formatDeadlineTime(value?: string) {
+  if (!value) return "n/a";
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value;
+  return format(new Date(parsed), "MMM d, yyyy HH:mm:ss");
+}
+
+export function LaunchCountdown({
+  projection,
+  kpis,
+  deadlineAt,
+}: {
+  projection: LaunchProjection;
+  kpis: DashboardKpis;
+  deadlineAt?: string;
+}) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     setNowMs(Date.now());
-  }, [projection.projectedLaunchAt, projection.status]);
+  }, [projection.projectedLaunchAt, projection.status, deadlineAt]);
 
   useEffect(() => {
-    if (projection.status !== "counting") return;
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, [projection.status]);
+  }, []);
 
   const targetMs = useMemo(() => {
     if (!projection.projectedLaunchAt) return null;
     const parsed = Date.parse(projection.projectedLaunchAt);
     return Number.isFinite(parsed) ? parsed : null;
   }, [projection.projectedLaunchAt]);
+  const deadlineMs = useMemo(() => {
+    if (!deadlineAt) return null;
+    const parsed = Date.parse(deadlineAt);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [deadlineAt]);
 
   const secondsRemaining = targetMs == null ? null : Math.max(0, Math.floor((targetMs - nowMs) / 1000));
   const countdown = secondsRemaining == null ? null : countdownParts(secondsRemaining);
+  const deadlineSecondsRemaining = deadlineMs == null ? null : Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
+  const deadlineCountdown =
+    deadlineSecondsRemaining == null ? null : countdownParts(deadlineSecondsRemaining);
   const liftoff = projection.status === "launched" || (projection.status === "counting" && secondsRemaining === 0);
+  const deadlineReached = deadlineMs != null && deadlineSecondsRemaining === 0;
+  const projectedMissesDeadline = targetMs != null && deadlineMs != null && targetMs > deadlineMs;
 
   const missionClock =
     projection.status === "counting" && countdown
@@ -110,6 +134,26 @@ export function LaunchCountdown({ projection, kpis }: { projection: LaunchProjec
             Projected launch window:{" "}
             <span className="font-mono text-slate-100">{formatProjectionTime(projection.projectedLaunchAt)}</span>
           </p>
+          {deadlineMs != null && (
+            <>
+              <p className="mt-2 text-xs text-slate-300">
+                Launch window deadline:{" "}
+                <span className="font-mono text-slate-100">{formatDeadlineTime(deadlineAt)}</span>
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <span className="rounded-full border border-cyan-300/35 bg-cyan-500/15 px-2.5 py-1 font-mono uppercase tracking-[0.18em] text-cyan-100">
+                  {deadlineReached || !deadlineCountdown
+                    ? "Window closed"
+                    : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`}
+                </span>
+                {projectedMissesDeadline && (
+                  <span className="rounded-full border border-rose-300/45 bg-rose-500/20 px-2.5 py-1 font-mono uppercase tracking-[0.18em] text-rose-100">
+                    Projected after deadline
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
