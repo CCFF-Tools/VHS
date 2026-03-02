@@ -515,7 +515,7 @@ export default function PresentationPage() {
           subtitle={current.subtitle}
         />
 
-        {data && current.key !== "deadline" && (
+        {data && current.key !== "deadline" && current.key !== "assembly" && (
           <div className="mission-alert-box mb-3 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6 lg:py-4 [@media(min-width:2800px)]:px-8 [@media(min-width:2800px)]:py-5">
             <div>
               <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] font-mono uppercase tracking-[0.22em] text-cyan-100/70">

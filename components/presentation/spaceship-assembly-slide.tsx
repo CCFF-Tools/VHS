@@ -336,8 +336,8 @@ export function SpaceshipAssemblySlide({
   ];
 
   return (
-    <div className="grid h-full gap-4 md:grid-cols-5">
-      <Card className="mission-panel flex h-full flex-col md:col-span-3">
+    <div className="grid h-full min-h-0 gap-3 md:grid-cols-5">
+      <Card className="mission-panel flex h-full min-h-0 flex-col md:col-span-3">
         <CardHeader className="pb-2">
           <div className="flex items-end justify-between gap-4">
             <div>
@@ -365,7 +365,7 @@ export function SpaceshipAssemblySlide({
         </CardHeader>
 
         <CardContent className="min-h-0 flex-1">
-          <div className="relative h-full min-h-[360px] overflow-hidden rounded-xl border border-cyan-200/40 bg-[#0d3b95] shadow-[inset_0_0_0_1px_rgba(214,239,255,0.14)]">
+          <div className="relative h-full min-h-[320px] overflow-hidden rounded-xl border border-cyan-200/40 bg-[#0d3b95] shadow-[inset_0_0_0_1px_rgba(214,239,255,0.14)]">
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)] bg-[size:22px_22px] opacity-55" />
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.14)_1px,transparent_1px)] bg-[size:110px_110px] opacity-30" />
             <div className="pointer-events-none absolute inset-2 border border-cyan-100/55" />
@@ -612,12 +612,12 @@ export function SpaceshipAssemblySlide({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:col-span-2">
-        <Card className="mission-panel">
+      <div className="grid h-full min-h-0 gap-3 md:col-span-2 md:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
+        <Card className="mission-panel min-h-0 flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-cyan-50">Subsystem Completion</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="min-h-0 space-y-2 overflow-auto pr-1">
             {milestoneRows.map((milestone) => (
               <div key={milestone.label} className="space-y-1">
                 <div className="flex items-center justify-between text-[clamp(0.78rem,0.62vw,1.05rem)] text-cyan-100/80">
@@ -664,11 +664,11 @@ export function SpaceshipAssemblySlide({
           </CardContent>
         </Card>
 
-        <Card className="mission-panel">
+        <Card className="mission-panel min-h-0 flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-cyan-50">Pipeline to Assembly Mapping</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="min-h-0 space-y-2 overflow-auto pr-1">
             <div className="rounded-md border border-cyan-300/20 bg-slate-900/70 p-3">
               <p className="text-[clamp(0.76rem,0.58vw,0.98rem)] uppercase tracking-[0.15em] text-cyan-100/60">
                 Cataloged Today
