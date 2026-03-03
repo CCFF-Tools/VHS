@@ -12,7 +12,7 @@ import { LaunchCountdown } from "@/components/dashboard/launch-countdown";
 import { SpaceshipAssemblySlide } from "@/components/presentation/spaceship-assembly-slide";
 import { MissionStateSlide } from "@/components/presentation/mission-state-slide";
 import { MissionColonizationSlide } from "@/components/presentation/mission-colonization-slide";
-import { MissionLoreBriefingSlide } from "@/components/presentation/mission-lore-briefing-slide";
+import { MissionBriefingContentSlide, MissionBriefingVisualsSlide } from "@/components/presentation/mission-lore-briefing-slide";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
@@ -162,7 +162,7 @@ export default function PresentationPage() {
     };
   }, [data]);
 
-  const slides = [
+  const baseSlides = [
     {
       key: "deadline",
       title: "Signal Fade Deadline",
@@ -227,8 +227,14 @@ export default function PresentationPage() {
     {
       key: "lore-briefing",
       title: "Mission Briefing",
-      subtitle: "Backstory, stakes, and mission objectives for the Meridia evacuation.",
-      content: data ? <MissionLoreBriefingSlide missionState={data.missionState} /> : null,
+      subtitle: "Command directives for protecting NoCap's municipal archive.",
+      content: data ? <MissionBriefingContentSlide missionState={data.missionState} /> : null,
+    },
+    {
+      key: "lore-briefing-visuals",
+      title: "Mission Briefing",
+      subtitle: "Route and crew stations for the NoCap to Meridia mission.",
+      content: data ? <MissionBriefingVisualsSlide missionState={data.missionState} /> : null,
     },
     {
       key: "launch",
@@ -522,6 +528,21 @@ export default function PresentationPage() {
     },
   ];
 
+  const slideByKey = (key: string) => baseSlides.find((slide) => slide.key === key);
+  const colonizationSlide = slideByKey("colonization");
+  const slides = [
+    slideByKey("deadline"),
+    slideByKey("lore-briefing"),
+    slideByKey("lore-briefing-visuals"),
+    colonizationSlide,
+    slideByKey("assembly"),
+    slideByKey("launch"),
+    colonizationSlide ? { ...colonizationSlide, key: "colonization-repeat" } : undefined,
+    slideByKey("runtime"),
+    slideByKey("recent"),
+    slideByKey("overview"),
+  ].filter((slide): slide is (typeof baseSlides)[number] => Boolean(slide));
+
   const totalSlides = slides.length;
   const autoRotateLabel = isPaused
     ? "Slides paused | Left/Right: slides | P: resume | Esc: return home"
@@ -569,6 +590,8 @@ export default function PresentationPage() {
           current.key !== "assembly" &&
           current.key !== "mission-state" &&
           current.key !== "lore-briefing" &&
+          current.key !== "lore-briefing-visuals" &&
+          current.key !== "colonization-repeat" &&
           current.key !== "colonization" && (
           <div className="mission-alert-box mb-3 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6 lg:py-4 [@media(min-width:2800px)]:px-8 [@media(min-width:2800px)]:py-5">
             <div>
