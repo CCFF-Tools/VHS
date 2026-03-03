@@ -147,6 +147,7 @@ export function MissionStateSlide({
             <CardTitle className="text-cyan-50">Canon Coordinates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-[clamp(0.8rem,0.64vw,1.08rem)] text-cyan-100/85">
+            <p>Homeworld: <span className="font-semibold text-cyan-50">{missionState.lore.origin.homeworld}</span></p>
             <p>Destination: <span className="font-semibold text-cyan-50">{missionState.lore.destination.planet}</span></p>
             <p>Landing Site: <span className="font-semibold text-cyan-50">{missionState.lore.destination.landingSite}</span></p>
             <p>Outpost: <span className="font-semibold text-cyan-50">{missionState.lore.destination.outpost}</span></p>

@@ -1,4 +1,4 @@
-# Mission Lore Canon (Meridia / Fluxfall Basin / The Stacks)
+# Mission Lore Canon (NoCap / Meridia / Fluxfall Basin / The Stacks)
 
 This document defines the **canon lore** for the VHS Archive “Mission Control” layer.
 It is the authoritative reference for names, stakes, tone, and approved in-world terminology.
@@ -14,6 +14,7 @@ it should align with this file.
 - **Kermans** (the crew)
 
 ### Destination
+- **Homeworld:** **NoCap**
 - **Planet:** **Meridia**
 - **Landing site:** **Fluxfall Basin**
 - **Primary outpost:** **The Stacks**
@@ -31,7 +32,7 @@ The Kermans are the caretakers of municipal memory: council meetings, ordinances
 A planetary core reaction (“Core Cascade”) is destabilizing the magnetic field.
 As the field shifts and spikes, magnetic recordings degrade faster and more unpredictably.
 The Great “Signal Fade” is the point-of-no-return where unprotected tapes begin accelerating toward unreadability.
-The mission is to digitize, verify, and **Archive Seal** the records, then evacuate them off-world to Meridia,
+The mission is to digitize, verify, and **Archive Seal** the records, then evacuate them off-world from NoCap to Meridia,
 landing at Fluxfall Basin and establishing The Stacks: a shielded archival outpost built for permanence.
 
 ---
@@ -56,12 +57,12 @@ or lose civic history forever.
 
 ## Mission Objective (what success looks like)
 
-1. **Rescue the signal** (capture tapes before deterioration accelerates)
-2. **Stabilize and prepare** (trim, combine, verify continuity)
-3. **Seal the cargo** (Archived = Archive Seal, chain-of-custody complete)
-4. **Depart for Meridia**
-5. **Land at Fluxfall Basin**
-6. **Grow The Stacks** into a permanent municipal archive
+1. **Preserve the signal** (capture before deterioration accelerates)
+2. **Mange VHS logistics** (track mission progress through Airtable)
+3. **Stabilize payloads** (trim, combine, and export files)
+4. **Depart for Meridia** (initiate transfer of all files to NAS)
+5. **Land at Fluxfall Basin** (final verification of archive status of each tape)
+6. **Expand The Stacks into a permanent off world municipal archive** (upload files to final public archive, probably YouTube)
 
 ---
 
@@ -112,7 +113,7 @@ Use these exact phrases for consistency:
 - **Archive Seal** (Archived stage badge)
 - **Quarantine** (Blocked overlay)
 - **Trajectory: Inside Window / Missed Window**
-- **Meridia**, **Fluxfall Basin**, **The Stacks**
+- **NoCap**, **Meridia**, **Fluxfall Basin**, **The Stacks**
 
 ---
 
@@ -145,6 +146,7 @@ Use these exact phrases for consistency:
 - **Signal Fade:** the projected point where magnetic media degradation accelerates sharply.
 - **Archive Seal:** certification state: digitized + verified + safely stored.
 - **Quarantine:** blocked work requiring intervention; counts as mission pressure.
+- **NoCap:** homeworld launch point and source of municipal tape rescue missions.
 - **The Stacks:** Meridia outpost designed for long-term municipal preservation.
 
 ---

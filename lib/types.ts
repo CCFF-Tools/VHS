@@ -104,6 +104,9 @@ export type ColonizationPhase =
 export interface MissionState {
   lore: {
     species: "Kermans";
+    origin: {
+      homeworld: "NoCap";
+    };
     destination: {
       planet: "Meridia";
       landingSite: "Fluxfall Basin";

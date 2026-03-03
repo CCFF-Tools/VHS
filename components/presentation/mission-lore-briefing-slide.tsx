@@ -2,12 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MissionState } from "@/lib/types";
 
 const OBJECTIVES = [
-  "Rescue the signal (capture before deterioration accelerates).",
-  "Stabilize payloads (trim, combine, and continuity checks).",
-  "Archive Seal cargo (certify chain-of-custody).",
-  "Depart for Meridia.",
-  "Land at Fluxfall Basin.",
-  "Expand The Stacks into a permanent municipal archive.",
+  "Preserve the signal (capture before deterioration accelerates)",
+  "Mange VHS logistics (track mission progress through Airtable)",
+  "Stabilize payloads (trim, combine, and export files)",
+  "Depart for Meridia. (Initiate transfer of all files to NAS)",
+  "Land at Fluxfall Basin. (Final verification of archive status of each tape)",
+  "Expand The Stacks into a permanent off world municipal archive. (Upload files to final public archive, probably YouTube)",
 ];
 
 const WORKFLOW_MAPPING = [
@@ -27,7 +27,7 @@ const CREW = [
   { name: "Vexa Kerman", role: "QA / Anomaly", color: "from-rose-300 to-amber-300" },
 ];
 
-function crewLine(state: MissionState) {
+function primaryCrewLine(state: MissionState) {
   if (state.overlays.quarantine) {
     return "Vexa: Quarantine is rising. Clear blocked anomalies before phase advancement.";
   }
@@ -35,6 +35,16 @@ function crewLine(state: MissionState) {
     return "Dexrin: Signal Fade threshold exceeded. Recovery pressure is now critical.";
   }
   return "Genev: Launch window still open. Keep Archive Seal cadence up and hold trajectory discipline.";
+}
+
+function crewQuotes(state: MissionState) {
+  return [
+    primaryCrewLine(state),
+    "Rivet: Capture rate is the airframe. Feed the bay.",
+    "Paxlo: Trim + Combine locks the course. No hand-wavy burns.",
+    "Nora: Archive Seal is cargo certification. No seal, no colony.",
+    "Vexa: Quarantine is growing. Clear anomalies or we stall.",
+  ];
 }
 
 function KermanBadge({
@@ -73,18 +83,21 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
     <div className="grid h-full gap-4 lg:grid-cols-5">
       <Card className="mission-panel flex h-full min-h-0 flex-col lg:col-span-3">
         <CardHeader className="pb-2">
-          <CardTitle className="text-cyan-50">Kerman Lore + Mission Objectives</CardTitle>
-          <p className="text-[clamp(0.82rem,0.66vw,1.1rem)] text-cyan-100/80">
-            The Kermans are caretakers of municipal memory under Core Cascade pressure.
+          <CardTitle className="text-[clamp(1.02rem,0.82vw,1.34rem)] text-cyan-50">
+            Kerman Lore + Mission Objectives
+          </CardTitle>
+          <p className="text-[clamp(0.9rem,0.74vw,1.22rem)] text-cyan-100/80">
+            The Kermans are caretakers of municipal memory on NoCap under Core Cascade pressure.
           </p>
         </CardHeader>
         <CardContent className="min-h-0 space-y-3 overflow-auto pr-1">
           <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3.5">
-            <p className="text-[clamp(0.86rem,0.7vw,1.18rem)] leading-relaxed text-cyan-100/90">
+            <p className="text-[clamp(0.94rem,0.8vw,1.3rem)] leading-relaxed text-cyan-100/90">
               A planetary core reaction called <span className="font-semibold text-cyan-50">Core Cascade</span> is
               destabilizing magnetic fields and accelerating media degradation. The Great{" "}
               <span className="font-semibold text-cyan-50">Signal Fade</span> is the point-of-no-return. Mission
-              success means digitizing, verifying, and Archive Sealing civic records, then evacuating to{" "}
+              success means digitizing, verifying, and Archive Sealing civic records, then evacuating from{" "}
+              <span className="font-semibold text-cyan-50"> NoCap</span> to{" "}
               <span className="font-semibold text-cyan-50">Meridia</span>, landing at{" "}
               <span className="font-semibold text-cyan-50">Fluxfall Basin</span>, and growing{" "}
               <span className="font-semibold text-cyan-50">The Stacks</span>.
@@ -99,7 +112,7 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
               <ol className="mt-2 space-y-1.5 text-[clamp(0.8rem,0.62vw,1rem)] text-cyan-100/85">
                 {OBJECTIVES.map((item, index) => (
                   <li key={item}>
-                    <span className="mr-1.5 font-semibold text-cyan-50">{index + 1}.</span>
+                    <span className="mr-1 font-semibold text-cyan-50">{index + 1}.</span>
                     {item}
                   </li>
                 ))}
@@ -123,9 +136,18 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
             </div>
           </div>
 
-          <p className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2 text-[clamp(0.76rem,0.58vw,0.98rem)] text-cyan-100">
-            {crewLine(missionState)}
-          </p>
+          <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2">
+            <p className="font-mono text-[clamp(0.7rem,0.54vw,0.88rem)] uppercase tracking-[0.12em] text-cyan-100/75">
+              Crew Voice Lines
+            </p>
+            <div className="mt-1.5 space-y-1">
+              {crewQuotes(missionState).map((quote) => (
+                <p key={quote} className="text-[clamp(0.74rem,0.58vw,0.96rem)] text-cyan-100">
+                  {quote}
+                </p>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -151,36 +173,44 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
 
                 <rect x="0" y="0" width="920" height="420" fill="rgba(8, 19, 43, 0.42)" />
                 <path
-                  d="M 70 315 C 240 245 305 260 420 200 C 545 136 690 180 850 120"
+                  d="M 185 228 C 320 170 470 150 620 150"
                   stroke="url(#routeLine)"
                   strokeWidth="7"
                   fill="none"
                   strokeLinecap="round"
                 />
 
-                <circle cx="80" cy="316" r="24" fill="#1d4ed8" stroke="#93c5fd" strokeWidth="4" />
-                <text x="80" y="355" textAnchor="middle" fill="#c7eaff" fontSize="20" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-                  Origin
-                </text>
-
-                <circle cx="410" cy="208" r="22" fill="#f59e0b" stroke="#fde68a" strokeWidth="4" />
-                <text x="410" y="245" textAnchor="middle" fill="#ffe7b1" fontSize="19" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <circle cx="135" cy="250" r="92" fill="#1e3a8a" stroke="#93c5fd" strokeWidth="4.5" />
+                <circle cx="103" cy="228" r="24" fill="#2f64ce" opacity="0.55" />
+                <circle cx="170" cy="276" r="18" fill="#315fb8" opacity="0.55" />
+                <circle cx="178" cy="206" r="8" fill="#fbbf24" stroke="#fde68a" strokeWidth="2.6" />
+                <path d="M 178 194 L 183 210 L 173 210 Z" fill="#fef3c7" />
+                <text x="178" y="186" textAnchor="middle" fill="#ffe8b4" fontSize="15" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
                   Launch
                 </text>
+                <text x="135" y="360" textAnchor="middle" fill="#c7eaff" fontSize="20" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  NoCap
+                </text>
 
-                <circle cx="720" cy="160" r="56" fill="url(#planetGlow)" stroke="#e0f2fe" strokeWidth="4.5" />
-                <text x="720" y="169" textAnchor="middle" fill="#ecfeff" fontSize="20" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>
+                <circle cx="650" cy="160" r="128" fill="url(#planetGlow)" stroke="#e0f2fe" strokeWidth="4.5" />
+                <circle cx="602" cy="130" r="30" fill="#3b82f6" opacity="0.5" />
+                <circle cx="695" cy="202" r="26" fill="#2563eb" opacity="0.5" />
+                <text x="650" y="314" textAnchor="middle" fill="#ecfeff" fontSize="22" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>
                   Meridia
                 </text>
 
-                <circle cx="820" cy="130" r="14" fill="#34d399" stroke="#d1fae5" strokeWidth="3.2" />
-                <text x="820" y="107" textAnchor="middle" fill="#bcf5df" fontSize="16" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <circle cx="610" cy="116" r="14" fill="#34d399" stroke="#d1fae5" strokeWidth="3.2" />
+                <text x="610" y="95" textAnchor="middle" fill="#bcf5df" fontSize="14" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
                   Fluxfall
                 </text>
 
-                <rect x="785" y="245" width="96" height="66" rx="10" fill="#0f2f3f" stroke="#99f6e4" strokeWidth="3" />
-                <text x="833" y="284" textAnchor="middle" fill="#ccfbf1" fontSize="16" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <rect x="662" y="188" width="94" height="56" rx="10" fill="#0f2f3f" stroke="#99f6e4" strokeWidth="3" />
+                <text x="709" y="221" textAnchor="middle" fill="#ccfbf1" fontSize="14" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
                   The Stacks
+                </text>
+
+                <text x="340" y="168" textAnchor="middle" fill="#9ad9f5" fontSize="14" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  Cruise Corridor
                 </text>
               </svg>
             </div>

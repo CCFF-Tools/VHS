@@ -93,6 +93,7 @@ This file defines how contributors/agents should work in this repository.
 This dashboard is also a “Mission Control” metaphor with a canon lore layer used in `/presentation` and some UI copy.
 
 **Canon destinations**
+- Homeworld: **NoCap**
 - Planet: **Meridia**
 - Landing site: **Fluxfall Basin**
 - Outpost: **The Stacks**

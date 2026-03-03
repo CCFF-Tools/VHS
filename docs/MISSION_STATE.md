@@ -7,6 +7,7 @@ This file defines the canonical **MissionState** model used to map real VHS work
 
 ## Canon (Do Not Drift)
 - Species: **Kermans**
+- Homeworld: **NoCap**
 - Destination planet: **Meridia**
 - Landing site: **Fluxfall Basin**
 - Outpost: **The Stacks**
@@ -71,6 +72,7 @@ type ColonizationPhase =
 type MissionState = {
   lore: {
     species: "Kermans";
+    origin: { homeworld: "NoCap" };
     destination: { planet: "Meridia"; landingSite: "Fluxfall Basin"; outpost: "The Stacks" };
     threat: { cause: "Core Cascade"; event: "Signal Fade" };
   };

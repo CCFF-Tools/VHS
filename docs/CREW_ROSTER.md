@@ -7,6 +7,7 @@ This file defines the canonical “mission control” crew names + positions use
 
 ## Canon (Do Not Drift)
 - Species: **Kermans**
+- Homeworld: **NoCap**
 - Destination: **Meridia**
 - Landing: **Fluxfall Basin**
 - Outpost: **The Stacks**
