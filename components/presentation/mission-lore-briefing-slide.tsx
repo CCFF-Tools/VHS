@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KERMAN_QUOTE_BANK, getMissionBriefingQuotes } from "@/lib/kerman-quotes";
 import type { MissionState } from "@/lib/types";
 
 const OBJECTIVES = [
@@ -14,7 +15,7 @@ const WORKFLOW_MAPPING = [
   { label: "Awaiting Capture", lore: "Blueprint backlog and jigs waiting for material." },
   { label: "Captured", lore: "Airframe construction and hull growth." },
   { label: "Trimmed + Combined", lore: "Course plotting and command integration." },
-  { label: "Archived", lore: "Archive Seal certification and colony phase advancement." },
+  { label: "Archived", lore: "Archiving certification and colony phase advancement." },
   { label: "Blocked", lore: "Quarantine pressure. Blocked work never advances mission phases." },
 ];
 
@@ -34,17 +35,13 @@ function primaryCrewLine(state: MissionState) {
   if (state.deadline.status === "missed") {
     return "Dexrin: Signal Fade threshold exceeded. Recovery pressure is now critical.";
   }
-  return "Genev: Launch window still open. Keep Archive Seal cadence up and hold trajectory discipline.";
+  return "Genev: Launch window still open. Keep archiving cadence up and hold trajectory discipline.";
 }
 
 function crewQuotes(state: MissionState) {
-  return [
-    primaryCrewLine(state),
-    "Rivet: Capture rate is the airframe. Feed the bay.",
-    "Paxlo: Trim + Combine locks the course. No hand-wavy burns.",
-    "Nora: Archive Seal is cargo certification. No seal, no colony.",
-    "Vexa: Quarantine is growing. Clear anomalies or we stall.",
-  ];
+  const generated = getMissionBriefingQuotes(state, 8).map((quote) => `${quote.speaker}: ${quote.line}`);
+  const combined = [primaryCrewLine(state), ...generated];
+  return combined.filter((line, index) => combined.indexOf(line) === index).slice(0, 8);
 }
 
 function KermanBadge({
@@ -96,7 +93,7 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
               A planetary core reaction called <span className="font-semibold text-cyan-50">Core Cascade</span> is
               destabilizing magnetic fields and accelerating media degradation. The Great{" "}
               <span className="font-semibold text-cyan-50">Signal Fade</span> is the point-of-no-return. Mission
-              success means digitizing, verifying, and Archive Sealing civic records, then evacuating from{" "}
+              success means digitizing, verifying, and archiving civic records, then evacuating from{" "}
               <span className="font-semibold text-cyan-50"> NoCap</span> to{" "}
               <span className="font-semibold text-cyan-50">Meridia</span>, landing at{" "}
               <span className="font-semibold text-cyan-50">Fluxfall Basin</span>, and growing{" "}
@@ -121,7 +118,7 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
 
             <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3.5">
               <p className="font-mono text-[clamp(0.72rem,0.56vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/70">
-                Workflow to Lore Mapping
+                Mission Systems Alignment
               </p>
               <div className="mt-2 space-y-1.5">
                 {WORKFLOW_MAPPING.map((row) => (
@@ -139,6 +136,9 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
           <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2">
             <p className="font-mono text-[clamp(0.7rem,0.54vw,0.88rem)] uppercase tracking-[0.12em] text-cyan-100/75">
               Crew Voice Lines
+            </p>
+            <p className="mt-1 text-[clamp(0.68rem,0.52vw,0.86rem)] text-cyan-100/65">
+              Pulling from {KERMAN_QUOTE_BANK.length} Kerman quotes for status, tasking, and mission wisdom.
             </p>
             <div className="mt-1.5 space-y-1">
               {crewQuotes(missionState).map((quote) => (

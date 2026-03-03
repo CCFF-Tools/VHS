@@ -370,11 +370,11 @@ function buildMissionState({
   if (quarantine) {
     holdReason = `Quarantine active: ${counts.blocked} blocked tape${counts.blocked === 1 ? "" : "s"} require anomaly review.`;
   } else if (!launchAllowed) {
-    holdReason = "Hold for readiness: raise Trim + Combine + Archive Seal coverage.";
+    holdReason = "Hold for readiness: raise Trim + Combine + archiving coverage.";
   } else if (!landingAllowed) {
-    holdReason = "Cruise prep: increase Archive Seal coverage before Fluxfall approach.";
+    holdReason = "Cruise prep: increase archiving coverage before Fluxfall approach.";
   } else if (!stacksGrowthAllowed) {
-    holdReason = "Landing corridor open: continue Archive Seal to expand The Stacks.";
+    holdReason = "Landing corridor open: continue archiving to expand The Stacks.";
   }
 
   return {

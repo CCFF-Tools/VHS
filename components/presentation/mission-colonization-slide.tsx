@@ -39,8 +39,8 @@ function activeCallout(state: MissionState) {
   if (state.milestones.colonization === "hold_for_readiness") {
     return "Dexrin: Signal Fade pressure is increasing. Open launch gate before the window collapses.";
   }
-  if (!state.gates.landingAllowed) return "Genev: Launch trajectory is up. Build archive seal coverage for Fluxfall approach.";
-  if (!state.gates.stacksGrowthAllowed) return "Nora: Landing corridor open. Keep sealing cargo for outpost expansion.";
+  if (!state.gates.landingAllowed) return "Genev: Launch trajectory is up. Build archiving coverage for Fluxfall approach.";
+  if (!state.gates.stacksGrowthAllowed) return "Nora: Landing corridor open. Keep archiving cargo for outpost expansion.";
   return "Mira: Meridia touchdown sequence is stable. The Stacks are scaling.";
 }
 
@@ -89,7 +89,7 @@ export function MissionColonizationSlide({
           <div className="grid gap-3 lg:grid-cols-3">
             <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3">
               <p className="font-mono text-[clamp(0.72rem,0.56vw,0.94rem)] uppercase tracking-[0.14em] text-cyan-100/70">
-                Archive Seal Coverage
+                Archiving Coverage
               </p>
               <p className="mt-1 text-[clamp(1.6rem,1.7vw,2.8rem)] font-semibold leading-none text-cyan-50">
                 {missionState.counts.archived}/{missionState.counts.total}

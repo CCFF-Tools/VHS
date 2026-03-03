@@ -46,14 +46,14 @@ const PLANNING_COPY: Record<PlanningMilestone, { title: string; detail: string }
 };
 
 const COLONIZATION_COPY: Record<ColonizationPhase, { title: string; detail: string }> = {
-  cargo_staged: { title: "Cargo Staged", detail: "Archive cargo gathered for seal verification." },
+  cargo_staged: { title: "Cargo Staged", detail: "Archive cargo gathered for archiving verification." },
   hold_for_readiness: { title: "Hold for Readiness", detail: "Launch is paused while gates remain closed." },
   launch: { title: "Launch", detail: "Evacuation departure from origin underway." },
   cruise: { title: "Cruise", detail: "Mission arc to Meridia is stable." },
   approach_meridia: { title: "Approach: Meridia", detail: "Fluxfall vectors are converging." },
   entry_descent: { title: "Entry / Descent", detail: "Atmospheric insertion and descent control active." },
   landing_fluxfall: { title: "Landing: Fluxfall Basin", detail: "Cargo touchdown operations in progress." },
-  stacks_expansion: { title: "The Stacks Expansion", detail: "Outpost storage grows with each seal." },
+  stacks_expansion: { title: "The Stacks Expansion", detail: "Outpost storage grows with each archived reel." },
   vault_sealed: { title: "Vault Sealed", detail: "Permanent municipal archive secured." },
 };
 
@@ -76,7 +76,7 @@ function crewLine(state: MissionState) {
   if (state.overlays.quarantine) return "Vexa: Quarantine is rising. Clear anomalies or we stall.";
   if (!state.gates.launchAllowed) return "Dexrin: Window is closing. Signal Fade does not negotiate.";
   if (!state.gates.landingAllowed) return "Mallo: Pad checks are clean. Hold vector discipline.";
-  if (!state.gates.stacksGrowthAllowed) return "Nora: Cargo certified. Push seal rate for The Stacks.";
+  if (!state.gates.stacksGrowthAllowed) return "Nora: Cargo certified. Push archiving rate for The Stacks.";
   return "Genev: Trajectory stable. Fluxfall secured, expand The Stacks.";
 }
 

@@ -303,7 +303,7 @@ export function SpaceshipAssemblySlide({
     { label: "Propulsion", value: trimOrBetter, hint: "Trim+" },
     { label: "Avionics", value: combineOrBetter, hint: "Combine+" },
     { label: "Booster Transfer", value: transferOrBetter, hint: "Transfer+" },
-    { label: "Archive Seal", value: archivedRatio, hint: "Archived" },
+    { label: "Archiving", value: archivedRatio, hint: "Archived" },
   ];
 
   const assemblySteps = [
@@ -606,7 +606,7 @@ export function SpaceshipAssemblySlide({
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
                 <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
                 <p className="mt-1 text-[clamp(0.68rem,0.5vw,0.9rem)] leading-snug text-cyan-100/80">
-                  Capture builds the ship. Trim + Combine lock the plan. Archive Seal pushes Meridia colonization.
+                  Capture builds the ship. Trim + Combine lock the plan. Archiving pushes Meridia colonization.
                 </p>
               </div>
               <div className="col-span-5 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
