@@ -225,7 +225,7 @@ export default function PresentationPage() {
     },
     {
       key: "lore-briefing",
-      title: "Kerman Lore Briefing",
+      title: "Mission Briefing",
       subtitle: "Backstory, stakes, and mission objectives for the Meridia evacuation.",
       content: data ? <MissionLoreBriefingSlide missionState={data.missionState} /> : null,
     },
