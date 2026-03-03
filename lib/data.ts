@@ -1,5 +1,6 @@
 import { eachDayOfInterval, endOfDay, format, isToday, parseISO, startOfDay, subDays } from "date-fns";
 import { listRecords } from "@/lib/airtable";
+import { RUNTIME_BUCKETS } from "@/lib/runtime-buckets";
 import { fieldMap, pipelineStages } from "@/lib/schema";
 import type { LaunchProjection, OpsSummaryResponse, Stage, TapeRecord } from "@/lib/types";
 
@@ -213,20 +214,19 @@ function buildContentRecordedDaily(tapes: TapeRecord[]) {
 }
 
 function bucketRuntime(minutes: number): string {
-  if (minutes <= 15) return "0-15";
-  if (minutes <= 30) return "16-30";
-  if (minutes <= 45) return "31-45";
-  if (minutes <= 60) return "46-60";
-  if (minutes <= 90) return "61-90";
-  if (minutes <= 120) return "91-120";
-  if (minutes <= 150) return "121-150";
-  if (minutes <= 180) return "151-180";
-  return "181+";
+  for (const bucket of RUNTIME_BUCKETS) {
+    if (bucket.max == null) {
+      if (minutes >= bucket.min) return bucket.key;
+      continue;
+    }
+    if (minutes >= bucket.min && minutes <= bucket.max) return bucket.key;
+  }
+  return RUNTIME_BUCKETS[RUNTIME_BUCKETS.length - 1].key;
 }
 
 function buildRuntimeHistogram(values: number[]) {
-  const buckets = ["0-15", "16-30", "31-45", "46-60", "61-90", "91-120", "121-150", "151-180", "181+"];
-  const counts = new Map<string, number>(buckets.map((b) => [b, 0]));
+  const buckets = RUNTIME_BUCKETS.map((bucket) => bucket.key);
+  const counts = new Map<string, number>(buckets.map((bucket) => [bucket, 0]));
 
   for (const value of values) {
     const bucket = bucketRuntime(value);

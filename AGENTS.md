@@ -87,3 +87,26 @@ This file defines how contributors/agents should work in this repository.
 - Preserve existing user-made changes in working tree; do not revert unrelated edits.
 - Keep labels and wording consistent across Home, Board, Analytics, Presentation, and Detail views.
 - If changing terminology or workflow logic, update both UI labels and filtering semantics.
+
+## Mission Lore + Visualization (Do Not Drift)
+
+This dashboard is also a “Mission Control” metaphor with a canon lore layer used in `/presentation` and some UI copy.
+
+**Canon destinations**
+- Planet: **Meridia**
+- Landing site: **Fluxfall Basin**
+- Outpost: **The Stacks**
+
+**Urgency**
+- Planetary **Core Cascade** destabilizes the magnetic field, degrading magnetic media (S-VHS etc.).
+- Countdown event: **Great “Signal Fade”** (ties to launch window deadline in presentation mode).
+
+**Visualization mapping contract**
+- Capture drives **ship assembly** visuals.
+- Trim + Combine drive **mission planning / course plotting** visuals.
+- Archived drives **colonization timeline** visuals (launch → cruise → landing → outpost growth).
+- Blocked triggers **Quarantine overlay**; blocked work never advances phases.
+
+Authoritative specs:
+- Mission state contract + milestone tables: `docs/MISSION_STATE.md`
+- Crew roster (names + roles + placements): `docs/CREW_ROSTER.md`

@@ -19,7 +19,9 @@ export function HistogramChart({
   className?: string;
 }) {
   const mission = theme === "mission";
-  const tickStyle = mission ? { fontSize: 13, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
+  const xTickStyle = mission ? { fontSize: 14, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
+  const yTickStyle = mission ? { fontSize: 14, fill: "hsl(190 82% 84%)" } : { fontSize: 11 };
+  const denseBuckets = data.length > 9;
   const gridStroke = mission ? "hsl(196 63% 30% / 0.55)" : "hsl(35 18% 83%)";
   const activeFill = mission ? "hsl(41 95% 61%)" : "hsl(171 45% 34%)";
   const defaultFill = mission ? "hsl(190 81% 48%)" : "hsl(38 84% 57%)";
@@ -40,8 +42,16 @@ export function HistogramChart({
       <ResponsiveContainer>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-          <XAxis dataKey="bucket" tick={tickStyle} tickLine={false} axisLine={false} />
-          <YAxis tick={tickStyle} tickLine={false} axisLine={false} />
+          <XAxis
+            dataKey="bucket"
+            tick={xTickStyle}
+            tickLine={false}
+            axisLine={false}
+            angle={mission && denseBuckets ? -28 : 0}
+            textAnchor={mission && denseBuckets ? "end" : "middle"}
+            height={mission && denseBuckets ? 60 : 32}
+          />
+          <YAxis tick={yTickStyle} tickLine={false} axisLine={false} width={mission ? 36 : 28} />
           <Tooltip {...tooltipStyles} />
           <Bar
             dataKey="count"

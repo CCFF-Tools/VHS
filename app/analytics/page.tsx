@@ -22,7 +22,7 @@ import { TapeDrilldownDrawer } from "@/components/drilldown/tape-drilldown-drawe
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
-import { runtimeBucketToRange } from "@/lib/runtime-buckets";
+import { RUNTIME_BUCKETS, runtimeBucketToRange } from "@/lib/runtime-buckets";
 import type { Stage, TapeRecord } from "@/lib/types";
 
 const STAGES: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"];
@@ -126,27 +126,18 @@ function stageBoxData(tapes: TapeRecord[]) {
 }
 
 function stageRidgelineData(tapes: TapeRecord[]) {
-  const bins: Array<{ key: string; min: number; max: number }> = [
-    { key: "0-15", min: 0, max: 15 },
-    { key: "16-30", min: 16, max: 30 },
-    { key: "31-45", min: 31, max: 45 },
-    { key: "46-60", min: 46, max: 60 },
-    { key: "61-90", min: 61, max: 90 },
-    { key: "91-120", min: 91, max: 120 },
-    { key: "121-150", min: 121, max: 150 },
-    { key: "151-180", min: 151, max: 180 },
-    { key: "181+", min: 181, max: Number.POSITIVE_INFINITY },
-  ];
-
   return STAGES.map((stage) => {
     const values = tapes
       .filter((tape) => tape.stage === stage)
       .map((tape) => runtimeForTape(tape))
       .filter((value): value is number => typeof value === "number");
 
-    const counts = bins.map((bin) => ({
-      bucket: bin.key,
-      count: values.filter((value) => value >= bin.min && value <= bin.max).length,
+    const counts = RUNTIME_BUCKETS.map((bucket) => ({
+      bucket: bucket.key,
+      count: values.filter((value) => {
+        if (value < bucket.min) return false;
+        return bucket.max == null ? true : value <= bucket.max;
+      }).length,
     }));
     const max = Math.max(1, ...counts.map((item) => item.count));
     const points = counts.map((item) => ({ bucket: item.bucket, density: item.count / max }));
@@ -155,25 +146,13 @@ function stageRidgelineData(tapes: TapeRecord[]) {
 }
 
 function runtimeDensityGrid(tapes: TapeRecord[]) {
-  const runtimeBins: Array<{ key: string; min: number; max: number }> = [
-    { key: "0-15", min: 0, max: 15 },
-    { key: "16-30", min: 16, max: 30 },
-    { key: "31-45", min: 31, max: 45 },
-    { key: "46-60", min: 46, max: 60 },
-    { key: "61-90", min: 61, max: 90 },
-    { key: "91-120", min: 91, max: 120 },
-    { key: "121-150", min: 121, max: 150 },
-    { key: "151-180", min: 151, max: 180 },
-    { key: "181+", min: 181, max: Number.POSITIVE_INFINITY },
-  ];
-
   // Always show a continuous weekly range so columns are predictable.
   const currentWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekKeys = Array.from({ length: 12 }, (_, idx) =>
     format(subWeeks(currentWeek, 11 - idx), "yyyy-MM-dd")
   );
 
-  const grid = runtimeBins.map((runtime) => ({
+  const grid = RUNTIME_BUCKETS.map((runtime) => ({
     runtime: runtime.key,
     cells: weekKeys.map((week) => {
       const count = tapes.filter((tape) => {
@@ -181,7 +160,8 @@ function runtimeDensityGrid(tapes: TapeRecord[]) {
         const dateValue = tape.acquisitionAt ?? tape.receivedDate;
         if (runtimeValue == null || !dateValue) return false;
         const weekValue = format(startOfWeek(parseISO(dateValue), { weekStartsOn: 1 }), "yyyy-MM-dd");
-        return weekValue === week && runtimeValue >= runtime.min && runtimeValue <= runtime.max;
+        if (weekValue !== week || runtimeValue < runtime.min) return false;
+        return runtime.max == null ? true : runtimeValue <= runtime.max;
       }).length;
       return { week, count };
     }),
