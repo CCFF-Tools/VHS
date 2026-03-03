@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KERMAN_QUOTE_BANK, getMissionBriefingQuotes } from "@/lib/kerman-quotes";
+import { getMissionBriefingQuotes } from "@/lib/kerman-quotes";
 import type { MissionState } from "@/lib/types";
 
 const OBJECTIVES = [
@@ -136,9 +136,6 @@ export function MissionLoreBriefingSlide({ missionState }: { missionState: Missi
           <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2">
             <p className="font-mono text-[clamp(0.7rem,0.54vw,0.88rem)] uppercase tracking-[0.12em] text-cyan-100/75">
               Crew Voice Lines
-            </p>
-            <p className="mt-1 text-[clamp(0.68rem,0.52vw,0.86rem)] text-cyan-100/65">
-              Pulling from {KERMAN_QUOTE_BANK.length} Kerman quotes for status, tasking, and mission wisdom.
             </p>
             <div className="mt-1.5 space-y-1">
               {crewQuotes(missionState).map((quote) => (
