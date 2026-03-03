@@ -615,6 +615,21 @@ export default function PresentationPage() {
             {autoRotateLabel}
           </p>
           <div className="flex items-center gap-2">
+            <div
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[clamp(0.72rem,0.58vw,0.9rem)] uppercase tracking-[0.12em] ${
+                isPaused
+                  ? "border-amber-300/45 bg-amber-500/20 text-amber-100"
+                  : "border-emerald-300/45 bg-emerald-500/20 text-emerald-100"
+              }`}
+              aria-live="polite"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isPaused ? "bg-amber-200" : "bg-emerald-200 animate-pulse"
+                }`}
+              />
+              {isPaused ? "Paused" : "Playing"}
+            </div>
             <button
               onClick={() => setIsPaused((prev) => !prev)}
               className="inline-flex items-center gap-1 rounded-md border border-cyan-300/35 bg-slate-900/65 px-2 py-1 text-cyan-50 hover:bg-slate-800/75"
