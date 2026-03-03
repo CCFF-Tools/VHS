@@ -10,12 +10,14 @@ import { AcquisitionChart } from "@/components/charts/acquisition-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
 import { LaunchCountdown } from "@/components/dashboard/launch-countdown";
 import { SpaceshipAssemblySlide } from "@/components/presentation/spaceship-assembly-slide";
+import { MissionStateSlide } from "@/components/presentation/mission-state-slide";
+import { MissionColonizationSlide } from "@/components/presentation/mission-colonization-slide";
+import { MissionLoreBriefingSlide } from "@/components/presentation/mission-lore-briefing-slide";
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 const SLIDE_INTERVAL_MS = 20000;
-const LAUNCH_WINDOW_DEADLINE = "2026-05-01T00:00:00-04:00";
 const MISSION_CHART_CLASS =
   "h-[220px] md:h-[240px] lg:h-[280px] xl:h-[320px] 2xl:h-[380px] [@media(min-width:2800px)]:h-[520px]";
 const MISSION_PIPELINE_CHART_CLASS =
@@ -61,7 +63,7 @@ function SlideHeader({
     <header className="mb-3 flex items-center justify-between gap-4 lg:mb-4">
       <div>
         <p className="font-mono text-[clamp(0.78rem,0.62vw,1.2rem)] uppercase tracking-[0.32em] text-cyan-200/70">
-          VHS Mission Control
+          VHS Mission Control // Meridia
         </p>
         <h1 className="mt-1 text-[clamp(2.3rem,2.9vw,5.2rem)] font-extrabold tracking-tight text-white">{title}</h1>
         {subtitle ? <p className="mt-1 text-[clamp(1rem,0.9vw,1.7rem)] text-cyan-100/80">{subtitle}</p> : null}
@@ -83,10 +85,12 @@ export default function PresentationPage() {
   const [slide, setSlide] = useState(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const router = useRouter();
+  const deadlineIso = data?.missionState.deadline.iso;
   const deadlineMs = useMemo(() => {
-    const parsed = Date.parse(LAUNCH_WINDOW_DEADLINE);
+    if (!deadlineIso) return null;
+    const parsed = Date.parse(deadlineIso);
     return Number.isFinite(parsed) ? parsed : null;
-  }, []);
+  }, [deadlineIso]);
 
   const stageData = useMemo(
     () =>
@@ -106,8 +110,10 @@ export default function PresentationPage() {
   const projectedAfterDeadline =
     projectedLaunchMs != null && deadlineMs != null && projectedLaunchMs > deadlineMs;
   const deadlineClockLabel =
-    deadlineReached || !deadlineCountdown
+    deadlineReached
       ? "WINDOW CLOSED"
+      : !deadlineCountdown
+        ? "TELEMETRY PENDING"
       : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`;
   const captureLaunchSummary = useMemo(() => {
     if (!data) return null;
@@ -158,15 +164,17 @@ export default function PresentationPage() {
   const slides = [
     {
       key: "deadline",
-      title: "Launch Window Deadline",
-      subtitle: "Hard launch window cutoff for mission completion",
+      title: "Signal Fade Deadline",
+      subtitle: "Core Cascade countdown against the launch window",
       content: data ? (
         <Card className="launch-card flex h-full flex-col border-slate-700 bg-slate-950 text-slate-100">
           <CardHeader className="pb-3">
             <p className="text-[clamp(0.78rem,0.62vw,1.2rem)] font-mono uppercase tracking-[0.3em] text-cyan-200/75">
-              Deadline Clock
+              Great Signal Fade Clock
             </p>
-            <CardTitle className="text-[clamp(1.35rem,1.45vw,2.4rem)] text-cyan-50">May 1, 2026 00:00:00 EDT</CardTitle>
+            <CardTitle className="text-[clamp(1.35rem,1.45vw,2.4rem)] text-cyan-50">
+              {formatProjectedLaunch(data.missionState.deadline.iso)}
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col justify-between gap-8">
             <p className="launch-digit-glow whitespace-nowrap text-center font-mono text-[clamp(2.8rem,7.5vw,10rem)] font-semibold leading-none tracking-[0.08em] text-cyan-100">
@@ -183,10 +191,10 @@ export default function PresentationPage() {
               </div>
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
                 <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
-                  Deadline Status
+                  Signal Fade Status
                 </p>
                 <p className="mt-1 text-[clamp(1.4rem,1.35vw,2.4rem)] font-semibold text-cyan-50">
-                  {deadlineReached ? "Closed" : "Open"}
+                  {data.missionState.deadline.status === "missed" ? "Missed Window" : "Inside Window"}
                 </p>
               </div>
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
@@ -196,7 +204,7 @@ export default function PresentationPage() {
                 <p
                   className={`mt-1 text-[clamp(1.4rem,1.35vw,2.4rem)] font-semibold ${projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}`}
                 >
-                  {projectedAfterDeadline ? "After Deadline" : "Inside Window"}
+                  {projectedAfterDeadline ? "Missed Window" : "Inside Window"}
                 </p>
               </div>
             </div>
@@ -205,15 +213,33 @@ export default function PresentationPage() {
       ) : null,
     },
     {
+      key: "mission-state",
+      title: "Mission State Contract",
+      subtitle: "Assembly, planning, and colonization in one canonical object",
+      content: data ? (
+        <MissionStateSlide
+          missionState={data.missionState}
+          projectedLaunchAt={data.launchProjection.projectedLaunchAt}
+        />
+      ) : null,
+    },
+    {
+      key: "lore-briefing",
+      title: "Kerman Lore Briefing",
+      subtitle: "Backstory, stakes, and mission objectives for the Meridia evacuation.",
+      content: data ? <MissionLoreBriefingSlide missionState={data.missionState} /> : null,
+    },
+    {
       key: "launch",
       title: "Launch Readiness",
-      subtitle: "Projected mission completion from live queue + throughput",
+      subtitle: "Projected cargo evacuation against Signal Fade pressure",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <div className="md:col-span-3">
             <LaunchCountdown
               projection={data.launchProjection}
               kpis={data.kpis}
+              deadlineAt={data.missionState.deadline.iso}
               className="h-full"
               showFrameHeader={false}
               summaryOverride={
@@ -379,8 +405,25 @@ export default function PresentationPage() {
     {
       key: "assembly",
       title: "Orbiter Assembly Progress",
-      subtitle: "From Intake to Archive, every completed tape builds the launch stack.",
-      content: data ? <SpaceshipAssemblySlide kpis={data.kpis} stageCounts={data.stageCounts} /> : null,
+      subtitle: "Capture builds the ship while Trim + Combine lock mission planning.",
+      content: data ? (
+        <SpaceshipAssemblySlide
+          kpis={data.kpis}
+          stageCounts={data.stageCounts}
+          missionState={data.missionState}
+        />
+      ) : null,
+    },
+    {
+      key: "colonization",
+      title: "Meridia Colonization Timeline",
+      subtitle: "Archived cargo drives launch, cruise, Fluxfall landing, and The Stacks growth.",
+      content: data ? (
+        <MissionColonizationSlide
+          missionState={data.missionState}
+          projectedAfterDeadline={projectedAfterDeadline}
+        />
+      ) : null,
     },
     {
       key: "runtime",
@@ -515,14 +558,19 @@ export default function PresentationPage() {
           subtitle={current.subtitle}
         />
 
-        {data && current.key !== "deadline" && current.key !== "assembly" && (
+        {data &&
+          current.key !== "deadline" &&
+          current.key !== "assembly" &&
+          current.key !== "mission-state" &&
+          current.key !== "lore-briefing" &&
+          current.key !== "colonization" && (
           <div className="mission-alert-box mb-3 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6 lg:py-4 [@media(min-width:2800px)]:px-8 [@media(min-width:2800px)]:py-5">
             <div>
               <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] font-mono uppercase tracking-[0.22em] text-cyan-100/70">
-                Launch Window
+                Signal Fade Window
               </p>
               <p className="font-mono text-[clamp(0.9rem,0.74vw,1.3rem)] text-cyan-50">
-                Deadline: May 1, 2026 00:00:00 EDT
+                Deadline: {formatProjectedLaunch(data.missionState.deadline.iso)}
               </p>
             </div>
             <p className="launch-digit-glow font-mono text-[clamp(1.9rem,2.7vw,5.2rem)] font-semibold tracking-[0.13em] text-cyan-100">
@@ -536,7 +584,7 @@ export default function PresentationPage() {
                 </span>
               </p>
               <p className={projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}>
-                {projectedAfterDeadline ? "Projected after deadline" : "Projected inside launch window"}
+                Trajectory: {projectedAfterDeadline ? "Missed Window" : "Inside Window"}
               </p>
             </div>
           </div>
@@ -557,16 +605,9 @@ export default function PresentationPage() {
         {data && <div className="min-h-0 flex-1 animate-floatIn">{current.content}</div>}
 
         <footer className="mt-3 flex items-center justify-between text-[clamp(0.82rem,0.7vw,1.22rem)] text-cyan-100/85">
-          <div className="flex gap-2">
-            {slides.map((s, idx) => (
-              <button
-                key={s.key}
-                onClick={() => setSlide(idx)}
-                className={`h-2.5 rounded-full transition-all ${slide === idx ? "w-8 bg-amber-300" : "w-2.5 bg-cyan-200/50"}`}
-                aria-label={`Go to ${s.title}`}
-              />
-            ))}
-          </div>
+          <p className="font-mono text-[clamp(0.76rem,0.62vw,1rem)] uppercase tracking-[0.12em] text-cyan-100/70">
+            Auto-rotate every 20s | Left/Right: slides | Esc: return home
+          </p>
           <button
             onClick={() => mutate()}
             className="inline-flex items-center gap-1 rounded-md border border-cyan-300/35 bg-slate-900/65 px-2 py-1 text-cyan-50 hover:bg-slate-800/75"

@@ -2,7 +2,17 @@ import { eachDayOfInterval, endOfDay, format, isToday, parseISO, startOfDay, sub
 import { listRecords } from "@/lib/airtable";
 import { RUNTIME_BUCKETS } from "@/lib/runtime-buckets";
 import { fieldMap, pipelineStages } from "@/lib/schema";
-import type { LaunchProjection, OpsSummaryResponse, Stage, TapeRecord } from "@/lib/types";
+import type {
+  AssemblyMilestone,
+  DashboardKpis,
+  ColonizationPhase,
+  LaunchProjection,
+  MissionState,
+  OpsSummaryResponse,
+  PlanningMilestone,
+  Stage,
+  TapeRecord,
+} from "@/lib/types";
 
 function toDate(value: unknown): string | undefined {
   if (!value || typeof value !== "string") return undefined;
@@ -239,6 +249,174 @@ function buildRuntimeHistogram(values: number[]) {
 function average(values: number[]) {
   if (!values.length) return 0;
   return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1));
+}
+
+export const MISSION_LAUNCH_WINDOW_DEADLINE = "2026-05-01T00:00:00-04:00";
+
+const ASSEMBLY_MILESTONES: Array<{ min: number; value: AssemblyMilestone }> = [
+  { min: 0.93, value: "pad_ready" },
+  { min: 0.8, value: "rollout" },
+  { min: 0.64, value: "booster_stacked" },
+  { min: 0.46, value: "engines_mated" },
+  { min: 0.28, value: "airframe_rising" },
+  { min: 0.12, value: "jigs_online" },
+  { min: 0, value: "blueprints" },
+];
+
+const PLANNING_MILESTONES: Array<{ min: number; value: PlanningMilestone }> = [
+  { min: 0.9, value: "autopilot_loaded" },
+  { min: 0.72, value: "flight_plan_locked" },
+  { min: 0.5, value: "go_no_go" },
+  { min: 0.32, value: "burns_scheduled" },
+  { min: 0.16, value: "course_plotted" },
+  { min: 0, value: "napkin_math" },
+];
+
+const COLONIZATION_ACTIVE_PHASES: Array<{ min: number; value: ColonizationPhase }> = [
+  { min: 0.95, value: "vault_sealed" },
+  { min: 0.82, value: "stacks_expansion" },
+  { min: 0.68, value: "landing_fluxfall" },
+  { min: 0.55, value: "entry_descent" },
+  { min: 0.4, value: "approach_meridia" },
+  { min: 0.25, value: "cruise" },
+  { min: 0.12, value: "launch" },
+];
+
+function clamp01(value: number) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function ratio(value: number, total: number) {
+  if (total <= 0) return 0;
+  return clamp01(value / total);
+}
+
+function stageCountMap(stageCounts: Array<{ stage: Stage; count: number }>) {
+  const map: Record<Stage, number> = {
+    Intake: 0,
+    Capture: 0,
+    Trim: 0,
+    Combine: 0,
+    Transfer: 0,
+    Archived: 0,
+    Blocked: 0,
+  };
+  for (const row of stageCounts) {
+    map[row.stage] = (map[row.stage] ?? 0) + row.count;
+  }
+  return map;
+}
+
+function milestoneAt<T extends string>(progress: number, milestones: Array<{ min: number; value: T }>) {
+  return milestones.find((milestone) => progress >= milestone.min)?.value ?? milestones[milestones.length - 1].value;
+}
+
+function buildMissionState({
+  kpis,
+  stageCounts,
+  deadlineIso = MISSION_LAUNCH_WINDOW_DEADLINE,
+}: {
+  kpis: DashboardKpis;
+  stageCounts: Array<{ stage: Stage; count: number }>;
+  deadlineIso?: string;
+}): MissionState {
+  const byStage = stageCountMap(stageCounts);
+  const counts: MissionState["counts"] = {
+    total: kpis.totalTapes,
+    intake: kpis.awaitingCaptureCount,
+    captured: kpis.capturedCount,
+    trimmed: kpis.trimmedCount,
+    combined: kpis.combinedCount,
+    transferred: kpis.transferredCount,
+    archived: byStage.Archived,
+    blocked: byStage.Blocked,
+  };
+
+  const captureRatio = ratio(counts.captured, counts.total);
+  const trimmedRatio = ratio(counts.trimmed, counts.total);
+  const combinedRatio = ratio(counts.combined, counts.total);
+  const transferredRatio = ratio(counts.transferred, counts.total);
+  const archivedRatio = ratio(counts.archived, counts.total);
+  const assembly = clamp01(
+    captureRatio * 0.42 +
+      trimmedRatio * 0.2 +
+      combinedRatio * 0.2 +
+      transferredRatio * 0.1 +
+      archivedRatio * 0.08
+  );
+  const planning = clamp01(trimmedRatio * 0.45 + combinedRatio * 0.55);
+  const colonization = archivedRatio;
+
+  const quarantine = counts.blocked > 0;
+  const launchAllowed = !quarantine && planning >= 0.68 && colonization >= 0.12;
+  const landingAllowed = launchAllowed && colonization >= 0.58;
+  const stacksGrowthAllowed = landingAllowed && colonization >= 0.82;
+
+  const deadlineMs = Date.parse(deadlineIso);
+  const msRemaining = Number.isFinite(deadlineMs) ? deadlineMs - Date.now() : 0;
+  const assemblyMilestone = milestoneAt(assembly, ASSEMBLY_MILESTONES);
+  const planningMilestone = milestoneAt(planning, PLANNING_MILESTONES);
+
+  let colonizationMilestone: ColonizationPhase = "cargo_staged";
+  if (colonization <= 0.01) {
+    colonizationMilestone = "cargo_staged";
+  } else if (quarantine || !launchAllowed) {
+    colonizationMilestone = "hold_for_readiness";
+  } else {
+    colonizationMilestone = milestoneAt(colonization, COLONIZATION_ACTIVE_PHASES);
+  }
+
+  let holdReason: string | undefined;
+  if (quarantine) {
+    holdReason = `Quarantine active: ${counts.blocked} blocked tape${counts.blocked === 1 ? "" : "s"} require anomaly review.`;
+  } else if (!launchAllowed) {
+    holdReason = "Hold for readiness: raise Trim + Combine + Archive Seal coverage.";
+  } else if (!landingAllowed) {
+    holdReason = "Cruise prep: increase Archive Seal coverage before Fluxfall approach.";
+  } else if (!stacksGrowthAllowed) {
+    holdReason = "Landing corridor open: continue Archive Seal to expand The Stacks.";
+  }
+
+  return {
+    lore: {
+      species: "Kermans",
+      destination: {
+        planet: "Meridia",
+        landingSite: "Fluxfall Basin",
+        outpost: "The Stacks",
+      },
+      threat: {
+        cause: "Core Cascade",
+        event: "Signal Fade",
+      },
+    },
+    deadline: {
+      iso: deadlineIso,
+      msRemaining,
+      status: msRemaining >= 0 ? "inside_window" : "missed",
+    },
+    counts,
+    progress: {
+      assembly,
+      planning,
+      colonization,
+    },
+    milestones: {
+      assembly: assemblyMilestone,
+      planning: planningMilestone,
+      colonization: colonizationMilestone,
+    },
+    gates: {
+      launchAllowed,
+      landingAllowed,
+      stacksGrowthAllowed,
+      ...(holdReason ? { holdReason } : {}),
+    },
+    overlays: {
+      quarantine,
+      anomaliesCount: counts.blocked,
+    },
+  };
 }
 
 export async function getTapes(): Promise<TapeRecord[]> {
@@ -499,20 +677,23 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
   const contentRecordedCoveragePercent = tapes.length
     ? Number(((contentRecordedCount / tapes.length) * 100).toFixed(1))
     : 0;
+  const kpis: DashboardKpis = {
+    totalTapes: tapes.length,
+    awaitingCaptureCount: tapes.filter((t) => t.stage === "Intake").length,
+    capturedCount: tapes.filter((t) => Boolean(t.captured)).length,
+    trimmedCount: tapes.filter((t) => Boolean(t.trimmed)).length,
+    combinedCount: tapes.filter((t) => Boolean(t.combined)).length,
+    transferredCount: tapes.filter((t) => Boolean(t.transferredToNas)).length,
+    receivedToday: tapes.filter((t) => {
+      const date = t.updatedTime ?? t.acquisitionAt ?? t.receivedDate;
+      return Boolean(date && isToday(parseISO(date)));
+    }).length,
+  };
+  const launchProjection = buildLaunchProjection(tapes);
+  const missionState = buildMissionState({ kpis, stageCounts });
 
   return {
-    kpis: {
-      totalTapes: tapes.length,
-      awaitingCaptureCount: tapes.filter((t) => t.stage === "Intake").length,
-      capturedCount: tapes.filter((t) => Boolean(t.captured)).length,
-      trimmedCount: tapes.filter((t) => Boolean(t.trimmed)).length,
-      combinedCount: tapes.filter((t) => Boolean(t.combined)).length,
-      transferredCount: tapes.filter((t) => Boolean(t.transferredToNas)).length,
-      receivedToday: tapes.filter((t) => {
-        const date = t.updatedTime ?? t.acquisitionAt ?? t.receivedDate;
-        return Boolean(date && isToday(parseISO(date)));
-      }).length,
-    },
+    kpis,
     stageCounts,
     acquisitionDaily: buildAcquisitionDaily(tapes),
     contentRecordedDaily: buildContentRecordedDaily(tapes),
@@ -530,7 +711,8 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       finalAverage: average(finalRuntimes),
       driftAverage: average(runtimeDrifts),
     },
-    launchProjection: buildLaunchProjection(tapes),
+    launchProjection,
+    missionState,
     recentAcquisitions,
     tapes,
   };

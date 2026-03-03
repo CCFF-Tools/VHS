@@ -1,28 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { stageLabel } from "@/lib/stage-label";
-import type { DashboardKpis, OpsSummaryResponse, Stage } from "@/lib/types";
+import type { AssemblyMilestone, DashboardKpis, MissionState, OpsSummaryResponse, Stage } from "@/lib/types";
 
-const STAGE_ORDER: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived", "Blocked"];
 const CORE_STAGE_ORDER: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"];
 
-const STAGE_WEIGHTS: Record<Stage, number> = {
-  Intake: 0,
-  Capture: 0.22,
-  Trim: 0.42,
-  Combine: 0.64,
-  Transfer: 0.84,
-  Archived: 1,
-  Blocked: 0,
+const ASSEMBLY_PHASE_COPY: Record<AssemblyMilestone, { name: string; detail: string }> = {
+  blueprints: {
+    name: "Blueprints",
+    detail: "Intake backlog is mapped and capture jigs are queued.",
+  },
+  jigs_online: {
+    name: "Jigs Online",
+    detail: "Capture bays are running and airframe material is flowing.",
+  },
+  airframe_rising: {
+    name: "Airframe Rising",
+    detail: "Captured inventory is scaling the hull.",
+  },
+  engines_mated: {
+    name: "Engines Mated",
+    detail: "Trimmed units are stabilizing propulsion assumptions.",
+  },
+  booster_stacked: {
+    name: "Booster Stacked",
+    detail: "Combine + Transfer are integrating mission modules.",
+  },
+  rollout: {
+    name: "Rollout",
+    detail: "Pad logistics are online for the launch stack.",
+  },
+  pad_ready: {
+    name: "Pad Ready",
+    detail: "Ship assembly is complete and launch hardware is locked.",
+  },
 };
-
-const ASSEMBLY_PHASES = [
-  { min: 0.95, name: "Launch-Ready Stack", detail: "Payload sealed and mission archive badge complete." },
-  { min: 0.8, name: "Payload Integration", detail: "Boosters and transfer systems mostly locked in." },
-  { min: 0.62, name: "Guidance Wiring", detail: "Core assembly stable, avionics being finalized." },
-  { min: 0.42, name: "Engine Mounting", detail: "Propulsion block is coming online." },
-  { min: 0.2, name: "Airframe Assembly", detail: "Hull sections welded and pressure-tested." },
-  { min: 0, name: "Blueprint & Jigs", detail: "Early queue stage with primary prep work active." },
-];
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value));
@@ -62,10 +73,6 @@ function buildStageMap(stageCounts: OpsSummaryResponse["stageCounts"]) {
   }
 
   return map;
-}
-
-function assemblyPhase(progress: number) {
-  return ASSEMBLY_PHASES.find((phase) => progress >= phase.min) ?? ASSEMBLY_PHASES[ASSEMBLY_PHASES.length - 1];
 }
 
 function KerbalCrew({
@@ -269,15 +276,14 @@ function KerbalCrew({
 export function SpaceshipAssemblySlide({
   kpis,
   stageCounts,
+  missionState,
 }: {
   kpis: DashboardKpis;
   stageCounts: OpsSummaryResponse["stageCounts"];
+  missionState: MissionState;
 }) {
   const counts = buildStageMap(stageCounts);
   const total = kpis.totalTapes;
-
-  const weightedUnits = STAGE_ORDER.reduce((sum, stage) => sum + counts[stage] * STAGE_WEIGHTS[stage], 0);
-  const overallProgress = ratio(weightedUnits, total);
 
   const captureOrBetter = ratio(
     counts.Capture + counts.Trim + counts.Combine + counts.Transfer + counts.Archived,
@@ -287,8 +293,9 @@ export function SpaceshipAssemblySlide({
   const combineOrBetter = ratio(counts.Combine + counts.Transfer + counts.Archived, total);
   const transferOrBetter = ratio(counts.Transfer + counts.Archived, total);
   const archivedRatio = ratio(counts.Archived, total);
+  const overallProgress = missionState.progress.assembly;
 
-  const phase = assemblyPhase(overallProgress);
+  const phase = ASSEMBLY_PHASE_COPY[missionState.milestones.assembly];
   const stageRows: Stage[] = counts.Blocked > 0 ? [...CORE_STAGE_ORDER, "Blocked"] : CORE_STAGE_ORDER;
 
   const milestoneRows = [
@@ -300,36 +307,37 @@ export function SpaceshipAssemblySlide({
   ];
 
   const assemblySteps = [
-    { label: "Frame & Couplers", minProgress: 0.18 },
-    { label: "Engine Mounting", minProgress: 0.38 },
-    { label: "Reticulating Splines", minProgress: 0.56 },
-    { label: "Guidance Wiring", minProgress: 0.68 },
-    { label: "Payload Integration", minProgress: 0.82 },
-    { label: "Archive Seal", minProgress: 0.95 },
+    { label: "Blueprints", minProgress: 0.01 },
+    { label: "Jigs Online", minProgress: 0.12 },
+    { label: "Airframe Rising", minProgress: 0.28 },
+    { label: "Engines Mated", minProgress: 0.46 },
+    { label: "Booster Stacked", minProgress: 0.64 },
+    { label: "Rollout", minProgress: 0.8 },
+    { label: "Pad Ready", minProgress: 0.93 },
   ];
 
   const componentTaskBoxes = [
     {
       title: "Command Capsule",
-      task: "Task: Finalize nav glass and uplink checks.",
+      task: "Task: Combine stack checks and guidance uplink.",
       value: combineOrBetter,
       className: "left-3 top-[7%]",
     },
     {
       title: "Main Airframe",
-      task: "Task: Reticulating Splines and pressure seals.",
+      task: "Task: Maintain capture throughput and hull integrity.",
       value: captureOrBetter,
       className: "left-3 top-[25%]",
     },
     {
       title: "Booster Pair",
-      task: "Task: Clamp lock and transfer manifold tests.",
+      task: "Task: Transfer gate checks and manifold integrity.",
       value: transferOrBetter,
       className: "right-3 top-[7%] text-right",
     },
     {
       title: "Engine Cluster",
-      task: "Task: Vector trim and burn sim validation.",
+      task: "Task: Trim validation and burn-sim confidence.",
       value: trimOrBetter,
       className: "right-3 top-[25%] text-right",
     },
@@ -540,8 +548,8 @@ export function SpaceshipAssemblySlide({
                 x={344}
                 y={426}
                 progress={captureOrBetter}
-                name="Jebrin Kerman"
-                title="EVA TECHNICIAN"
+                name="Rivet Kerman"
+                title="AIRFRAME CHIEF"
                 role="eva"
                 badgeDx={-74}
                 badgeDy={-18}
@@ -550,8 +558,8 @@ export function SpaceshipAssemblySlide({
                 x={656}
                 y={400}
                 progress={combineOrBetter}
-                name="Valdo Kerman"
-                title="RUNWAY MARSHAL"
+                name="Paxlo Kerman"
+                title="GNC LEAD"
                 role="marshal"
                 badgeDx={84}
                 badgeDy={-12}
@@ -598,7 +606,7 @@ export function SpaceshipAssemblySlide({
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
                 <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
                 <p className="mt-1 text-[clamp(0.68rem,0.5vw,0.9rem)] leading-snug text-cyan-100/80">
-                  Live workflow stages are mapped to module completion, crew activity, and launch stack readiness in real time.
+                  Capture builds the ship. Trim + Combine lock the plan. Archive Seal pushes Meridia colonization.
                 </p>
               </div>
               <div className="col-span-5 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
