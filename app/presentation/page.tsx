@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { RefreshCcw } from "lucide-react";
+import { Pause, Play, RefreshCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PipelineFlowChart } from "@/components/charts/pipeline-flow-chart";
@@ -83,6 +83,7 @@ function SlideHeader({
 export default function PresentationPage() {
   const { data, isLoading, error, mutate } = useOpsSummary();
   const [slide, setSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const router = useRouter();
   const deadlineIso = data?.missionState.deadline.iso;
@@ -522,6 +523,9 @@ export default function PresentationPage() {
   ];
 
   const totalSlides = slides.length;
+  const autoRotateLabel = isPaused
+    ? "Slides paused | Left/Right: slides | P: resume | Esc: return home"
+    : "Auto-rotate every 20s | Left/Right: slides | P: pause | Esc: return home";
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -531,16 +535,18 @@ export default function PresentationPage() {
   }, []);
 
   useEffect(() => {
-    const id = window.setInterval(() => {
+    if (isPaused) return;
+    const id = window.setTimeout(() => {
       setSlide((prev) => (prev + 1) % totalSlides);
     }, SLIDE_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [totalSlides]);
+    return () => window.clearTimeout(id);
+  }, [isPaused, slide, totalSlides]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight") setSlide((prev) => (prev + 1) % totalSlides);
       if (event.key === "ArrowLeft") setSlide((prev) => (prev + totalSlides - 1) % totalSlides);
+      if (event.key.toLowerCase() === "p") setIsPaused((prev) => !prev);
       if (event.key.toLowerCase() === "r") mutate();
       if (event.key === "Escape") router.push("/");
     };
@@ -606,14 +612,23 @@ export default function PresentationPage() {
 
         <footer className="mt-3 flex items-center justify-between text-[clamp(0.82rem,0.7vw,1.22rem)] text-cyan-100/85">
           <p className="font-mono text-[clamp(0.76rem,0.62vw,1rem)] uppercase tracking-[0.12em] text-cyan-100/70">
-            Auto-rotate every 20s | Left/Right: slides | Esc: return home
+            {autoRotateLabel}
           </p>
-          <button
-            onClick={() => mutate()}
-            className="inline-flex items-center gap-1 rounded-md border border-cyan-300/35 bg-slate-900/65 px-2 py-1 text-cyan-50 hover:bg-slate-800/75"
-          >
-            <RefreshCcw className="h-3.5 w-3.5" /> Refresh Data
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsPaused((prev) => !prev)}
+              className="inline-flex items-center gap-1 rounded-md border border-cyan-300/35 bg-slate-900/65 px-2 py-1 text-cyan-50 hover:bg-slate-800/75"
+            >
+              {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+              {isPaused ? "Resume Slides" : "Pause Slides"}
+            </button>
+            <button
+              onClick={() => mutate()}
+              className="inline-flex items-center gap-1 rounded-md border border-cyan-300/35 bg-slate-900/65 px-2 py-1 text-cyan-50 hover:bg-slate-800/75"
+            >
+              <RefreshCcw className="h-3.5 w-3.5" /> Refresh Data
+            </button>
+          </div>
         </footer>
       </div>
     </div>
