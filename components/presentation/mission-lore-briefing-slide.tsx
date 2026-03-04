@@ -246,7 +246,7 @@ function KermanBadge({
   return (
     <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3">
       <div className="flex items-center gap-3">
-        <div className={`relative h-14 w-14 rounded-full bg-gradient-to-br ${color} p-[1px]`}>
+        <div className={`relative h-16 w-16 xl:h-20 xl:w-20 rounded-full bg-gradient-to-br ${color} p-[1px]`}>
           <div className="relative h-full w-full overflow-hidden rounded-full bg-[#1d2e4d]">
             <KermanPortrait variant={variant} />
           </div>
