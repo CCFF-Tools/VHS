@@ -8,6 +8,7 @@ import type {
   ColonizationPhase,
   LaunchProjection,
   MissionState,
+  MissionRuntimeProgress,
   OpsSummaryResponse,
   PlanningMilestone,
   Stage,
@@ -251,6 +252,118 @@ function average(values: number[]) {
   return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1));
 }
 
+function roundToOne(value: number) {
+  return Number(value.toFixed(1));
+}
+
+const STAGE_PROGRESS_RANK: Record<Stage, number> = {
+  Intake: 0,
+  Capture: 1,
+  Trim: 2,
+  Combine: 3,
+  Transfer: 4,
+  Archived: 5,
+  Blocked: -1,
+};
+
+function createStageNumberMap() {
+  return {
+    Intake: 0,
+    Capture: 0,
+    Trim: 0,
+    Combine: 0,
+    Transfer: 0,
+    Archived: 0,
+    Blocked: 0,
+  } satisfies Record<Stage, number>;
+}
+
+function preferredRuntimeMinutes(tape: TapeRecord) {
+  const value = tape.labelRuntimeMinutes ?? tape.qtRuntimeMinutes ?? tape.finalClipDurationMinutes;
+  if (value == null || !Number.isFinite(value) || value < 0) return undefined;
+  return value;
+}
+
+interface RuntimeWeightingSummary {
+  totalMinutes: number;
+  knownMinutes: number;
+  knownCount: number;
+  coveragePercent: number;
+  fallbackMinutesPerTape: number;
+  byTapeId: Map<string, number>;
+  stageMinutes: Record<Stage, number>;
+  cumulativeMinutes: MissionRuntimeProgress["cumulativeMinutes"];
+  progress: MissionRuntimeProgress["progress"];
+}
+
+function buildRuntimeWeighting(tapes: TapeRecord[]): RuntimeWeightingSummary {
+  const knownRuntimeValues = tapes
+    .map((tape) => preferredRuntimeMinutes(tape))
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const knownMinutes = knownRuntimeValues.reduce((sum, value) => sum + value, 0);
+  const knownCount = knownRuntimeValues.length;
+  const fallbackMinutesPerTape = knownCount > 0 ? knownMinutes / knownCount : 1;
+
+  const byTapeId = new Map<string, number>();
+  const stageMinutes = createStageNumberMap();
+  const cumulativeMinutes: MissionRuntimeProgress["cumulativeMinutes"] = {
+    captureOrBetter: 0,
+    trimOrBetter: 0,
+    combineOrBetter: 0,
+    transferOrBetter: 0,
+    archived: 0,
+  };
+
+  let totalMinutes = 0;
+  for (const tape of tapes) {
+    const minutes = preferredRuntimeMinutes(tape) ?? fallbackMinutesPerTape;
+    byTapeId.set(tape.id, minutes);
+    stageMinutes[tape.stage] = (stageMinutes[tape.stage] ?? 0) + minutes;
+    totalMinutes += minutes;
+
+    const rank = STAGE_PROGRESS_RANK[tape.stage] ?? -1;
+    if (rank >= 1) cumulativeMinutes.captureOrBetter += minutes;
+    if (rank >= 2) cumulativeMinutes.trimOrBetter += minutes;
+    if (rank >= 3) cumulativeMinutes.combineOrBetter += minutes;
+    if (rank >= 4) cumulativeMinutes.transferOrBetter += minutes;
+    if (rank >= 5) cumulativeMinutes.archived += minutes;
+  }
+
+  const progress: MissionRuntimeProgress["progress"] = {
+    captureOrBetter: ratio(cumulativeMinutes.captureOrBetter, totalMinutes),
+    trimOrBetter: ratio(cumulativeMinutes.trimOrBetter, totalMinutes),
+    combineOrBetter: ratio(cumulativeMinutes.combineOrBetter, totalMinutes),
+    transferOrBetter: ratio(cumulativeMinutes.transferOrBetter, totalMinutes),
+    archived: ratio(cumulativeMinutes.archived, totalMinutes),
+  };
+
+  return {
+    totalMinutes: roundToOne(totalMinutes),
+    knownMinutes: roundToOne(knownMinutes),
+    knownCount,
+    coveragePercent: tapes.length ? Number(((knownCount / tapes.length) * 100).toFixed(1)) : 0,
+    fallbackMinutesPerTape: roundToOne(fallbackMinutesPerTape),
+    byTapeId,
+    stageMinutes: {
+      Intake: roundToOne(stageMinutes.Intake),
+      Capture: roundToOne(stageMinutes.Capture),
+      Trim: roundToOne(stageMinutes.Trim),
+      Combine: roundToOne(stageMinutes.Combine),
+      Transfer: roundToOne(stageMinutes.Transfer),
+      Archived: roundToOne(stageMinutes.Archived),
+      Blocked: roundToOne(stageMinutes.Blocked),
+    },
+    cumulativeMinutes: {
+      captureOrBetter: roundToOne(cumulativeMinutes.captureOrBetter),
+      trimOrBetter: roundToOne(cumulativeMinutes.trimOrBetter),
+      combineOrBetter: roundToOne(cumulativeMinutes.combineOrBetter),
+      transferOrBetter: roundToOne(cumulativeMinutes.transferOrBetter),
+      archived: roundToOne(cumulativeMinutes.archived),
+    },
+    progress,
+  };
+}
+
 export const MISSION_LAUNCH_WINDOW_DEADLINE = "2026-05-01T00:00:00-04:00";
 
 const ASSEMBLY_MILESTONES: Array<{ min: number; value: AssemblyMilestone }> = [
@@ -292,15 +405,7 @@ function ratio(value: number, total: number) {
 }
 
 function stageCountMap(stageCounts: Array<{ stage: Stage; count: number }>) {
-  const map: Record<Stage, number> = {
-    Intake: 0,
-    Capture: 0,
-    Trim: 0,
-    Combine: 0,
-    Transfer: 0,
-    Archived: 0,
-    Blocked: 0,
-  };
+  const map = createStageNumberMap();
   for (const row of stageCounts) {
     map[row.stage] = (map[row.stage] ?? 0) + row.count;
   }
@@ -314,29 +419,35 @@ function milestoneAt<T extends string>(progress: number, milestones: Array<{ min
 function buildMissionState({
   kpis,
   stageCounts,
+  runtimeWeighting,
   deadlineIso = MISSION_LAUNCH_WINDOW_DEADLINE,
 }: {
   kpis: DashboardKpis;
   stageCounts: Array<{ stage: Stage; count: number }>;
+  runtimeWeighting: RuntimeWeightingSummary;
   deadlineIso?: string;
 }): MissionState {
   const byStage = stageCountMap(stageCounts);
+  const capturedOrBetterCount = byStage.Capture + byStage.Trim + byStage.Combine + byStage.Transfer + byStage.Archived;
+  const trimmedOrBetterCount = byStage.Trim + byStage.Combine + byStage.Transfer + byStage.Archived;
+  const combinedOrBetterCount = byStage.Combine + byStage.Transfer + byStage.Archived;
+  const transferredOrBetterCount = byStage.Transfer + byStage.Archived;
   const counts: MissionState["counts"] = {
     total: kpis.totalTapes,
-    intake: kpis.awaitingCaptureCount,
-    captured: kpis.capturedCount,
-    trimmed: kpis.trimmedCount,
-    combined: kpis.combinedCount,
-    transferred: kpis.transferredCount,
+    intake: byStage.Intake,
+    captured: capturedOrBetterCount,
+    trimmed: trimmedOrBetterCount,
+    combined: combinedOrBetterCount,
+    transferred: transferredOrBetterCount,
     archived: byStage.Archived,
     blocked: byStage.Blocked,
   };
 
-  const captureRatio = ratio(counts.captured, counts.total);
-  const trimmedRatio = ratio(counts.trimmed, counts.total);
-  const combinedRatio = ratio(counts.combined, counts.total);
-  const transferredRatio = ratio(counts.transferred, counts.total);
-  const archivedRatio = ratio(counts.archived, counts.total);
+  const captureRatio = runtimeWeighting.progress.captureOrBetter;
+  const trimmedRatio = runtimeWeighting.progress.trimOrBetter;
+  const combinedRatio = runtimeWeighting.progress.combineOrBetter;
+  const transferredRatio = runtimeWeighting.progress.transferOrBetter;
+  const archivedRatio = runtimeWeighting.progress.archived;
   const assembly = clamp01(
     captureRatio * 0.42 +
       trimmedRatio * 0.2 +
@@ -403,6 +514,15 @@ function buildMissionState({
       assembly,
       planning,
       colonization,
+    },
+    runtime: {
+      totalMinutes: runtimeWeighting.totalMinutes,
+      knownMinutes: runtimeWeighting.knownMinutes,
+      coveragePercent: runtimeWeighting.coveragePercent,
+      fallbackMinutesPerTape: runtimeWeighting.fallbackMinutesPerTape,
+      stageMinutes: runtimeWeighting.stageMinutes,
+      cumulativeMinutes: runtimeWeighting.cumulativeMinutes,
+      progress: runtimeWeighting.progress,
     },
     milestones: {
       assembly: assemblyMilestone,
@@ -533,7 +653,7 @@ function isLaunchComplete(tape: TapeRecord) {
   return Boolean(tape.archivalFilename || tape.transferredToNas || tape.stage === "Archived");
 }
 
-function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
+function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWeightingSummary): LaunchProjection {
   const now = new Date();
   const nowMs = now.getTime();
   if (!tapes.length) {
@@ -542,10 +662,15 @@ function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
       generatedAt: now.toISOString(),
       backlogCount: 0,
       completedCount: 0,
+      backlogRuntimeMinutes: 0,
+      completedRuntimeMinutes: 0,
       throughputPerDay: 0,
+      throughputUnit: "runtime-minutes/day",
       throughputWindowDays: 21,
       recentCompletions: 0,
+      recentRuntimeMinutes: 0,
       completionDateCoveragePercent: 0,
+      runtimeCoveragePercent: 0,
       confidence: "low",
       source: "none",
     };
@@ -554,15 +679,30 @@ function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
   const completedTapes = tapes.filter((tape) => isLaunchComplete(tape));
   const completedCount = completedTapes.length;
   const backlogCount = Math.max(0, tapes.length - completedCount);
-  const completionTimestamps = completedTapes
-    .map((tape) => toTimestamp(tape.completedDate))
-    .filter((timestamp): timestamp is number => typeof timestamp === "number")
-    .sort((a, b) => a - b);
+  const completedRuntimeMinutes = roundToOne(
+    completedTapes.reduce((sum, tape) => sum + (runtimeWeighting.byTapeId.get(tape.id) ?? 0), 0)
+  );
+  const backlogRuntimeMinutes = roundToOne(Math.max(0, runtimeWeighting.totalMinutes - completedRuntimeMinutes));
+  const completionEvents = completedTapes
+    .map((tape) => {
+      const timestamp = toTimestamp(tape.completedDate);
+      if (timestamp == null) return null;
+      return {
+        timestamp,
+        minutes: runtimeWeighting.byTapeId.get(tape.id) ?? runtimeWeighting.fallbackMinutesPerTape,
+      };
+    })
+    .filter((event): event is { timestamp: number; minutes: number } => Boolean(event))
+    .sort((a, b) => a.timestamp - b.timestamp);
 
   const throughputWindowDays = 21;
   const recentWindowStartMs = subDays(startOfDay(now), throughputWindowDays - 1).getTime();
-  const recentCompletions = completionTimestamps.filter((timestamp) => timestamp >= recentWindowStartMs).length;
-  const recentThroughput = recentCompletions / throughputWindowDays;
+  const recentCompletionEvents = completionEvents.filter((event) => event.timestamp >= recentWindowStartMs);
+  const recentCompletions = recentCompletionEvents.length;
+  const recentRuntimeMinutes = roundToOne(
+    recentCompletionEvents.reduce((sum, event) => sum + event.minutes, 0)
+  );
+  const recentRuntimeThroughput = recentRuntimeMinutes / throughputWindowDays;
 
   const timelineStartCandidates = tapes
     .map((tape) => toTimestamp(tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.completedDate))
@@ -575,18 +715,21 @@ function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
           1,
           Math.floor((startOfDay(now).getTime() - startOfDay(new Date(timelineStartMs)).getTime()) / 86400000) + 1
         );
-  const historicalThroughput = activeDays > 0 ? completedCount / activeDays : 0;
+  const historicalRuntimeThroughput = activeDays > 0 ? completedRuntimeMinutes / activeDays : 0;
+  const historicalCountThroughput = activeDays > 0 ? completedCount / activeDays : 0;
 
   let throughputPerDay = 0;
+  let throughputUnit: LaunchProjection["throughputUnit"] = "runtime-minutes/day";
   let source: LaunchProjection["source"] = "none";
-  if (completionTimestamps.length >= 3 && recentCompletions > 0) {
-    throughputPerDay = recentThroughput;
-    source = "completion-dates";
-  } else if (completionTimestamps.length >= 3 && historicalThroughput > 0) {
-    throughputPerDay = historicalThroughput;
-    source = "completion-dates";
-  } else if (historicalThroughput > 0) {
-    throughputPerDay = historicalThroughput;
+  if (completionEvents.length >= 3 && recentRuntimeThroughput > 0 && runtimeWeighting.coveragePercent > 0) {
+    throughputPerDay = recentRuntimeThroughput;
+    source = "completion-dates-runtime";
+  } else if (historicalRuntimeThroughput > 0 && runtimeWeighting.coveragePercent > 0) {
+    throughputPerDay = historicalRuntimeThroughput;
+    source = "historical-runtime";
+  } else if (historicalCountThroughput > 0) {
+    throughputPerDay = historicalCountThroughput;
+    throughputUnit = "tapes/day";
     source = "historical-count";
   }
 
@@ -601,17 +744,23 @@ function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
     projectedLaunchAt = now.toISOString();
     estimatedDaysRemaining = 0;
   } else if (throughputPerDay > 0) {
+    const backlogValue = throughputUnit === "runtime-minutes/day" ? backlogRuntimeMinutes : backlogCount;
     status = "counting";
-    estimatedDaysRemaining = Number((backlogCount / throughputPerDay).toFixed(1));
-    projectedLaunchAt = new Date(nowMs + (backlogCount / throughputPerDay) * 86400000).toISOString();
+    estimatedDaysRemaining = Number((backlogValue / throughputPerDay).toFixed(1));
+    projectedLaunchAt = new Date(nowMs + (backlogValue / throughputPerDay) * 86400000).toISOString();
   }
 
   const completionDateCoveragePercent = completedCount
-    ? Number(((completionTimestamps.length / completedCount) * 100).toFixed(1))
+    ? Number(((completionEvents.length / completedCount) * 100).toFixed(1))
     : 0;
 
   let confidence: LaunchProjection["confidence"] = "low";
-  if (source === "completion-dates" && recentCompletions >= 4 && completionDateCoveragePercent >= 60) {
+  if (
+    source === "completion-dates-runtime" &&
+    recentCompletions >= 4 &&
+    completionDateCoveragePercent >= 60 &&
+    runtimeWeighting.coveragePercent >= 60
+  ) {
     confidence = "high";
   } else if (throughputPerDay > 0 && completedCount >= 5) {
     confidence = "medium";
@@ -623,11 +772,16 @@ function buildLaunchProjection(tapes: TapeRecord[]): LaunchProjection {
     generatedAt: now.toISOString(),
     backlogCount,
     completedCount,
+    backlogRuntimeMinutes,
+    completedRuntimeMinutes,
     throughputPerDay,
+    throughputUnit,
     throughputWindowDays,
     estimatedDaysRemaining,
     recentCompletions,
+    recentRuntimeMinutes,
     completionDateCoveragePercent,
+    runtimeCoveragePercent: runtimeWeighting.coveragePercent,
     confidence,
     source,
   };
@@ -692,8 +846,9 @@ export async function getOpsSummary(): Promise<OpsSummaryResponse> {
       return Boolean(date && isToday(parseISO(date)));
     }).length,
   };
-  const launchProjection = buildLaunchProjection(tapes);
-  const missionState = buildMissionState({ kpis, stageCounts });
+  const runtimeWeighting = buildRuntimeWeighting(tapes);
+  const launchProjection = buildLaunchProjection(tapes, runtimeWeighting);
+  const missionState = buildMissionState({ kpis, stageCounts, runtimeWeighting });
 
   return {
     kpis,

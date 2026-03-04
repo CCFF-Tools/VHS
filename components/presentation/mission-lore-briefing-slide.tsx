@@ -1,14 +1,41 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMissionBriefingQuotes } from "@/lib/kerman-quotes";
+import {
+  Archive,
+  ClipboardList,
+  MapPin,
+  Radio,
+  Rocket,
+  Scissors,
+  type LucideIcon,
+} from "lucide-react";
+import { getMissionBriefingQuotes, getMissionCommandNote } from "@/lib/kerman-quotes";
 import type { MissionState } from "@/lib/types";
 
-const OBJECTIVES = [
-  "Preserve the signal (capture before deterioration accelerates)",
-  "Mange VHS logistics (track mission progress through Airtable)",
-  "Stabilize payloads (trim, combine, and export files)",
-  "Depart for Meridia. (Initiate transfer of all files to NAS)",
-  "Land at Fluxfall Basin. (Final verification of archive status of each tape)",
-  "Expand The Stacks into a permanent off world municipal archive. (Upload files to final public archive, probably YouTube)",
+const OBJECTIVES: Array<{ text: string; icon: LucideIcon }> = [
+  {
+    text: "Preserve the signal (capture before deterioration accelerates)",
+    icon: Radio,
+  },
+  {
+    text: "Mange VHS logistics (track mission progress through Airtable)",
+    icon: ClipboardList,
+  },
+  {
+    text: "Stabilize payloads (trim, combine, and export files)",
+    icon: Scissors,
+  },
+  {
+    text: "Depart for Meridia. (Initiate transfer of all files to NAS)",
+    icon: Rocket,
+  },
+  {
+    text: "Land at Fluxfall Basin. (Final verification of archive status of each tape)",
+    icon: MapPin,
+  },
+  {
+    text: "Expand The Stacks into a permanent off world municipal archive. (Upload files to final public archive, probably YouTube)",
+    icon: Archive,
+  },
 ];
 
 type CrewAvatarVariant =
@@ -66,16 +93,6 @@ const CREW = [
     variant: "qa-anomaly" as const,
   },
 ];
-
-function primaryCrewLine(state: MissionState) {
-  if (state.overlays.quarantine) {
-    return "Vexa: Quarantine is rising. Clear blocked anomalies before phase advancement.";
-  }
-  if (state.deadline.status === "missed") {
-    return "Dexrin: Signal Fade threshold exceeded. Recovery pressure is now critical.";
-  }
-  return "Genev: Launch window still open. Keep archiving cadence up and hold trajectory discipline.";
-}
 
 function crewQuotes(state: MissionState, limit = 4) {
   const generated = getMissionBriefingQuotes(state, Math.max(limit + 2, 6)).map(
@@ -331,16 +348,30 @@ export function MissionBriefingContentSlide() {
 
           <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-5">
             <p className="font-mono text-[clamp(1rem,0.9vw,1.34rem)] uppercase tracking-[0.14em] text-cyan-100/70">
-              Mission Objectives
+              Primary Directives
             </p>
-            <ol className="mt-3 space-y-2.5 text-[clamp(1.2rem,1.08vw,1.76rem)] text-cyan-100/90">
-              {OBJECTIVES.map((item, index) => (
-                <li key={item}>
-                  <span className="mr-1 font-semibold text-cyan-50">{index + 1}.</span>
-                  {item}
-                </li>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              {OBJECTIVES.map(({ text, icon: Icon }, index) => (
+                <div
+                  key={text}
+                  className="rounded-md border border-cyan-300/25 bg-slate-950/60 px-3.5 py-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-cyan-200/45 bg-cyan-950/35 text-cyan-100">
+                      <Icon className="h-4.5 w-4.5" strokeWidth={2.2} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-mono text-[clamp(0.8rem,0.68vw,1.06rem)] uppercase tracking-[0.1em] text-cyan-100/70">
+                        Directive {index + 1}
+                      </p>
+                      <p className="mt-1 text-[clamp(1.02rem,0.9vw,1.44rem)] leading-snug text-cyan-100/90">
+                        {text}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </ol>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -348,7 +379,13 @@ export function MissionBriefingContentSlide() {
   );
 }
 
-export function MissionBriefingVisualsSlide({ missionState }: { missionState: MissionState }) {
+export function MissionBriefingVisualsSlide({
+  missionState,
+  nowMs,
+}: {
+  missionState: MissionState;
+  nowMs: number;
+}) {
   return (
     <div className="grid h-full min-h-0 gap-4 lg:grid-cols-12">
       <Card className="mission-panel min-h-0 flex flex-col lg:col-span-7">
@@ -382,7 +419,7 @@ export function MissionBriefingVisualsSlide({ missionState }: { missionState: Mi
               Command Note
             </p>
             <p className="mt-1 text-[clamp(0.96rem,0.82vw,1.28rem)] text-cyan-100">
-              {primaryCrewLine(missionState)}
+              {getMissionCommandNote(missionState, nowMs)}
             </p>
           </div>
           <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2.5 sm:col-span-2">

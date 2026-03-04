@@ -16,6 +16,8 @@ import { MissionBriefingContentSlide, MissionBriefingVisualsSlide } from "@/comp
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
+import { RUNTIME_BUCKETS } from "@/lib/runtime-buckets";
+import type { TapeRecord } from "@/lib/types";
 
 const SLIDE_INTERVAL_MS = 20000;
 const MISSION_CHART_CLASS =
@@ -36,6 +38,78 @@ function formatProjectedLaunch(value?: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "TBD";
   return format(parsed, "yyyy-MM-dd HH:mm:ss");
+}
+
+function runtimeMinutesForTape(tape: TapeRecord, fallbackMinutes: number) {
+  const value = tape.labelRuntimeMinutes ?? tape.qtRuntimeMinutes ?? tape.finalClipDurationMinutes;
+  if (value == null || !Number.isFinite(value) || value < 0) return fallbackMinutes;
+  return value;
+}
+
+function toDateKey(value?: string) {
+  if (!value) return undefined;
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return undefined;
+  return format(new Date(parsed), "yyyy-MM-dd");
+}
+
+function buildRuntimeHoursByDate({
+  tapes,
+  dates,
+  fallbackMinutes,
+  pickDate,
+}: {
+  tapes: TapeRecord[];
+  dates: Array<{ date: string }>;
+  fallbackMinutes: number;
+  pickDate: (tape: TapeRecord) => string | undefined;
+}) {
+  const minutesByDate = new Map<string, number>();
+  for (const tape of tapes) {
+    const key = pickDate(tape);
+    if (!key) continue;
+    minutesByDate.set(
+      key,
+      (minutesByDate.get(key) ?? 0) + runtimeMinutesForTape(tape, fallbackMinutes)
+    );
+  }
+
+  return dates.map((row) => ({
+    date: row.date,
+    count: Number((((minutesByDate.get(row.date) ?? 0) / 60)).toFixed(2)),
+  }));
+}
+
+function bucketForRuntime(minutes: number) {
+  for (const bucket of RUNTIME_BUCKETS) {
+    if (minutes < bucket.min) continue;
+    if (bucket.max == null || minutes <= bucket.max) return bucket.key;
+  }
+  return RUNTIME_BUCKETS[RUNTIME_BUCKETS.length - 1].key;
+}
+
+function buildRuntimeHistogramHours(
+  tapes: TapeRecord[],
+  field: "label" | "qt" | "final"
+) {
+  const bucketMinutes = new Map<string, number>(RUNTIME_BUCKETS.map((bucket) => [bucket.key, 0]));
+
+  for (const tape of tapes) {
+    const value =
+      field === "label"
+        ? tape.labelRuntimeMinutes
+        : field === "qt"
+          ? tape.qtRuntimeMinutes
+          : tape.finalClipDurationMinutes;
+    if (value == null || !Number.isFinite(value) || value < 0) continue;
+    const bucket = bucketForRuntime(value);
+    bucketMinutes.set(bucket, (bucketMinutes.get(bucket) ?? 0) + value);
+  }
+
+  return RUNTIME_BUCKETS.map((bucket) => ({
+    bucket: bucket.key,
+    count: Number((((bucketMinutes.get(bucket.key) ?? 0) / 60)).toFixed(2)),
+  }));
 }
 
 function countdownParts(totalSeconds: number) {
@@ -95,9 +169,46 @@ export default function PresentationPage() {
 
   const stageData = useMemo(
     () =>
-      data?.stageCounts.map((row) => ({ stage: stageLabel(row.stage), count: row.count })) ?? [],
-    [data?.stageCounts]
+      data?.stageCounts.map((row) => {
+        const runtimeMinutes = data.missionState.runtime.stageMinutes[row.stage] ?? 0;
+        const runtimeWeighted = data.missionState.runtime.coveragePercent > 0;
+        const count = runtimeWeighted ? Number((runtimeMinutes / 60).toFixed(1)) : row.count;
+        return { stage: stageLabel(row.stage), count };
+      }) ?? [],
+    [data?.stageCounts, data?.missionState.runtime.coveragePercent, data?.missionState.runtime.stageMinutes]
   );
+  const runtimeDailyBars = useMemo(() => {
+    if (!data || data.missionState.runtime.coveragePercent <= 0) return null;
+    const fallbackMinutes = data.missionState.runtime.fallbackMinutesPerTape;
+    return {
+      captured: buildRuntimeHoursByDate({
+        tapes: data.tapes,
+        dates: data.capturedDaily,
+        fallbackMinutes,
+        pickDate: (tape) => toDateKey(tape.capturedAt),
+      }),
+      cataloged: buildRuntimeHoursByDate({
+        tapes: data.tapes,
+        dates: data.acquisitionDaily,
+        fallbackMinutes,
+        pickDate: (tape) => toDateKey(tape.updatedTime ?? tape.acquisitionAt ?? tape.receivedDate),
+      }),
+      content: buildRuntimeHoursByDate({
+        tapes: data.tapes,
+        dates: data.contentRecordedDaily,
+        fallbackMinutes,
+        pickDate: (tape) => toDateKey(tape.contentRecordedAt),
+      }),
+    };
+  }, [data]);
+  const runtimeHistogramBars = useMemo(() => {
+    if (!data || data.missionState.runtime.coveragePercent <= 0) return null;
+    return {
+      label: buildRuntimeHistogramHours(data.tapes, "label"),
+      qt: buildRuntimeHistogramHours(data.tapes, "qt"),
+      final: buildRuntimeHistogramHours(data.tapes, "final"),
+    };
+  }, [data]);
   const projectedLaunchMs = useMemo(() => {
     if (!data?.launchProjection.projectedLaunchAt) return null;
     const parsed = Date.parse(data.launchProjection.projectedLaunchAt);
@@ -116,51 +227,6 @@ export default function PresentationPage() {
       : !deadlineCountdown
         ? "TELEMETRY PENDING"
       : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`;
-  const captureLaunchSummary = useMemo(() => {
-    if (!data) return null;
-
-    const throughputWindowDays = 21;
-    const captureBacklogCount = Math.max(0, data.kpis.totalTapes - data.kpis.capturedCount);
-    const recentCapturedCount = data.capturedDaily
-      .slice(-throughputWindowDays)
-      .reduce((sum, day) => sum + day.count, 0);
-
-    let captureThroughputPerDay = recentCapturedCount / throughputWindowDays;
-    let source = `captured-at (${throughputWindowDays}d window)`;
-
-    if (captureThroughputPerDay <= 0 && data.kpis.capturedCount > 0) {
-      const timelineStartCandidates = data.tapes
-        .map((tape) => {
-          const raw = tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.capturedAt;
-          if (!raw) return null;
-          const parsed = Date.parse(raw);
-          return Number.isFinite(parsed) ? parsed : null;
-        })
-        .filter((timestamp): timestamp is number => timestamp != null);
-
-      if (timelineStartCandidates.length > 0) {
-        const timelineStartMs = Math.min(...timelineStartCandidates);
-        const activeDays = Math.max(1, Math.floor((Date.now() - timelineStartMs) / 86400000) + 1);
-        captureThroughputPerDay = data.kpis.capturedCount / activeDays;
-        source = "historical capture ratio";
-      }
-    }
-
-    const throughputPerDay = Number(captureThroughputPerDay.toFixed(2));
-    const estimatedDaysRemaining =
-      captureBacklogCount === 0
-        ? 0
-        : throughputPerDay > 0
-          ? Number((captureBacklogCount / throughputPerDay).toFixed(1))
-          : undefined;
-
-    return {
-      backlogCount: captureBacklogCount,
-      throughputPerDay,
-      estimatedDaysRemaining,
-      source,
-    };
-  }, [data]);
 
   const baseSlides = [
     {
@@ -232,7 +298,7 @@ export default function PresentationPage() {
       key: "lore-briefing-visuals",
       title: "Mission Briefing",
       subtitle: "Route and crew stations for the NoCap to Meridia mission.",
-      content: data ? <MissionBriefingVisualsSlide missionState={data.missionState} /> : null,
+      content: data ? <MissionBriefingVisualsSlide missionState={data.missionState} nowMs={nowMs} /> : null,
     },
     {
       key: "launch",
@@ -243,21 +309,10 @@ export default function PresentationPage() {
           <div className="md:col-span-3">
             <LaunchCountdown
               projection={data.launchProjection}
-              kpis={data.kpis}
+              missionState={data.missionState}
               deadlineAt={data.missionState.deadline.iso}
               className="h-full"
               showFrameHeader={false}
-              summaryOverride={
-                captureLaunchSummary
-                  ? {
-                      backlogCount: captureLaunchSummary.backlogCount,
-                      throughputPerDay: captureLaunchSummary.throughputPerDay,
-                      estimatedDaysRemaining: captureLaunchSummary.estimatedDaysRemaining,
-                      labelPrefix: "Capture",
-                      throughputUnit: "tapes/day",
-                    }
-                  : undefined
-              }
             />
           </div>
           <div className="md:col-span-2 grid gap-4 sm:grid-cols-2 md:grid-cols-1 [@media(min-width:2800px)]:grid-cols-2">
@@ -274,10 +329,15 @@ export default function PresentationPage() {
             <Card className="mission-panel">
               <CardContent className="py-4">
                 <p className="text-[clamp(0.88rem,0.74vw,1.24rem)] uppercase tracking-[0.16em] text-cyan-100/65">
-                  Completion Status
+                  {data.launchProjection.runtimeCoveragePercent > 0 ? "Runtime Completed" : "Completion Status"}
                 </p>
                 <p className="mt-1 text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
-                  {data.launchProjection.completedCount}/{data.kpis.totalTapes}
+                  {data.launchProjection.runtimeCoveragePercent > 0
+                    ? `${formatDurationHMSFromMinutes(data.launchProjection.completedRuntimeMinutes)} / ${formatDurationHMSFromMinutes(data.missionState.runtime.totalMinutes)}`
+                    : `${data.launchProjection.completedCount}/${data.kpis.totalTapes}`}
+                </p>
+                <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
+                  Tape count: {data.launchProjection.completedCount}/{data.kpis.totalTapes}
                 </p>
               </CardContent>
             </Card>
@@ -287,10 +347,13 @@ export default function PresentationPage() {
                   Velocity
                 </p>
                 <p className="mt-1 font-mono text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
-                  {(captureLaunchSummary?.throughputPerDay ?? data.launchProjection.throughputPerDay).toFixed(2)}
+                  {data.launchProjection.throughputUnit === "runtime-minutes/day"
+                    ? formatDurationHMSFromMinutes(data.launchProjection.throughputPerDay)
+                    : data.launchProjection.throughputPerDay.toFixed(2)}
                 </p>
                 <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
-                  tapes/day ({captureLaunchSummary?.source ?? data.launchProjection.source})
+                  {data.launchProjection.throughputUnit === "runtime-minutes/day" ? "runtime/day" : "tapes/day"} (
+                  {data.launchProjection.source})
                 </p>
               </CardContent>
             </Card>
@@ -303,7 +366,8 @@ export default function PresentationPage() {
                   {data.launchProjection.confidence}
                 </p>
                 <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
-                  Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}%
+                  Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}% | Runtime coverage:{" "}
+                  {data.launchProjection.runtimeCoveragePercent}%
                 </p>
               </CardContent>
             </Card>
@@ -314,12 +378,17 @@ export default function PresentationPage() {
     {
       key: "overview",
       title: "Stage Distribution",
-      subtitle: "Current pipeline load by stage",
+      subtitle:
+        data && data.missionState.runtime.coveragePercent > 0
+          ? "Runtime-weighted pipeline load (hours) by stage"
+          : "Current pipeline load by stage",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-5">
           <Card className="mission-panel md:col-span-3">
             <CardHeader>
-              <CardTitle className="text-cyan-50">Stage Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {data.missionState.runtime.coveragePercent > 0 ? "Stage Runtime Load (hours)" : "Stage Distribution"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <PipelineFlowChart data={stageData} theme="mission" className={MISSION_PIPELINE_CHART_CLASS} />
@@ -351,20 +420,30 @@ export default function PresentationPage() {
     {
       key: "throughput",
       title: "Cataloged + Capture Throughput",
-      subtitle: "Last 30 days",
+      subtitle:
+        data && runtimeDailyBars
+          ? "Runtime-weighted bars (hours) with tape-count context"
+          : "Last 30 days",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-3">
           <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
-              <CardTitle className="text-cyan-50">Captured Per Day</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {runtimeDailyBars ? "Captured Runtime Per Day" : "Captured Per Day"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col">
               {data.capturedDateCoveragePercent > 0 ? (
                 <>
                   <p className="mb-2 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
                     Coverage: {data.capturedDateCoveragePercent}% have capture timestamps
+                    {runtimeDailyBars ? ` | Runtime coverage: ${data.missionState.runtime.coveragePercent}%` : ""}
                   </p>
-                  <AcquisitionChart data={data.capturedDaily} theme="mission" className={MISSION_CHART_CLASS} />
+                  <AcquisitionChart
+                    data={runtimeDailyBars?.captured ?? data.capturedDaily}
+                    theme="mission"
+                    className={MISSION_CHART_CLASS}
+                  />
                 </>
               ) : (
                 <div className="flex h-[260px] items-center justify-center text-center text-sm text-cyan-100/65">
@@ -375,24 +454,38 @@ export default function PresentationPage() {
           </Card>
           <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
-              <CardTitle className="text-cyan-50">Cataloged Per Day</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {runtimeDailyBars ? "Cataloged Runtime Per Day" : "Cataloged Per Day"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col">
-              <AcquisitionChart data={data.acquisitionDaily} theme="mission" className={MISSION_CHART_CLASS} />
+              {runtimeDailyBars ? (
+                <p className="mb-2 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
+                  Runtime-weighted bars. Tape counts remain in KPI cards and feed tables.
+                </p>
+              ) : null}
+              <AcquisitionChart
+                data={runtimeDailyBars?.cataloged ?? data.acquisitionDaily}
+                theme="mission"
+                className={MISSION_CHART_CLASS}
+              />
             </CardContent>
           </Card>
           <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
-              <CardTitle className="text-cyan-50">Projected Source Recording Timeline</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {runtimeDailyBars ? "Source Recording Runtime Timeline" : "Projected Source Recording Timeline"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col">
               {data.contentRecordedCoveragePercent > 0 ? (
                 <>
                   <p className="mb-2 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
                     Coverage: {data.contentRecordedCoveragePercent}% have content recorded dates
+                    {runtimeDailyBars ? ` | Runtime coverage: ${data.missionState.runtime.coveragePercent}%` : ""}
                   </p>
                   <AcquisitionChart
-                    data={data.contentRecordedDaily}
+                    data={runtimeDailyBars?.content ?? data.contentRecordedDaily}
                     theme="mission"
                     className={MISSION_CHART_CLASS}
                   />
@@ -412,11 +505,7 @@ export default function PresentationPage() {
       title: "Interplanetary Vessel Assembly",
       subtitle: "Capture builds the vessel while Trim + Combine lock mission planning.",
       content: data ? (
-        <SpaceshipAssemblySlide
-          kpis={data.kpis}
-          stageCounts={data.stageCounts}
-          missionState={data.missionState}
-        />
+        <SpaceshipAssemblySlide missionState={data.missionState} />
       ) : null,
     },
     {
@@ -433,31 +522,56 @@ export default function PresentationPage() {
     {
       key: "runtime",
       title: "Runtime Intelligence",
-      subtitle: "Distribution by source/output runtime fields",
+      subtitle: runtimeHistogramBars
+        ? "Runtime-volume bars (hours) by source/output fields"
+        : "Distribution by source/output runtime fields",
       content: data ? (
         <div className="grid h-full gap-4 md:grid-cols-3">
           <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
-              <CardTitle className="text-cyan-50">Meeting Runtime Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {runtimeHistogramBars ? "Meeting Runtime Volume (hours)" : "Meeting Runtime Distribution"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col">
-              <HistogramChart data={data.runtimeHistograms.labelRuntime} theme="mission" className={MISSION_CHART_CLASS} />
+              {runtimeHistogramBars ? (
+                <p className="mb-2 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
+                  Bars show runtime hours per bucket. Tape counts remain in KPI cards and drilldown rows.
+                </p>
+              ) : null}
+              <HistogramChart
+                data={runtimeHistogramBars?.label ?? data.runtimeHistograms.labelRuntime}
+                theme="mission"
+                className={MISSION_CHART_CLASS}
+              />
             </CardContent>
           </Card>
           <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
-              <CardTitle className="text-cyan-50">QT Runtime Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {runtimeHistogramBars ? "QT Runtime Volume (hours)" : "QT Runtime Distribution"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col">
-              <HistogramChart data={data.runtimeHistograms.qtRuntime} theme="mission" className={MISSION_CHART_CLASS} />
+              <HistogramChart
+                data={runtimeHistogramBars?.qt ?? data.runtimeHistograms.qtRuntime}
+                theme="mission"
+                className={MISSION_CHART_CLASS}
+              />
             </CardContent>
           </Card>
           <Card className="mission-panel flex h-full flex-col">
             <CardHeader>
-              <CardTitle className="text-cyan-50">Final Runtime Distribution</CardTitle>
+              <CardTitle className="text-cyan-50">
+                {runtimeHistogramBars ? "Final Runtime Volume (hours)" : "Final Runtime Distribution"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col">
-              <HistogramChart data={data.runtimeHistograms.finalRuntime} theme="mission" className={MISSION_CHART_CLASS} />
+              <HistogramChart
+                data={runtimeHistogramBars?.final ?? data.runtimeHistograms.finalRuntime}
+                theme="mission"
+                className={MISSION_CHART_CLASS}
+              />
             </CardContent>
           </Card>
         </div>

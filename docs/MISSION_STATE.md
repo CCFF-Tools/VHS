@@ -100,6 +100,28 @@ type MissionState = {
     colonization: number;        // 0..1
   };
 
+  runtime: {
+    totalMinutes: number;        // weighted total runtime minutes across all tapes
+    knownMinutes: number;        // sum of explicit runtime values (label/qt/final fallback chain)
+    coveragePercent: number;     // tapes with explicit runtime values
+    fallbackMinutesPerTape: number; // imputed minutes for missing runtime rows
+    stageMinutes: Record<Stage, number>;
+    cumulativeMinutes: {
+      captureOrBetter: number;
+      trimOrBetter: number;
+      combineOrBetter: number;
+      transferOrBetter: number;
+      archived: number;
+    };
+    progress: {
+      captureOrBetter: number;   // 0..1 runtime-weighted
+      trimOrBetter: number;      // 0..1 runtime-weighted
+      combineOrBetter: number;   // 0..1 runtime-weighted
+      transferOrBetter: number;  // 0..1 runtime-weighted
+      archived: number;          // 0..1 runtime-weighted
+    };
+  };
+
   milestones: {
     assembly: AssemblyMilestone;
     planning: PlanningMilestone;

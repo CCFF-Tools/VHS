@@ -16,7 +16,8 @@ import { TapeDrilldownDrawer } from "@/components/drilldown/tape-drilldown-drawe
 import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
-import { runtimeBucketToRange } from "@/lib/runtime-buckets";
+import { RUNTIME_BUCKETS, runtimeBucketToRange } from "@/lib/runtime-buckets";
+import type { TapeRecord } from "@/lib/types";
 
 function formatDateTime(value?: string) {
   if (!value) return "n/a";
@@ -25,6 +26,78 @@ function formatDateTime(value?: string) {
   } catch {
     return value;
   }
+}
+
+function runtimeMinutesForTape(tape: TapeRecord, fallbackMinutes: number) {
+  const value = tape.labelRuntimeMinutes ?? tape.qtRuntimeMinutes ?? tape.finalClipDurationMinutes;
+  if (value == null || !Number.isFinite(value) || value < 0) return fallbackMinutes;
+  return value;
+}
+
+function toDateKey(value?: string) {
+  if (!value) return undefined;
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return undefined;
+  return format(new Date(parsed), "yyyy-MM-dd");
+}
+
+function buildRuntimeHoursByDate({
+  tapes,
+  dates,
+  fallbackMinutes,
+  pickDate,
+}: {
+  tapes: TapeRecord[];
+  dates: Array<{ date: string }>;
+  fallbackMinutes: number;
+  pickDate: (tape: TapeRecord) => string | undefined;
+}) {
+  const minutesByDate = new Map<string, number>();
+  for (const tape of tapes) {
+    const key = pickDate(tape);
+    if (!key) continue;
+    minutesByDate.set(
+      key,
+      (minutesByDate.get(key) ?? 0) + runtimeMinutesForTape(tape, fallbackMinutes)
+    );
+  }
+
+  return dates.map((row) => ({
+    date: row.date,
+    count: Number((((minutesByDate.get(row.date) ?? 0) / 60)).toFixed(2)),
+  }));
+}
+
+function bucketForRuntime(minutes: number) {
+  for (const bucket of RUNTIME_BUCKETS) {
+    if (minutes < bucket.min) continue;
+    if (bucket.max == null || minutes <= bucket.max) return bucket.key;
+  }
+  return RUNTIME_BUCKETS[RUNTIME_BUCKETS.length - 1].key;
+}
+
+function buildRuntimeHistogramHours(
+  tapes: TapeRecord[],
+  field: "label" | "qt" | "final"
+) {
+  const bucketMinutes = new Map<string, number>(RUNTIME_BUCKETS.map((bucket) => [bucket.key, 0]));
+
+  for (const tape of tapes) {
+    const value =
+      field === "label"
+        ? tape.labelRuntimeMinutes
+        : field === "qt"
+          ? tape.qtRuntimeMinutes
+          : tape.finalClipDurationMinutes;
+    if (value == null || !Number.isFinite(value) || value < 0) continue;
+    const bucket = bucketForRuntime(value);
+    bucketMinutes.set(bucket, (bucketMinutes.get(bucket) ?? 0) + value);
+  }
+
+  return RUNTIME_BUCKETS.map((bucket) => ({
+    bucket: bucket.key,
+    count: Number((((bucketMinutes.get(bucket.key) ?? 0) / 60)).toFixed(2)),
+  }));
 }
 
 function HomePageContent() {
@@ -168,6 +241,39 @@ function HomePageContent() {
     const start = (page - 1) * size;
     return data.recentAcquisitions.slice(start, start + size);
   }, [data, page, rowsPerPage]);
+  const runtimeChartMode = (data?.missionState.runtime.coveragePercent ?? 0) > 0;
+  const runtimeDailyBars = useMemo(() => {
+    if (!data || !runtimeChartMode) return null;
+    const fallbackMinutes = data.missionState.runtime.fallbackMinutesPerTape;
+    return {
+      captured: buildRuntimeHoursByDate({
+        tapes: data.tapes,
+        dates: data.capturedDaily,
+        fallbackMinutes,
+        pickDate: (tape) => toDateKey(tape.capturedAt),
+      }),
+      cataloged: buildRuntimeHoursByDate({
+        tapes: data.tapes,
+        dates: data.acquisitionDaily,
+        fallbackMinutes,
+        pickDate: (tape) => toDateKey(tape.updatedTime ?? tape.acquisitionAt ?? tape.receivedDate),
+      }),
+      content: buildRuntimeHoursByDate({
+        tapes: data.tapes,
+        dates: data.contentRecordedDaily,
+        fallbackMinutes,
+        pickDate: (tape) => toDateKey(tape.contentRecordedAt),
+      }),
+    };
+  }, [data, runtimeChartMode]);
+  const runtimeHistogramBars = useMemo(() => {
+    if (!data || !runtimeChartMode) return null;
+    return {
+      label: buildRuntimeHistogramHours(data.tapes, "label"),
+      qt: buildRuntimeHistogramHours(data.tapes, "qt"),
+      final: buildRuntimeHistogramHours(data.tapes, "final"),
+    };
+  }, [data, runtimeChartMode]);
 
   return (
     <div>
@@ -199,14 +305,23 @@ function HomePageContent() {
           <section className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Workflow Stage Counts</CardTitle>
+                <CardTitle>
+                  {runtimeChartMode ? "Workflow Stage Runtime Load (hours)" : "Workflow Stage Counts"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
+                {runtimeChartMode ? (
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Bars are runtime-weighted. Tape counts remain in KPI cards and drilldowns.
+                  </p>
+                ) : null}
                 <PipelineFlowChart
                   data={data.stageCounts.map((s) => ({
                     stage: stageLabel(s.stage),
                     stageRaw: s.stage,
-                    count: s.count,
+                    count: runtimeChartMode
+                      ? Number((((data.missionState.runtime.stageMinutes[s.stage] ?? 0) / 60)).toFixed(1))
+                      : s.count,
                   }))}
                   onBarClick={onStageClick}
                   activeStageRaw={drilldown.stage}
@@ -216,16 +331,17 @@ function HomePageContent() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Captured Per Day (30d)</CardTitle>
+                <CardTitle>{runtimeChartMode ? "Captured Runtime Per Day (30d)" : "Captured Per Day (30d)"}</CardTitle>
               </CardHeader>
               <CardContent>
                 {data.capturedDateCoveragePercent > 0 ? (
                   <>
                     <p className="mb-2 text-xs text-muted-foreground">
                       Capture date coverage: {data.capturedDateCoveragePercent}%
+                      {runtimeChartMode ? ` | Runtime coverage: ${data.missionState.runtime.coveragePercent}%` : ""}
                     </p>
                     <AcquisitionChart
-                      data={data.capturedDaily}
+                      data={runtimeDailyBars?.captured ?? data.capturedDaily}
                       onBarClick={onDateClick("captured", "Captured Date")}
                       activeDate={drilldown.dateField === "captured" ? drilldown.date : undefined}
                     />
@@ -243,11 +359,16 @@ function HomePageContent() {
           <section className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Cataloged Per Day (30d)</CardTitle>
+                <CardTitle>{runtimeChartMode ? "Cataloged Runtime Per Day (30d)" : "Cataloged Per Day (30d)"}</CardTitle>
               </CardHeader>
               <CardContent>
+                {runtimeChartMode ? (
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Runtime-weighted bars. Tape counts remain available in KPI cards.
+                  </p>
+                ) : null}
                 <AcquisitionChart
-                  data={data.acquisitionDaily}
+                  data={runtimeDailyBars?.cataloged ?? data.acquisitionDaily}
                   onBarClick={onDateClick("cataloged", "Cataloged Date")}
                   activeDate={drilldown.dateField === "cataloged" ? drilldown.date : undefined}
                 />
@@ -256,16 +377,19 @@ function HomePageContent() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Original Content Recorded Timeline</CardTitle>
+                <CardTitle>
+                  {runtimeChartMode ? "Original Content Runtime Timeline" : "Original Content Recorded Timeline"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {data.contentRecordedCoveragePercent > 0 ? (
                   <>
                     <p className="mb-2 text-xs text-muted-foreground">
                       Original content date coverage: {data.contentRecordedCoveragePercent}%
+                      {runtimeChartMode ? ` | Runtime coverage: ${data.missionState.runtime.coveragePercent}%` : ""}
                     </p>
                     <AcquisitionChart
-                      data={data.contentRecordedDaily}
+                      data={runtimeDailyBars?.content ?? data.contentRecordedDaily}
                       onBarClick={onDateClick("content", "Recorded Date")}
                       activeDate={drilldown.dateField === "content" ? drilldown.date : undefined}
                     />
@@ -283,11 +407,18 @@ function HomePageContent() {
           <section className="grid gap-4 lg:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle>Meeting Runtime Distribution</CardTitle>
+                <CardTitle>
+                  {runtimeChartMode ? "Meeting Runtime Volume by Bucket (hours)" : "Meeting Runtime Distribution"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
+                {runtimeChartMode ? (
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Bars show runtime hours in each bucket. Drilldowns still return tape rows.
+                  </p>
+                ) : null}
                 <HistogramChart
-                  data={data.runtimeHistograms.labelRuntime}
+                  data={runtimeHistogramBars?.label ?? data.runtimeHistograms.labelRuntime}
                   onBarClick={onRuntimeBucketClick("label", "Meeting Runtime")}
                   activeBucket={drilldown.runtimeField === "label" ? drilldown.bucket : undefined}
                 />
@@ -296,11 +427,13 @@ function HomePageContent() {
 
             <Card>
               <CardHeader>
-                <CardTitle>QT Runtime Distribution</CardTitle>
+                <CardTitle>
+                  {runtimeChartMode ? "QT Runtime Volume by Bucket (hours)" : "QT Runtime Distribution"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <HistogramChart
-                  data={data.runtimeHistograms.qtRuntime}
+                  data={runtimeHistogramBars?.qt ?? data.runtimeHistograms.qtRuntime}
                   onBarClick={onRuntimeBucketClick("qt", "QT Runtime")}
                   activeBucket={drilldown.runtimeField === "qt" ? drilldown.bucket : undefined}
                 />
@@ -309,11 +442,13 @@ function HomePageContent() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Final Runtime Distribution</CardTitle>
+                <CardTitle>
+                  {runtimeChartMode ? "Final Runtime Volume by Bucket (hours)" : "Final Runtime Distribution"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <HistogramChart
-                  data={data.runtimeHistograms.finalRuntime}
+                  data={runtimeHistogramBars?.final ?? data.runtimeHistograms.finalRuntime}
                   onBarClick={onRuntimeBucketClick("final", "Final Runtime")}
                   activeBucket={drilldown.runtimeField === "final" ? drilldown.bucket : undefined}
                 />

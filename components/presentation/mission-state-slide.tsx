@@ -100,6 +100,7 @@ export function MissionStateSlide({
           <CardTitle className="text-cyan-50">Mission State Contract</CardTitle>
           <p className="text-[clamp(0.8rem,0.64vw,1.1rem)] text-cyan-100/75">
             Core Cascade pressure model mapped to assembly, planning, and colonization.
+            Runtime-weighted coverage: {missionState.runtime.coveragePercent}%.
           </p>
         </CardHeader>
         <CardContent className="min-h-0 space-y-4 overflow-auto pr-1">

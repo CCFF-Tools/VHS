@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AssemblyMilestone, DashboardKpis, MissionState, OpsSummaryResponse, Stage } from "@/lib/types";
+import type { AssemblyMilestone, MissionState } from "@/lib/types";
 
 const ASSEMBLY_PHASE_COPY: Record<AssemblyMilestone, { name: string; detail: string }> = {
   blueprints: {
@@ -40,11 +40,6 @@ function percent(value: number) {
   return `${Math.round(clamp01(value) * 100)}%`;
 }
 
-function ratio(value: number, total: number) {
-  if (total <= 0) return 0;
-  return clamp01(value / total);
-}
-
 function partOpacity(value: number) {
   return 0.15 + clamp01(value) * 0.85;
 }
@@ -52,24 +47,6 @@ function partOpacity(value: number) {
 function workerOpacity(value: number) {
   if (value <= 0.02) return 0;
   return 0.3 + clamp01(value) * 0.7;
-}
-
-function buildStageMap(stageCounts: OpsSummaryResponse["stageCounts"]) {
-  const map: Record<Stage, number> = {
-    Intake: 0,
-    Capture: 0,
-    Trim: 0,
-    Combine: 0,
-    Transfer: 0,
-    Archived: 0,
-    Blocked: 0,
-  };
-
-  for (const row of stageCounts) {
-    map[row.stage] = (map[row.stage] ?? 0) + row.count;
-  }
-
-  return map;
 }
 
 function KerbalCrew({
@@ -271,25 +248,15 @@ function KerbalCrew({
 }
 
 export function SpaceshipAssemblySlide({
-  kpis,
-  stageCounts,
   missionState,
 }: {
-  kpis: DashboardKpis;
-  stageCounts: OpsSummaryResponse["stageCounts"];
   missionState: MissionState;
 }) {
-  const counts = buildStageMap(stageCounts);
-  const total = kpis.totalTapes;
-
-  const captureOrBetter = ratio(
-    counts.Capture + counts.Trim + counts.Combine + counts.Transfer + counts.Archived,
-    total
-  );
-  const trimOrBetter = ratio(counts.Trim + counts.Combine + counts.Transfer + counts.Archived, total);
-  const combineOrBetter = ratio(counts.Combine + counts.Transfer + counts.Archived, total);
-  const transferOrBetter = ratio(counts.Transfer + counts.Archived, total);
-  const archivedRatio = ratio(counts.Archived, total);
+  const captureOrBetter = missionState.runtime.progress.captureOrBetter;
+  const trimOrBetter = missionState.runtime.progress.trimOrBetter;
+  const combineOrBetter = missionState.runtime.progress.combineOrBetter;
+  const transferOrBetter = missionState.runtime.progress.transferOrBetter;
+  const archivedRatio = missionState.runtime.progress.archived;
   const overallProgress = missionState.progress.assembly;
 
   const phase = ASSEMBLY_PHASE_COPY[missionState.milestones.assembly];
@@ -350,6 +317,9 @@ export function SpaceshipAssemblySlide({
               </p>
               <CardTitle className="mt-1 text-[clamp(1.65rem,1.86vw,2.9rem)] text-cyan-50">{phase.name}</CardTitle>
               <p className="mt-1 text-[clamp(0.96rem,0.84vw,1.34rem)] text-cyan-100/75">{phase.detail}</p>
+              <p className="mt-1 text-[clamp(0.78rem,0.66vw,1.02rem)] font-mono uppercase tracking-[0.12em] text-cyan-100/60">
+                Runtime-weighted (coverage {missionState.runtime.coveragePercent}%)
+              </p>
             </div>
             <div className="rounded-md border border-cyan-300/30 bg-slate-900/80 px-4 py-2 text-right">
               <p className="text-[clamp(0.84rem,0.72vw,1.12rem)] uppercase tracking-[0.16em] text-cyan-100/60">

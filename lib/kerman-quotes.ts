@@ -611,6 +611,158 @@ export const KERMAN_QUOTE_BANK: readonly KermanQuote[] = [
   },
 ] as const;
 
+export interface CommandNote {
+  line: string;
+  tags: readonly string[];
+}
+
+const COMMAND_NOTE_BANK: readonly CommandNote[] = [
+  {
+    line: "Genev: Vector is steady. Keep capture feeding archiving and keep the heroics to a minimum.",
+    tags: ["general", "launch_ready", "capture_push", "seal_push", "deadline_inside"],
+  },
+  {
+    line: "Genev: We do not need miracles; we need clean handoffs and zero orphaned tasks.",
+    tags: ["general", "launch_hold", "planning_push", "quarantine"],
+  },
+  {
+    line: "Genev: Confirm the checklist, trust the telemetry, and earn the cinematic ending.",
+    tags: ["general", "launch_ready", "planning_push"],
+  },
+  {
+    line: "Dexrin: Window margin is positive, but only if this queue stops breeding after midnight.",
+    tags: ["general", "deadline_inside", "launch_hold", "capture_push"],
+  },
+  {
+    line: "Dexrin: Signal Fade is inside prediction bounds and outside our comfort zone.",
+    tags: ["general", "deadline_missed", "magnetic"],
+  },
+  {
+    line: "Dexrin: Tighten every handoff; delay compounds faster than optimism.",
+    tags: ["general", "launch_hold", "planning_push", "deadline_inside"],
+  },
+  {
+    line: "Rivet: Capture lane is hot. Route fragile stock first and keep the transport gentle.",
+    tags: ["general", "capture_push", "magnetic", "launch_ready"],
+  },
+  {
+    line: "Rivet: One clean pass is worth three dramatic retries and one sad postmortem.",
+    tags: ["general", "capture_push", "launch_hold"],
+  },
+  {
+    line: "Rivet: Hull growth tracks captured minutes, not motivational speeches.",
+    tags: ["general", "capture_push", "launch_ready"],
+  },
+  {
+    line: "Paxlo: Guidance stack check. Trim and Combine remain phase-locked.",
+    tags: ["general", "planning_push", "launch_ready"],
+  },
+  {
+    line: "Paxlo: Resolve near-complete edits now. Partial work does not survive reentry.",
+    tags: ["general", "planning_push", "launch_hold"],
+  },
+  {
+    line: "Paxlo: No improv at ignition. Use the process, then enjoy the applause.",
+    tags: ["general", "planning_push", "seal_push"],
+  },
+  {
+    line: "Splicia: Integration pass is clean, and metadata still remembers what it is.",
+    tags: ["general", "planning_push", "launch_ready"],
+  },
+  {
+    line: "Splicia: Any fuzzy provenance goes to quarantine before it contaminates transfer.",
+    tags: ["general", "planning_push", "quarantine", "seal_push"],
+  },
+  {
+    line: "Splicia: If future-you cannot trace it in ten seconds, it is not mission-ready.",
+    tags: ["general", "planning_push", "launch_hold"],
+  },
+  {
+    line: "Mallo: Pad ops green. Checksums agree and runtime audits are in family.",
+    tags: ["general", "seal_push", "launch_ready"],
+  },
+  {
+    line: "Mallo: No partial verification. This launch does not have a stunt double.",
+    tags: ["general", "seal_push", "launch_hold"],
+  },
+  {
+    line: "Mallo: Stage transfers in batches. Cluster failures are for disaster films.",
+    tags: ["general", "seal_push", "quarantine"],
+  },
+  {
+    line: "Nora: Archiving tempo is good. The Stacks can feel it from orbit.",
+    tags: ["general", "archive", "stacks_growth", "launch_ready"],
+  },
+  {
+    line: "Nora: No custody trail, no trust. No trust, no colony.",
+    tags: ["general", "seal_push", "launch_hold"],
+  },
+  {
+    line: "Nora: Prioritize high-value civic records while the window still smiles at us.",
+    tags: ["general", "archive", "deadline_inside", "capture_push"],
+  },
+  {
+    line: "Bitra: Telemetry is coherent. Error bars are still annoying but no longer hostile.",
+    tags: ["general", "planning_push", "launch_ready"],
+  },
+  {
+    line: "Bitra: Close timestamp gaps now, before they become mythology.",
+    tags: ["general", "planning_push", "launch_hold"],
+  },
+  {
+    line: "Bitra: Magnetic noise is up. Prioritize records with weak signal-to-noise.",
+    tags: ["general", "magnetic", "deadline_missed", "capture_push"],
+  },
+  {
+    line: "Vexa: Quarantine board says we have blockers, not mysteries. Clear them by risk.",
+    tags: ["general", "quarantine", "launch_hold"],
+  },
+  {
+    line: "Vexa: Fast fixes without notes are just sequels with worse lighting.",
+    tags: ["general", "quarantine", "planning_push"],
+  },
+  {
+    line: "Vexa: Signal Fade plus unresolved defects equals a very short third act.",
+    tags: ["general", "quarantine", "deadline_missed", "magnetic"],
+  },
+  {
+    line: "Mira: Core Cascade variance is still rude. Sequence tasks accordingly.",
+    tags: ["general", "magnetic", "deadline_missed"],
+  },
+  {
+    line: "Mira: Entropy is undefeated, but it is not unbeatable on this shift.",
+    tags: ["general", "magnetic", "deadline_inside", "capture_push"],
+  },
+  {
+    line: "Mira: Archive what degrades fastest first. Science says that is the winning script.",
+    tags: ["general", "magnetic", "capture_push", "archive"],
+  },
+  {
+    line: "Jebrin: Capture bench nominal. Heads clean, alignment true, coffee still suspicious.",
+    tags: ["general", "capture_push", "launch_ready"],
+  },
+  {
+    line: "Jebrin: Feed me the brittle reels first. We can still pull signal from static.",
+    tags: ["general", "capture_push", "magnetic"],
+  },
+  {
+    line: "Jebrin: Gentle handling now prevents tragic restoration stories later.",
+    tags: ["general", "capture_push", "launch_hold"],
+  },
+  {
+    line: "Valdo: Runway discipline is holding. Keep queues short and decisions shorter.",
+    tags: ["general", "launch_ready", "planning_push"],
+  },
+  {
+    line: "Valdo: Gate stays closed until transfer logs read like clean math.",
+    tags: ["general", "launch_hold", "seal_push"],
+  },
+  {
+    line: "Valdo: If a lane fails twice, park it, diagnose it, and return stronger.",
+    tags: ["general", "launch_hold", "quarantine"],
+  },
+] as const;
+
 function hashString(value: string): number {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -622,6 +774,10 @@ function hashString(value: string): number {
 
 function quoteKey(quote: KermanQuote): string {
   return `${quote.speaker}|${quote.line}`;
+}
+
+function noteKey(note: CommandNote): string {
+  return note.line;
 }
 
 function stableOrder(quotes: readonly KermanQuote[], seed: number): KermanQuote[] {
@@ -774,4 +930,33 @@ export function getMissionBriefingQuotes(state: MissionState, limit = 8): Kerman
   }
 
   return pickSpeakerDiverse(stacked, cappedLimit);
+}
+
+function stableNoteOrder(notes: readonly CommandNote[], seed: number): CommandNote[] {
+  return [...notes].sort((left, right) => {
+    const leftScore = hashString(`${seed}|${noteKey(left)}`);
+    const rightScore = hashString(`${seed}|${noteKey(right)}`);
+    return leftScore - rightScore;
+  });
+}
+
+export function getMissionCommandNote(
+  state: MissionState,
+  nowMs = Date.now(),
+  rotationMs = 45000
+): string {
+  const tags = activeMissionTags(state);
+  const matching = COMMAND_NOTE_BANK.filter((note) => note.tags.some((tag) => tags.has(tag)));
+  const matchingKeys = new Set(matching.map((note) => noteKey(note)));
+  const fallback = COMMAND_NOTE_BANK.filter((note) => !matchingKeys.has(noteKey(note)));
+  const seed = missionSeed(state) + 701;
+  const ordered = [...stableNoteOrder(matching, seed), ...stableNoteOrder(fallback, seed + 37)];
+
+  if (ordered.length === 0) {
+    return "Genev: Maintain vector discipline and protect the archive.";
+  }
+
+  const safeRotationMs = Math.max(10000, rotationMs);
+  const index = Math.floor(nowMs / safeRotationMs) % ordered.length;
+  return ordered[index].line;
 }

@@ -62,13 +62,40 @@ export interface LaunchProjection {
   generatedAt: string;
   backlogCount: number;
   completedCount: number;
+  backlogRuntimeMinutes: number;
+  completedRuntimeMinutes: number;
   throughputPerDay: number;
+  throughputUnit: "runtime-minutes/day" | "tapes/day";
   throughputWindowDays: number;
   estimatedDaysRemaining?: number;
   recentCompletions: number;
+  recentRuntimeMinutes: number;
   completionDateCoveragePercent: number;
+  runtimeCoveragePercent: number;
   confidence: "high" | "medium" | "low";
-  source: "completion-dates" | "historical-count" | "none";
+  source: "completion-dates-runtime" | "historical-runtime" | "historical-count" | "none";
+}
+
+export interface MissionRuntimeProgress {
+  totalMinutes: number;
+  knownMinutes: number;
+  coveragePercent: number;
+  fallbackMinutesPerTape: number;
+  stageMinutes: Record<Stage, number>;
+  cumulativeMinutes: {
+    captureOrBetter: number;
+    trimOrBetter: number;
+    combineOrBetter: number;
+    transferOrBetter: number;
+    archived: number;
+  };
+  progress: {
+    captureOrBetter: number;
+    trimOrBetter: number;
+    combineOrBetter: number;
+    transferOrBetter: number;
+    archived: number;
+  };
 }
 
 export type MissionAxis = "assembly" | "planning" | "colonization";
@@ -137,6 +164,7 @@ export interface MissionState {
     planning: number;
     colonization: number;
   };
+  runtime: MissionRuntimeProgress;
   milestones: {
     assembly: AssemblyMilestone;
     planning: PlanningMilestone;
