@@ -409,8 +409,8 @@ export default function PresentationPage() {
     },
     {
       key: "assembly",
-      title: "Orbiter Assembly Progress",
-      subtitle: "Capture builds the ship while Trim + Combine lock mission planning.",
+      title: "Interplanetary Vessel Assembly",
+      subtitle: "Capture builds the vessel while Trim + Combine lock mission planning.",
       content: data ? (
         <SpaceshipAssemblySlide
           kpis={data.kpis}

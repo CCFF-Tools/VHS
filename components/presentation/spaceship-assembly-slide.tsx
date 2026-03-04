@@ -1,8 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { stageLabel } from "@/lib/stage-label";
 import type { AssemblyMilestone, DashboardKpis, MissionState, OpsSummaryResponse, Stage } from "@/lib/types";
-
-const CORE_STAGE_ORDER: Stage[] = ["Intake", "Capture", "Trim", "Combine", "Transfer", "Archived"];
 
 const ASSEMBLY_PHASE_COPY: Record<AssemblyMilestone, { name: string; detail: string }> = {
   blueprints: {
@@ -296,7 +293,6 @@ export function SpaceshipAssemblySlide({
   const overallProgress = missionState.progress.assembly;
 
   const phase = ASSEMBLY_PHASE_COPY[missionState.milestones.assembly];
-  const stageRows: Stage[] = counts.Blocked > 0 ? [...CORE_STAGE_ORDER, "Blocked"] : CORE_STAGE_ORDER;
 
   const milestoneRows = [
     { label: "Airframe", value: captureOrBetter, hint: "Capture+" },
@@ -604,7 +600,7 @@ export function SpaceshipAssemblySlide({
 
             <div className="absolute inset-x-2 bottom-2 grid grid-cols-12 gap-2 text-cyan-50">
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
-                <p className="text-[clamp(0.86rem,0.72vw,1.12rem)] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
+                <p className="text-[clamp(0.86rem,0.72vw,1.12rem)] uppercase tracking-[0.14em] text-cyan-100/85">Interplanetary Vessel Brief</p>
                 <p className="mt-1 text-[clamp(0.82rem,0.68vw,1.08rem)] leading-snug text-cyan-100/80">
                   Capture builds the ship. Trim + Combine lock the plan. Archiving pushes Meridia colonization.
                 </p>
@@ -620,8 +616,8 @@ export function SpaceshipAssemblySlide({
         </CardContent>
       </Card>
 
-      <div className="grid h-full min-h-0 gap-3 md:col-span-2 md:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card className="mission-panel min-h-0 flex flex-col">
+      <div className="h-full min-h-0 md:col-span-2">
+        <Card className="mission-panel flex h-full min-h-0 flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-[clamp(1.22rem,1.08vw,1.75rem)] text-cyan-50">Subsystem Completion</CardTitle>
           </CardHeader>
@@ -669,40 +665,6 @@ export function SpaceshipAssemblySlide({
                 })}
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mission-panel min-h-0 flex flex-col">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[clamp(1.22rem,1.08vw,1.75rem)] text-cyan-50">Systems to Assembly Mapping</CardTitle>
-          </CardHeader>
-          <CardContent className="min-h-0 space-y-2 overflow-auto pr-1">
-            <div className="rounded-md border border-cyan-300/20 bg-slate-900/70 p-3">
-              <p className="text-[clamp(0.84rem,0.72vw,1.12rem)] uppercase tracking-[0.15em] text-cyan-100/60">
-                Cataloged Today
-              </p>
-              <p className="mt-1 text-[clamp(1.55rem,1.68vw,2.5rem)] font-semibold text-cyan-50">{kpis.receivedToday}</p>
-            </div>
-            {stageRows.map((stage) => {
-              const count = counts[stage];
-              const share = ratio(count, total);
-              return (
-                <div key={stage} className="space-y-1">
-                  <div className="flex items-center justify-between text-[clamp(0.92rem,0.8vw,1.28rem)] text-cyan-100/80">
-                    <p className="font-mono uppercase tracking-[0.12em]">{stageLabel(stage)}</p>
-                    <p className="font-mono text-cyan-50">
-                      {count} <span className="text-cyan-100/60">({percent(share)})</span>
-                    </p>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-sky-200 transition-all duration-700"
-                      style={{ width: percent(share) }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
           </CardContent>
         </Card>
       </div>
