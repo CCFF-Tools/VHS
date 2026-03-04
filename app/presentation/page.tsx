@@ -226,7 +226,7 @@ export default function PresentationPage() {
       key: "lore-briefing",
       title: "Mission Briefing",
       subtitle: "Command directives for protecting NoCap's municipal archive.",
-      content: data ? <MissionBriefingContentSlide missionState={data.missionState} /> : null,
+      content: data ? <MissionBriefingContentSlide /> : null,
     },
     {
       key: "lore-briefing-visuals",

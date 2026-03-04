@@ -77,10 +77,11 @@ function primaryCrewLine(state: MissionState) {
   return "Genev: Launch window still open. Keep archiving cadence up and hold trajectory discipline.";
 }
 
-function crewQuotes(state: MissionState) {
-  const generated = getMissionBriefingQuotes(state, 6).map((quote) => `${quote.speaker}: ${quote.line}`);
-  const combined = [primaryCrewLine(state), ...generated];
-  return combined.filter((line, index) => combined.indexOf(line) === index).slice(0, 5);
+function crewQuotes(state: MissionState, limit = 4) {
+  const generated = getMissionBriefingQuotes(state, Math.max(limit + 2, 6)).map(
+    (quote) => `${quote.speaker}: ${quote.line}`
+  );
+  return generated.filter((line, index) => generated.indexOf(line) === index).slice(0, limit);
 }
 
 function AccessoryGlyph({
@@ -303,22 +304,20 @@ function MissionRouteDiagram() {
   );
 }
 
-export function MissionBriefingContentSlide({ missionState }: { missionState: MissionState }) {
+export function MissionBriefingContentSlide() {
   return (
     <div className="grid h-full gap-4">
       <Card className="mission-panel flex h-full min-h-0 flex-col">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[clamp(1.45rem,1.34vw,2.1rem)] text-cyan-50">
-            Mission Objectives
-          </CardTitle>
-          <p className="text-[clamp(1.15rem,1.02vw,1.62rem)] text-cyan-100/80">
-            The Kermans are caretakers of municipal memory on the planet NoCap. They must preserve their municipal
-            archive from the looming core cascade pressure event.
-          </p>
-        </CardHeader>
-        <CardContent className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-4 overflow-auto pr-1">
-          <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3.5">
-            <p className="text-[clamp(1.12rem,1.02vw,1.72rem)] leading-relaxed text-cyan-100/90">
+        <CardContent className="grid min-h-0 gap-4 overflow-auto pr-1">
+          <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-5">
+            <p className="font-mono text-[clamp(1rem,0.9vw,1.34rem)] uppercase tracking-[0.14em] text-cyan-100/75">
+              Mission Objectives
+            </p>
+            <p className="mt-2 text-[clamp(1.2rem,1.1vw,1.82rem)] leading-relaxed text-cyan-100/90">
+              The Kermans are caretakers of municipal memory on the planet NoCap. They must preserve their municipal
+              archive from the looming core cascade pressure event.
+            </p>
+            <p className="mt-2.5 text-[clamp(1.2rem,1.1vw,1.82rem)] leading-relaxed text-cyan-100/90">
               A planetary core reaction called <span className="font-semibold text-cyan-50">Core Cascade</span> is
               destabilizing magnetic fields and accelerating media degradation. The Great{" "}
               <span className="font-semibold text-cyan-50">Signal Fade</span> is the point-of-no-return. Mission
@@ -342,19 +341,6 @@ export function MissionBriefingContentSlide({ missionState }: { missionState: Mi
                 </li>
               ))}
             </ol>
-          </div>
-
-          <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3.5 py-2.5">
-            <p className="font-mono text-[clamp(0.9rem,0.78vw,1.16rem)] uppercase tracking-[0.12em] text-cyan-100/75">
-              Crew Voice Lines
-            </p>
-            <div className="mt-2 space-y-1.5">
-              {crewQuotes(missionState).map((quote) => (
-                <p key={quote} className="text-[clamp(0.98rem,0.84vw,1.3rem)] text-cyan-100">
-                  {quote}
-                </p>
-              ))}
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -398,6 +384,18 @@ export function MissionBriefingVisualsSlide({ missionState }: { missionState: Mi
             <p className="mt-1 text-[clamp(0.96rem,0.82vw,1.28rem)] text-cyan-100">
               {primaryCrewLine(missionState)}
             </p>
+          </div>
+          <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2.5 sm:col-span-2">
+            <p className="font-mono text-[clamp(0.8rem,0.68vw,1.04rem)] uppercase tracking-[0.1em] text-cyan-100/75">
+              Crew Voice Lines
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {crewQuotes(missionState, 4).map((quote) => (
+                <p key={quote} className="text-[clamp(0.94rem,0.8vw,1.24rem)] text-cyan-100">
+                  {quote}
+                </p>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
