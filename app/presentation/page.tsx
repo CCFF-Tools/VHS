@@ -19,7 +19,9 @@ import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 import { RUNTIME_BUCKETS } from "@/lib/runtime-buckets";
 import type { LaunchProjection, TapeRecord } from "@/lib/types";
 
-const SLIDE_INTERVAL_MS = 20000;
+const DEFAULT_SLIDE_INTERVAL_MS = 20000;
+const BRIEFING_SLIDE_INTERVAL_MS = 30000;
+const BRIEFING_SLIDE_KEYS = new Set(["lore-briefing", "lore-briefing-visuals"]);
 const MISSION_CHART_CLASS =
   "h-[300px] md:h-[360px] lg:h-[430px] xl:h-[520px] 2xl:h-[650px] [@media(min-width:2800px)]:h-[860px]";
 const MISSION_PIPELINE_CHART_CLASS =
@@ -725,9 +727,14 @@ export default function PresentationPage() {
   ].filter((slide): slide is (typeof baseSlides)[number] => Boolean(slide));
 
   const totalSlides = slides.length;
+  const currentSlideKey = slides[slide]?.key;
+  const currentSlideIntervalMs =
+    currentSlideKey && BRIEFING_SLIDE_KEYS.has(currentSlideKey)
+      ? BRIEFING_SLIDE_INTERVAL_MS
+      : DEFAULT_SLIDE_INTERVAL_MS;
   const autoRotateLabel = isPaused
     ? "Slides paused | Left/Right: slides | P: resume | Esc: return home"
-    : "Auto-rotate every 20s | Left/Right: slides | P: pause | Esc: return home";
+    : `Auto-rotate every ${Math.round(currentSlideIntervalMs / 1000)}s | Left/Right: slides | P: pause | Esc: return home`;
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -740,9 +747,9 @@ export default function PresentationPage() {
     if (isPaused) return;
     const id = window.setTimeout(() => {
       setSlide((prev) => (prev + 1) % totalSlides);
-    }, SLIDE_INTERVAL_MS);
+    }, currentSlideIntervalMs);
     return () => window.clearTimeout(id);
-  }, [isPaused, slide, totalSlides]);
+  }, [currentSlideIntervalMs, isPaused, slide, totalSlides]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
