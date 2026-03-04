@@ -350,11 +350,11 @@ export function MissionBriefingContentSlide() {
             <p className="font-mono text-[clamp(1rem,0.9vw,1.34rem)] uppercase tracking-[0.14em] text-cyan-100/70">
               Primary Directives
             </p>
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <div className="mt-3 space-y-2.5">
               {OBJECTIVES.map(({ text, icon: Icon }, index) => (
                 <div
                   key={text}
-                  className="rounded-md border border-cyan-300/25 bg-slate-950/60 px-3.5 py-3"
+                  className="rounded-md border border-cyan-300/25 bg-slate-950/60 px-3.5 py-3.5"
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-cyan-200/45 bg-cyan-950/35 text-cyan-100">
