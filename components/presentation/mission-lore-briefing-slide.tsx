@@ -330,7 +330,7 @@ export function MissionBriefingContentSlide() {
             <p className="font-mono text-[clamp(1rem,0.9vw,1.34rem)] uppercase tracking-[0.14em] text-cyan-100/75">
               Mission Objectives
             </p>
-            <div className="mt-2 max-w-[108ch] space-y-3">
+            <div className="mt-2 w-full lg:w-[78%] space-y-3">
               <p className="text-[clamp(1.2rem,1.1vw,1.82rem)] leading-relaxed text-cyan-100/90">
                 The Kermans serve as caretakers of municipal memory on the planet NoCap. They must preserve their
                 municipal archive from the looming core cascade pressure event. Core cascade destabilizes planetary
