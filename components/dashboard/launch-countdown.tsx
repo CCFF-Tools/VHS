@@ -57,6 +57,7 @@ interface SummaryOverride {
   throughputPerDay: number;
   estimatedDaysRemaining?: number;
   labelPrefix?: string;
+  velocityLabel?: string;
   throughputUnit?: string;
 }
 
@@ -123,7 +124,8 @@ export function LaunchCountdown({
 
   const summaryPrefix = summaryOverride?.labelPrefix?.trim();
   const backlogLabel = summaryPrefix ? `${summaryPrefix} Backlog` : "Backlog";
-  const velocityLabel = summaryPrefix ? `${summaryPrefix} Velocity` : "Velocity";
+  const velocityLabel =
+    summaryOverride?.velocityLabel?.trim() || (summaryPrefix ? `${summaryPrefix} Velocity` : "Velocity");
   const etaLabel = summaryPrefix ? `${summaryPrefix} ETA` : "ETA";
   const summaryBacklog = summaryOverride?.backlogCount ?? projection.backlogCount;
   const summaryThroughput = summaryOverride?.throughputPerDay ?? projection.throughputPerDay;

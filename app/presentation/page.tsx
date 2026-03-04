@@ -20,8 +20,10 @@ import { RUNTIME_BUCKETS } from "@/lib/runtime-buckets";
 import type { LaunchProjection, TapeRecord } from "@/lib/types";
 
 const DEFAULT_SLIDE_INTERVAL_MS = 20000;
-const BRIEFING_SLIDE_INTERVAL_MS = 30000;
-const BRIEFING_SLIDE_KEYS = new Set(["lore-briefing", "lore-briefing-visuals"]);
+const SLIDE_INTERVAL_BY_KEY: Record<string, number> = {
+  "lore-briefing": 45000,
+  "lore-briefing-visuals": 30000,
+};
 const MISSION_CHART_CLASS =
   "h-[300px] md:h-[360px] lg:h-[430px] xl:h-[520px] 2xl:h-[650px] [@media(min-width:2800px)]:h-[860px]";
 const MISSION_PIPELINE_CHART_CLASS =
@@ -242,7 +244,7 @@ export default function PresentationPage() {
   const captureLaunchSummary = useMemo(() => {
     if (!data) return null;
 
-    const throughputWindowDays = 21;
+    const throughputWindowDays = 7;
     const captureBacklogCount = Math.max(0, data.kpis.totalTapes - data.kpis.capturedCount);
     const recentCapturedCount = data.capturedDaily
       .slice(-throughputWindowDays)
@@ -377,6 +379,7 @@ export default function PresentationPage() {
                       throughputPerDay: captureLaunchSummary.throughputPerDay,
                       estimatedDaysRemaining: captureLaunchSummary.estimatedDaysRemaining,
                       labelPrefix: "Capture",
+                      velocityLabel: "Capture Velocity (7 day moving average)",
                       throughputUnit: "tapes/day",
                     }
                   : undefined
@@ -729,9 +732,7 @@ export default function PresentationPage() {
   const totalSlides = slides.length;
   const currentSlideKey = slides[slide]?.key;
   const currentSlideIntervalMs =
-    currentSlideKey && BRIEFING_SLIDE_KEYS.has(currentSlideKey)
-      ? BRIEFING_SLIDE_INTERVAL_MS
-      : DEFAULT_SLIDE_INTERVAL_MS;
+    currentSlideKey ? (SLIDE_INTERVAL_BY_KEY[currentSlideKey] ?? DEFAULT_SLIDE_INTERVAL_MS) : DEFAULT_SLIDE_INTERVAL_MS;
   const autoRotateLabel = isPaused
     ? "Slides paused | Left/Right: slides | P: resume | Esc: return home"
     : `Auto-rotate every ${Math.round(currentSlideIntervalMs / 1000)}s | Left/Right: slides | P: pause | Esc: return home`;
