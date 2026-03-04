@@ -79,9 +79,8 @@ function startOfLocalDayMs(value: number | Date) {
   return date.getTime();
 }
 
-function inferredCaptureTimestamp(tape: TapeRecord) {
-  if (!tape.captured) return null;
-  return toTimestamp(tape.capturedAt ?? tape.completedDate ?? tape.updatedTime ?? tape.acquisitionAt ?? tape.receivedDate);
+function captureEventTimestamp(tape: TapeRecord) {
+  return toTimestamp(tape.capturedAt);
 }
 
 function buildRuntimeHoursByDate({
@@ -240,6 +239,12 @@ export default function PresentationPage() {
       final: buildRuntimeHistogramHours(data.tapes, "final"),
     };
   }, [data]);
+  const captureEventTimestamps = useMemo(() => {
+    if (!data) return [];
+    return data.tapes
+      .map(captureEventTimestamp)
+      .filter((timestamp): timestamp is number => timestamp != null);
+  }, [data]);
   const projectedLaunchMs = useMemo(() => {
     if (!data?.launchProjection.projectedLaunchAt) return null;
     const parsed = Date.parse(data.launchProjection.projectedLaunchAt);
@@ -263,11 +268,10 @@ export default function PresentationPage() {
 
     const throughputWindowDays = 7;
     const captureBacklogCount = Math.max(0, data.kpis.totalTapes - data.kpis.capturedCount);
+    const hasCaptureTelemetry = captureEventTimestamps.length > 0;
     const nowStartMs = startOfLocalDayMs(new Date());
     const recentWindowStartMs = nowStartMs - (throughputWindowDays - 1) * 86400000;
-    const recentCapturedCount = data.tapes
-      .map(inferredCaptureTimestamp)
-      .filter((timestamp): timestamp is number => timestamp != null)
+    const recentCapturedCount = captureEventTimestamps
       .filter((timestamp) => timestamp >= recentWindowStartMs).length;
 
     const throughputPerDay = Number((recentCapturedCount / throughputWindowDays).toFixed(2));
@@ -282,47 +286,40 @@ export default function PresentationPage() {
       backlogCount: captureBacklogCount,
       throughputPerDay,
       estimatedDaysRemaining,
-      source: `capture telemetry (${throughputWindowDays}d window)`,
+      source: hasCaptureTelemetry
+        ? `captured-at (${throughputWindowDays}d window)`
+        : "no captured-at telemetry",
     };
-  }, [data]);
+  }, [captureEventTimestamps, data]);
 
   const historicalCaptureVelocity = useMemo(() => {
     if (!data) return null;
-    if (data.kpis.capturedCount <= 0) {
+    if (captureEventTimestamps.length === 0) {
       return {
         throughputPerDay: 0,
-        source: "historical capture ratio",
+        source: "no captured-at telemetry",
       };
     }
 
-    const captureStartCandidates = data.tapes
-      .map(inferredCaptureTimestamp)
-      .filter((timestamp): timestamp is number => timestamp != null);
-
-    if (captureStartCandidates.length === 0) {
-      return {
-        throughputPerDay: 0,
-        source: "historical capture ratio",
-      };
-    }
-
-    const captureStartMs = Math.min(...captureStartCandidates);
+    const captureStartMs = Math.min(...captureEventTimestamps);
     const nowStartMs = startOfLocalDayMs(new Date());
     const captureStartDayMs = startOfLocalDayMs(captureStartMs);
     const elapsedDays = Math.max(1, Math.floor((nowStartMs - captureStartDayMs) / 86400000) + 1);
-    const throughputPerDay = Number((data.kpis.capturedCount / elapsedDays).toFixed(2));
+    const throughputPerDay = Number((captureEventTimestamps.length / elapsedDays).toFixed(2));
 
     return {
       throughputPerDay,
-      source: "historical capture ratio",
+      source: "historical captured-at ratio",
     };
-  }, [data]);
+  }, [captureEventTimestamps, data]);
 
   const capturedTodayCount = useMemo(() => {
-    if (!data) return 0;
-    const todayKey = format(new Date(), "yyyy-MM-dd");
-    return data.tapes.filter((tape) => toDateKey(tape.acquisitionAt) === todayKey).length;
-  }, [data]);
+    const todayStartMs = startOfLocalDayMs(new Date());
+    const tomorrowStartMs = todayStartMs + 86400000;
+    return captureEventTimestamps.filter(
+      (timestamp) => timestamp >= todayStartMs && timestamp < tomorrowStartMs
+    ).length;
+  }, [captureEventTimestamps]);
 
   const baseSlides = [
     {
@@ -417,6 +414,7 @@ export default function PresentationPage() {
                       estimatedDaysRemaining: captureLaunchSummary.estimatedDaysRemaining,
                       labelPrefix: "Capture",
                       velocityLabel: "Capture Velocity (7 day moving average)",
+                      basisLabel: captureLaunchSummary.source,
                       throughputUnit: "tapes/day",
                     }
                   : undefined

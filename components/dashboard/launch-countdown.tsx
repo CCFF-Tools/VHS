@@ -58,6 +58,7 @@ interface SummaryOverride {
   estimatedDaysRemaining?: number;
   labelPrefix?: string;
   velocityLabel?: string;
+  basisLabel?: string;
   throughputUnit?: string;
 }
 
@@ -130,6 +131,7 @@ export function LaunchCountdown({
   const summaryBacklog = summaryOverride?.backlogCount ?? projection.backlogCount;
   const summaryThroughput = summaryOverride?.throughputPerDay ?? projection.throughputPerDay;
   const summaryEta = summaryOverride?.estimatedDaysRemaining ?? projection.estimatedDaysRemaining;
+  const basisLabel = summaryOverride?.basisLabel?.trim() || projectionBasis(projection);
   const throughputUnit = summaryOverride?.throughputUnit ?? "tapes/day";
 
   return (
@@ -243,7 +245,7 @@ export function LaunchCountdown({
             );
           })}
           <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] text-slate-400">
-            Basis: <span className="font-mono text-slate-300">{projectionBasis(projection)}</span> | Completion-date
+            Basis: <span className="font-mono text-slate-300">{basisLabel}</span> | Completion-date
             coverage: <span className="font-mono text-slate-300">{projection.completionDateCoveragePercent}%</span>
           </p>
         </div>

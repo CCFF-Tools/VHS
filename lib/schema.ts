@@ -1,5 +1,7 @@
 import type { Stage } from "@/lib/types";
 
+const capturedAtField = process.env.AIRTABLE_CAPTURED_AT_FIELD?.trim();
+
 export const fieldMap = {
   tapeId: process.env.AIRTABLE_TAPE_ID_FIELD ?? "📼",
   tapeName: process.env.AIRTABLE_TAPE_NAME_FIELD ?? "Tape Name",
@@ -11,7 +13,7 @@ export const fieldMap = {
   contentRecordedDate: process.env.AIRTABLE_CONTENT_DATE_FIELD ?? "",
   updatedAt: process.env.AIRTABLE_UPDATED_AT_FIELD ?? "Last Modified",
   qtFilename: process.env.AIRTABLE_QT_FILENAME_FIELD ?? "QT Filename",
-  capturedAt: process.env.AIRTABLE_CAPTURED_AT_FIELD ?? "",
+  capturedAt: capturedAtField || "Captured At",
   captured: process.env.AIRTABLE_CAPTURED_FIELD ?? "Captured",
   trimmed: process.env.AIRTABLE_TRIMMED_FIELD ?? "Trimmed",
   combined: process.env.AIRTABLE_COMBINED_FIELD ?? "Combined",
