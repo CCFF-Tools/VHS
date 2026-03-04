@@ -12,483 +12,302 @@ export interface KermanQuote {
 export const KERMAN_QUOTE_BANK: readonly KermanQuote[] = [
   {
     speaker: "Genev Kerman",
-    line: "Flight report: launch lane is stable if capture keeps feeding archive prep.",
+    line: "Flight Director log: launch window is open. Keep capture feeding archiving.",
     theme: "status",
-    tags: ["launch_ready", "capture_push", "seal_push"],
+    tags: ["general", "launch_ready", "capture_push", "seal_push", "deadline_inside"],
   },
   {
     speaker: "Genev Kerman",
-    line: "Tasking for this shift: clear intake, verify catalog, queue archiving.",
+    line: "Hold formation. Clear blockers before they become trajectory errors.",
     theme: "tasks",
-    tags: ["capture_push", "planning_push", "seal_push"],
+    tags: ["general", "launch_hold", "quarantine", "planning_push"],
   },
   {
     speaker: "Genev Kerman",
-    line: "A calm cockpit starts with clean metadata.",
+    line: "Checklist discipline beats sprinting every time.",
     theme: "wisdom",
-    tags: ["planning_push"],
+    tags: ["general", "planning_push"],
   },
   {
     speaker: "Genev Kerman",
-    line: "Do not confuse speed with vector; trim and combine define trajectory.",
+    line: "NoCap memory moves only when each stage hands off clean.",
     theme: "wisdom",
-    tags: ["planning_push"],
+    tags: ["general", "capture_push", "planning_push", "seal_push", "archive"],
   },
+
   {
-    speaker: "Genev Kerman",
-    line: "When Core Cascade spikes, discipline is propulsion.",
-    theme: "wisdom",
-    tags: ["magnetic", "deadline_missed"],
-  },
-  {
-    speaker: "Genev Kerman",
-    line: "Meridia rewards cadence, not heroics.",
-    theme: "wisdom",
-    tags: ["stacks_growth", "archive", "launch_ready"],
-  },
-  {
-    speaker: "Genev Kerman",
-    line: "Status is green enough to move and red enough to stay sharp.",
+    speaker: "Dexrin Kerman",
+    line: "Window analysis: delay compounds faster than anyone admits.",
     theme: "status",
-    tags: ["launch_ready", "deadline_inside"],
+    tags: ["general", "launch_hold", "deadline_inside"],
   },
   {
     speaker: "Dexrin Kerman",
-    line: "Window math update: every blocked reel subtracts daylight from launch.",
+    line: "Signal Fade does not wait for perfect conditions.",
+    theme: "wisdom",
+    tags: ["general", "deadline_missed", "magnetic"],
+  },
+  {
+    speaker: "Dexrin Kerman",
+    line: "Cut queue age, then lock trim and combine cadence.",
+    theme: "tasks",
+    tags: ["general", "capture_push", "planning_push"],
+  },
+  {
+    speaker: "Dexrin Kerman",
+    line: "If the curve drifts right, tighten every handoff left.",
+    theme: "tasks",
+    tags: ["general", "launch_hold", "planning_push"],
+  },
+
+  {
+    speaker: "Rivet Kerman",
+    line: "Capture deck green. Move fragile reels first.",
     theme: "status",
-    tags: ["launch_hold", "quarantine", "deadline_inside"],
+    tags: ["general", "capture_push", "magnetic"],
   },
   {
-    speaker: "Dexrin Kerman",
-    line: "If projected launch drifts right, tighten handoffs left.",
-    theme: "tasks",
-    tags: ["launch_hold", "planning_push"],
-  },
-  {
-    speaker: "Dexrin Kerman",
-    line: "Signal Fade clock is impartial; act before it explains itself.",
+    speaker: "Rivet Kerman",
+    line: "Dropped frames are lost civic facts. Run steady.",
     theme: "wisdom",
-    tags: ["deadline_missed", "magnetic"],
+    tags: ["general", "capture_push"],
   },
   {
-    speaker: "Dexrin Kerman",
-    line: "Next burn: convert capture backlog into archived payload.",
-    theme: "tasks",
-    tags: ["capture_push", "seal_push"],
+    speaker: "Rivet Kerman",
+    line: "One clean pass beats three rushed retries.",
+    theme: "wisdom",
+    tags: ["general", "capture_push", "planning_push"],
   },
   {
-    speaker: "Dexrin Kerman",
-    line: "Deadline is inside window, but only if combine stays on schedule.",
+    speaker: "Rivet Kerman",
+    line: "Airframe grows only on captured minutes.",
     theme: "status",
-    tags: ["deadline_inside", "planning_push"],
+    tags: ["general", "capture_push", "launch_ready"],
   },
+
   {
-    speaker: "Dexrin Kerman",
-    line: "Missed windows are made from small delays stacked in silence.",
-    theme: "wisdom",
-    tags: ["deadline_missed", "launch_hold"],
-  },
-  {
-    speaker: "Dexrin Kerman",
-    line: "Tasks ahead: cut queue age, raise archiving rate, protect launch margin.",
-    theme: "tasks",
-    tags: ["capture_push", "seal_push", "launch_hold"],
-  },
-  {
-    speaker: "Rivet Kerman",
-    line: "Capture bay status: decks are hot, heads are clean, keep loading.",
+    speaker: "Paxlo Kerman",
+    line: "Trim and Combine are the guidance computer. Keep both synchronized.",
     theme: "status",
-    tags: ["capture_push", "launch_ready"],
+    tags: ["general", "planning_push"],
   },
   {
-    speaker: "Rivet Kerman",
-    line: "A dropped frame now is a lost city record later.",
+    speaker: "Paxlo Kerman",
+    line: "Unmerged segments are unresolved risk.",
     theme: "wisdom",
-    tags: ["capture_push", "magnetic"],
+    tags: ["general", "planning_push", "launch_hold"],
   },
   {
-    speaker: "Rivet Kerman",
-    line: "Do not park prime tapes in intake; magnetic weather gets louder.",
+    speaker: "Paxlo Kerman",
+    line: "Lock in and out points before every export burn.",
     theme: "tasks",
-    tags: ["capture_push", "magnetic", "deadline_inside"],
+    tags: ["general", "planning_push"],
   },
   {
-    speaker: "Rivet Kerman",
-    line: "Today's build order: fragile reels first, then volume.",
-    theme: "tasks",
-    tags: ["capture_push", "magnetic"],
-  },
-  {
-    speaker: "Rivet Kerman",
-    line: "Airframe truth: consistency beats sprinting.",
+    speaker: "Paxlo Kerman",
+    line: "Course stability comes from repeatable edits.",
     theme: "wisdom",
-    tags: ["capture_push"],
+    tags: ["general", "planning_push", "deadline_inside"],
   },
+
   {
-    speaker: "Rivet Kerman",
-    line: "If labels are sloppy, the ship flies blind.",
-    theme: "wisdom",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Rivet Kerman",
-    line: "Hull progress equals captured minutes you can trust.",
+    speaker: "Splicia Kerman",
+    line: "Integration report: naming and metadata are within tolerance.",
     theme: "status",
-    tags: ["capture_push", "archive"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "Navigation update: trim plus combine is the only legal flight plan.",
-    theme: "status",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "Unmerged segments are fake progress.",
-    theme: "wisdom",
-    tags: ["planning_push", "launch_hold"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "Before any burn, confirm in and out points and sync drift.",
-    theme: "tasks",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "Course lock comes from repeatable edits, not memory.",
-    theme: "wisdom",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "If queue pressure rises, simplify decisions and keep the path linear.",
-    theme: "tasks",
-    tags: ["planning_push", "deadline_inside"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "Signal Fade punishes rework first.",
-    theme: "wisdom",
-    tags: ["deadline_missed", "planning_push", "magnetic"],
-  },
-  {
-    speaker: "Paxlo Kerman",
-    line: "Task ahead: resolve near-complete reels to clear transfer runway.",
-    theme: "tasks",
-    tags: ["planning_push", "seal_push", "launch_hold"],
+    tags: ["general", "planning_push", "launch_ready"],
   },
   {
     speaker: "Splicia Kerman",
-    line: "Integration report: handoffs stay clean when naming stays exact.",
+    line: "When two cuts conflict, follow documented intent.",
+    theme: "tasks",
+    tags: ["general", "planning_push"],
+  },
+  {
+    speaker: "Splicia Kerman",
+    line: "Continuity check first, transfer second.",
+    theme: "tasks",
+    tags: ["general", "planning_push", "seal_push"],
+  },
+  {
+    speaker: "Splicia Kerman",
+    line: "If provenance is fuzzy, payload is not flight-ready.",
+    theme: "wisdom",
+    tags: ["general", "planning_push", "launch_hold"],
+  },
+
+  {
+    speaker: "Mallo Kerman",
+    line: "Pad ops: transfers clear only after checksum and runtime verification.",
     theme: "status",
-    tags: ["planning_push", "launch_ready"],
+    tags: ["general", "seal_push", "launch_ready"],
   },
   {
-    speaker: "Splicia Kerman",
-    line: "One bad merge can ghost an entire meeting.",
-    theme: "wisdom",
-    tags: ["planning_push", "magnetic"],
-  },
-  {
-    speaker: "Splicia Kerman",
-    line: "Combine queue first, transfer queue second, archiving queue third.",
+    speaker: "Mallo Kerman",
+    line: "No partial checks on a launch-bound payload.",
     theme: "tasks",
-    tags: ["planning_push", "seal_push"],
-  },
-  {
-    speaker: "Splicia Kerman",
-    line: "I trust files with provenance, not vibes.",
-    theme: "wisdom",
-    tags: ["planning_push", "archive"],
-  },
-  {
-    speaker: "Splicia Kerman",
-    line: "When two cuts disagree, choose the one with documented intent.",
-    theme: "wisdom",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Splicia Kerman",
-    line: "Status note: metadata debt is trajectory debt.",
-    theme: "status",
-    tags: ["planning_push", "launch_hold"],
+    tags: ["general", "seal_push", "launch_hold"],
   },
   {
     speaker: "Mallo Kerman",
-    line: "Pad ops ready once transfers pass checksum and path checks.",
-    theme: "status",
-    tags: ["seal_push", "launch_ready"],
-  },
-  {
-    speaker: "Mallo Kerman",
-    line: "Do not roll to pad with half-checked payload.",
+    line: "Stage batches, log each transfer, then release.",
     theme: "tasks",
-    tags: ["seal_push", "launch_hold"],
+    tags: ["general", "seal_push", "planning_push"],
   },
   {
     speaker: "Mallo Kerman",
-    line: "Task order: verify transfer, validate runtime, flag anomalies.",
-    theme: "tasks",
-    tags: ["seal_push", "quarantine", "planning_push"],
-  },
-  {
-    speaker: "Mallo Kerman",
-    line: "A smooth launch is built in preflight.",
+    line: "Pressure is not permission to skip preflight.",
     theme: "wisdom",
-    tags: ["launch_ready", "planning_push"],
+    tags: ["general", "deadline_inside", "seal_push"],
   },
-  {
-    speaker: "Mallo Kerman",
-    line: "If NAS lanes are crowded, stage batches and keep logs tight.",
-    theme: "tasks",
-    tags: ["seal_push", "planning_push"],
-  },
-  {
-    speaker: "Mallo Kerman",
-    line: "Window pressure means fewer retries, not fewer checks.",
-    theme: "wisdom",
-    tags: ["deadline_inside", "seal_push"],
-  },
+
   {
     speaker: "Nora Kerman",
-    line: "Archiving update: certified reels push colony phase forward.",
+    line: "Archiving update: certified reels move colonization forward.",
     theme: "status",
-    tags: ["archive", "stacks_growth", "launch_ready"],
+    tags: ["general", "archive", "stacks_growth", "launch_ready"],
   },
   {
     speaker: "Nora Kerman",
     line: "No archiving, no settlement.",
     theme: "wisdom",
-    tags: ["seal_push", "launch_hold"],
+    tags: ["general", "seal_push", "launch_hold"],
   },
   {
     speaker: "Nora Kerman",
-    line: "Chain-of-custody is oxygen for The Stacks.",
+    line: "Chain-of-custody keeps The Stacks trustworthy.",
     theme: "wisdom",
-    tags: ["archive", "stacks_growth"],
+    tags: ["general", "archive", "stacks_growth"],
   },
   {
     speaker: "Nora Kerman",
-    line: "Task ahead: prioritize civic high-value reels for archiving.",
+    line: "Prioritize high-value civic reels until the window stabilizes.",
     theme: "tasks",
-    tags: ["seal_push", "capture_push"],
+    tags: ["general", "seal_push", "capture_push", "deadline_inside"],
   },
+
   {
-    speaker: "Nora Kerman",
-    line: "If it is not cataloged, it is not recoverable.",
-    theme: "wisdom",
-    tags: ["planning_push", "archive"],
-  },
-  {
-    speaker: "Nora Kerman",
-    line: "Meridia storage grows one verified reel at a time.",
+    speaker: "Bitra Kerman",
+    line: "Telemetry is clean enough to act. Keep trend discipline.",
     theme: "status",
-    tags: ["stacks_growth", "archive"],
-  },
-  {
-    speaker: "Nora Kerman",
-    line: "Archiving rate is the heartbeat of colonization.",
-    theme: "wisdom",
-    tags: ["stacks_growth", "seal_push", "deadline_inside"],
+    tags: ["general", "launch_ready", "planning_push"],
   },
   {
     speaker: "Bitra Kerman",
-    line: "Telemetry check: counts are honest, trends are improving, stay on plan.",
-    theme: "status",
-    tags: ["launch_ready", "deadline_inside"],
-  },
-  {
-    speaker: "Bitra Kerman",
-    line: "Dashboards do not create progress; they reveal it.",
-    theme: "wisdom",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Bitra Kerman",
-    line: "If a metric has no owner, it has no future.",
-    theme: "wisdom",
-    tags: ["planning_push", "launch_hold"],
-  },
-  {
-    speaker: "Bitra Kerman",
-    line: "Status drift often starts as timestamp drift.",
-    theme: "status",
-    tags: ["planning_push", "magnetic"],
-  },
-  {
-    speaker: "Bitra Kerman",
-    line: "Task ahead: close data gaps before the next briefing cycle.",
+    line: "Close date and runtime gaps before the next command brief.",
     theme: "tasks",
-    tags: ["planning_push"],
+    tags: ["general", "planning_push"],
   },
   {
     speaker: "Bitra Kerman",
-    line: "Cataloged-per-day is our pulse under magnetic stress.",
-    theme: "status",
-    tags: ["capture_push", "magnetic"],
+    line: "No owner, no metric. No metric, no control.",
+    theme: "wisdom",
+    tags: ["general", "planning_push", "launch_hold"],
   },
   {
     speaker: "Bitra Kerman",
-    line: "No clean drilldown, no confident decision.",
-    theme: "wisdom",
-    tags: ["planning_push"],
-  },
-  {
-    speaker: "Vexa Kerman",
-    line: "Quarantine alert: blocked work is mission drag, not parking.",
+    line: "Cataloged-per-day is our heartbeat under Core Cascade.",
     theme: "status",
-    tags: ["quarantine", "launch_hold"],
+    tags: ["general", "capture_push", "magnetic"],
+  },
+
+  {
+    speaker: "Vexa Kerman",
+    line: "Quarantine notice: blocked work is drag, not backlog.",
+    theme: "status",
+    tags: ["general", "quarantine", "launch_hold"],
   },
   {
     speaker: "Vexa Kerman",
-    line: "Clear root cause, then clear queue.",
+    line: "Resolve root cause before reopening queue lanes.",
     theme: "tasks",
-    tags: ["quarantine"],
+    tags: ["general", "quarantine"],
   },
   {
     speaker: "Vexa Kerman",
-    line: "A fast fix without a note is a delayed failure.",
+    line: "Fast fixes without notes become repeat incidents.",
     theme: "wisdom",
-    tags: ["quarantine", "planning_push"],
+    tags: ["general", "quarantine", "planning_push"],
   },
   {
     speaker: "Vexa Kerman",
-    line: "Signal Fade amplifies unresolved defects.",
+    line: "Quality is the only velocity that survives Signal Fade.",
+    theme: "wisdom",
+    tags: ["general", "quarantine", "deadline_inside", "magnetic"],
+  },
+
+  {
+    speaker: "Mira Kerman",
+    line: "Science update: Core Cascade variance remains hostile.",
     theme: "status",
-    tags: ["quarantine", "magnetic", "deadline_missed"],
+    tags: ["general", "magnetic", "deadline_missed"],
   },
   {
-    speaker: "Vexa Kerman",
-    line: "Task ahead: unblock by risk, not by noise.",
+    speaker: "Mira Kerman",
+    line: "Older magnetic stock first. Entropy compounds.",
     theme: "tasks",
-    tags: ["quarantine", "launch_hold"],
-  },
-  {
-    speaker: "Vexa Kerman",
-    line: "If anomaly count climbs, pause assumptions first.",
-    theme: "wisdom",
-    tags: ["quarantine", "launch_hold"],
-  },
-  {
-    speaker: "Vexa Kerman",
-    line: "Quality is velocity that survives tomorrow.",
-    theme: "wisdom",
-    tags: ["quarantine", "deadline_inside"],
+    tags: ["general", "capture_push", "magnetic"],
   },
   {
     speaker: "Mira Kerman",
-    line: "Magnetics update: Core Cascade variance is trending hostile.",
+    line: "Treat weak tape like reentry hardware: gentle and deliberate.",
+    theme: "wisdom",
+    tags: ["general", "capture_push", "magnetic"],
+  },
+  {
+    speaker: "Mira Kerman",
+    line: "Signal Fade starts gradual, then sudden. Do not coast.",
+    theme: "wisdom",
+    tags: ["general", "magnetic", "deadline_inside", "deadline_missed"],
+  },
+
+  {
+    speaker: "Jebrin Kerman",
+    line: "EVA capture log: heads clean, alignment true, lane nominal.",
     theme: "status",
-    tags: ["magnetic", "deadline_missed"],
-  },
-  {
-    speaker: "Mira Kerman",
-    line: "Every extra day in intake increases decode risk.",
-    theme: "status",
-    tags: ["capture_push", "magnetic"],
-  },
-  {
-    speaker: "Mira Kerman",
-    line: "Treat weak tapes like reentry hardware: gently and first.",
-    theme: "wisdom",
-    tags: ["capture_push", "magnetic"],
-  },
-  {
-    speaker: "Mira Kerman",
-    line: "Signal Fade is a curve, not a cliff, until it becomes both.",
-    theme: "wisdom",
-    tags: ["deadline_inside", "deadline_missed", "magnetic"],
-  },
-  {
-    speaker: "Mira Kerman",
-    line: "Task ahead: process oldest magnetic stock before pristine stock.",
-    theme: "tasks",
-    tags: ["capture_push", "magnetic"],
-  },
-  {
-    speaker: "Mira Kerman",
-    line: "Science note: verified runtime is a preservation signal.",
-    theme: "wisdom",
-    tags: ["planning_push", "archive"],
-  },
-  {
-    speaker: "Mira Kerman",
-    line: "Entropy always sends the invoice after the deadline.",
-    theme: "wisdom",
-    tags: ["magnetic", "deadline_missed"],
+    tags: ["general", "capture_push", "launch_ready"],
   },
   {
     speaker: "Jebrin Kerman",
-    line: "EVA log: heads cleaned, deck aligned, capture lane nominal.",
+    line: "Feed me the reels that still whisper. We can still recover them.",
     theme: "status",
-    tags: ["capture_push", "launch_ready"],
+    tags: ["general", "capture_push", "magnetic"],
   },
   {
     speaker: "Jebrin Kerman",
-    line: "I pull signal from noise; give me the reels that still whisper.",
+    line: "Stabilize tracking before you press ahead.",
+    theme: "tasks",
+    tags: ["general", "capture_push", "planning_push"],
+  },
+  {
+    speaker: "Jebrin Kerman",
+    line: "Every rescued frame preserves a public record.",
+    theme: "wisdom",
+    tags: ["general", "capture_push", "archive"],
+  },
+
+  {
+    speaker: "Valdo Kerman",
+    line: "Runway marshal update: rollout stays green when queues stay short.",
     theme: "status",
-    tags: ["capture_push", "magnetic"],
+    tags: ["general", "launch_ready", "capture_push"],
   },
   {
-    speaker: "Jebrin Kerman",
-    line: "Task ahead: run fragile stock on the calmest chain.",
+    speaker: "Valdo Kerman",
+    line: "Finished work to the front, uncertain work to quarantine.",
     theme: "tasks",
-    tags: ["capture_push", "magnetic"],
+    tags: ["general", "launch_hold", "quarantine"],
   },
   {
-    speaker: "Jebrin Kerman",
-    line: "Do not over-handle tape; one pass should count.",
-    theme: "wisdom",
-    tags: ["capture_push"],
-  },
-  {
-    speaker: "Jebrin Kerman",
-    line: "If tracking hunts, stop and stabilize before continuing.",
+    speaker: "Valdo Kerman",
+    line: "Clear transfer bottlenecks before opening the gate.",
     theme: "tasks",
-    tags: ["capture_push", "planning_push"],
+    tags: ["general", "seal_push", "planning_push"],
   },
   {
-    speaker: "Jebrin Kerman",
-    line: "A rescued frame is a rescued vote.",
+    speaker: "Valdo Kerman",
+    line: "When the window narrows, remove options, not standards.",
     theme: "wisdom",
-    tags: ["capture_push", "archive"],
-  },
-  {
-    speaker: "Valdo Kerman",
-    line: "Runway status: rollout stays green when queues stay short.",
-    theme: "status",
-    tags: ["launch_ready", "capture_push"],
-  },
-  {
-    speaker: "Valdo Kerman",
-    line: "Pad discipline is simple: finished work in front, hopeful work behind.",
-    theme: "wisdom",
-    tags: ["launch_hold", "seal_push"],
-  },
-  {
-    speaker: "Valdo Kerman",
-    line: "Task ahead: clear transfer bottlenecks before lunch burn.",
-    theme: "tasks",
-    tags: ["seal_push", "planning_push"],
-  },
-  {
-    speaker: "Valdo Kerman",
-    line: "Late scramble is just early planning debt.",
-    theme: "wisdom",
-    tags: ["planning_push", "launch_hold"],
-  },
-  {
-    speaker: "Valdo Kerman",
-    line: "When the window narrows, remove choices, not standards.",
-    theme: "wisdom",
-    tags: ["deadline_inside", "launch_hold"],
-  },
-  {
-    speaker: "Valdo Kerman",
-    line: "Green lights mean go-fast only after go-right.",
-    theme: "wisdom",
-    tags: ["launch_ready"],
+    tags: ["general", "deadline_inside", "launch_hold"],
   },
 ] as const;
 
@@ -515,6 +334,7 @@ function stableOrder(quotes: readonly KermanQuote[], seed: number): KermanQuote[
 
 function activeMissionTags(state: MissionState): Set<string> {
   const tags = new Set<string>();
+  tags.add("general");
 
   if (state.deadline.status === "missed") {
     tags.add("deadline_missed");
@@ -557,6 +377,25 @@ function activeMissionTags(state: MissionState): Set<string> {
   return tags;
 }
 
+function prioritizedTagOrder(tags: Set<string>): string[] {
+  const order = [
+    "general",
+    "quarantine",
+    "deadline_missed",
+    "launch_hold",
+    "seal_push",
+    "capture_push",
+    "planning_push",
+    "archive",
+    "stacks_growth",
+    "launch_ready",
+    "deadline_inside",
+    "magnetic",
+  ];
+
+  return order.filter((tag) => tags.has(tag));
+}
+
 function missionSeed(state: MissionState): number {
   return hashString(
     [
@@ -579,13 +418,60 @@ function missionSeed(state: MissionState): number {
   );
 }
 
+function pickSpeakerDiverse(quotes: readonly KermanQuote[], limit: number): KermanQuote[] {
+  const selected: KermanQuote[] = [];
+  const selectedKeys = new Set<string>();
+  const usedSpeakers = new Set<string>();
+
+  for (const quote of quotes) {
+    const key = quoteKey(quote);
+    if (selected.length >= limit) break;
+    if (selectedKeys.has(key) || usedSpeakers.has(quote.speaker)) continue;
+    selected.push(quote);
+    selectedKeys.add(key);
+    usedSpeakers.add(quote.speaker);
+  }
+
+  for (const quote of quotes) {
+    const key = quoteKey(quote);
+    if (selected.length >= limit) break;
+    if (selectedKeys.has(key)) continue;
+    selected.push(quote);
+    selectedKeys.add(key);
+  }
+
+  return selected;
+}
+
 export function getMissionBriefingQuotes(state: MissionState, limit = 8): KermanQuote[] {
   const cappedLimit = Math.max(1, Math.min(limit, KERMAN_QUOTE_BANK.length));
   const tags = activeMissionTags(state);
-  const matchingQuotes = KERMAN_QUOTE_BANK.filter((quote) => quote.tags.some((tag) => tags.has(tag)));
-  const matchingKeys = new Set(matchingQuotes.map((quote) => quoteKey(quote)));
-  const fallbackQuotes = KERMAN_QUOTE_BANK.filter((quote) => !matchingKeys.has(quoteKey(quote)));
+  const orderedTags = prioritizedTagOrder(tags);
   const seed = missionSeed(state);
-  const ordered = [...stableOrder(matchingQuotes, seed), ...stableOrder(fallbackQuotes, seed + 29)];
-  return ordered.slice(0, cappedLimit);
+
+  const stacked: KermanQuote[] = [];
+  const seen = new Set<string>();
+
+  orderedTags.forEach((tag, index) => {
+    const taggedQuotes = stableOrder(
+      KERMAN_QUOTE_BANK.filter((quote) => quote.tags.includes(tag)),
+      seed + index * 97
+    );
+    for (const quote of taggedQuotes) {
+      const key = quoteKey(quote);
+      if (seen.has(key)) continue;
+      stacked.push(quote);
+      seen.add(key);
+    }
+  });
+
+  const fallback = stableOrder(KERMAN_QUOTE_BANK, seed + 1229);
+  for (const quote of fallback) {
+    const key = quoteKey(quote);
+    if (seen.has(key)) continue;
+    stacked.push(quote);
+    seen.add(key);
+  }
+
+  return pickSpeakerDiverse(stacked, cappedLimit);
 }

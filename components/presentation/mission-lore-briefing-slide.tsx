@@ -11,14 +11,6 @@ const OBJECTIVES = [
   "Expand The Stacks into a permanent off world municipal archive. (Upload files to final public archive, probably YouTube)",
 ];
 
-const WORKFLOW_MAPPING = [
-  { label: "Awaiting Capture", lore: "Blueprint backlog and jigs waiting for material." },
-  { label: "Captured", lore: "Airframe construction and hull growth." },
-  { label: "Trimmed + Combined", lore: "Course plotting and command integration." },
-  { label: "Archived", lore: "Archiving certification and colony phase advancement." },
-  { label: "Blocked", lore: "Quarantine pressure. Blocked work never advances mission phases." },
-];
-
 const CREW = [
   { name: "Genev Kerman", role: "Flight Director", color: "from-cyan-300 to-sky-300" },
   { name: "Dexrin Kerman", role: "Window Analyst", color: "from-amber-300 to-orange-300" },
@@ -129,9 +121,6 @@ function MissionRouteDiagram() {
           The Stacks
         </text>
 
-        <text x="340" y="168" textAnchor="middle" fill="#9ad9f5" fontSize="17" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-          Cruise Corridor
-        </text>
       </svg>
     </div>
   );
@@ -164,36 +153,18 @@ export function MissionBriefingContentSlide({ missionState }: { missionState: Mi
             </p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-4">
-              <p className="font-mono text-[clamp(0.92rem,0.8vw,1.2rem)] uppercase tracking-[0.14em] text-cyan-100/70">
-                Mission Objectives
-              </p>
-              <ol className="mt-2 space-y-2 text-[clamp(1rem,0.88vw,1.36rem)] text-cyan-100/85">
-                {OBJECTIVES.map((item, index) => (
-                  <li key={item}>
-                    <span className="mr-1 font-semibold text-cyan-50">{index + 1}.</span>
-                    {item}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-4">
-              <p className="font-mono text-[clamp(0.92rem,0.8vw,1.2rem)] uppercase tracking-[0.14em] text-cyan-100/70">
-                Mission Systems Alignment
-              </p>
-              <div className="mt-2 space-y-2">
-                {WORKFLOW_MAPPING.map((row) => (
-                  <div key={row.label} className="rounded border border-cyan-300/20 bg-slate-950/55 px-3 py-2.5">
-                    <p className="font-mono text-[clamp(0.84rem,0.72vw,1.08rem)] uppercase tracking-[0.1em] text-cyan-50">
-                      {row.label}
-                    </p>
-                    <p className="mt-1 text-[clamp(0.95rem,0.8vw,1.24rem)] text-cyan-100/75">{row.lore}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-5">
+            <p className="font-mono text-[clamp(1rem,0.9vw,1.34rem)] uppercase tracking-[0.14em] text-cyan-100/70">
+              Mission Objectives
+            </p>
+            <ol className="mt-3 space-y-2.5 text-[clamp(1.2rem,1.08vw,1.76rem)] text-cyan-100/90">
+              {OBJECTIVES.map((item, index) => (
+                <li key={item}>
+                  <span className="mr-1 font-semibold text-cyan-50">{index + 1}.</span>
+                  {item}
+                </li>
+              ))}
+            </ol>
           </div>
 
           <div className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3.5 py-2.5">

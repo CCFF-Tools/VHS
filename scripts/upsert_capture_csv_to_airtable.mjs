@@ -29,7 +29,7 @@ Options:
 Examples:
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --schema-csv "/Users/me/Downloads/Titled Table-Grid view.csv"
-  node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --fields "📼,QT Filename,Captured At,Tape Sequence,Tapes in Sequence,Original Recording Date"
+  node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --fields "📼,QT Filename,Tape Name,Captured At,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT"
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --captured-field "Captured" --captured-value "Yes"
   node scripts/upsert_capture_csv_to_airtable.mjs ./capture_export.csv --dry-run
 `);

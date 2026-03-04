@@ -15,20 +15,18 @@ Options:
   -o, --output FILE       CSV output path (default: ./quicktime_capture_export_YYYYmmdd_HHMMSS.csv)
   -e, --ext LIST          Comma-separated extensions (default: mov,mp4,m4v,qt)
   -f, --format FORMAT     csv format: airtable or standard (default: airtable)
-  --id-field NAME     Primary identifier field name (default: AIRTABLE_TAPE_ID_FIELD or 📼)
+      --id-field NAME     Primary identifier field name (default: AIRTABLE_TAPE_ID_FIELD or 📼)
       --series-mode MODE  Series grouping: parent or root (default: parent, standard format only)
       --series-name NAME  Force one series name for all rows (standard format only)
       --sequence-by MODE  Row ordering in output: created or name (default: created)
       --recording-date D  Force original recording date for all rows (YYYY-MM-DD)
+      --tape-name NAME    Force tape name/label for all rows
       --content-type T    Force content type for all rows
-      --city-label LABEL  Label used for City Council content (default: City Council Meeting)
-      --other-label LABEL Label used for non-City Council content (default: Other)
-      --city-keywords L   Comma-separated keywords for auto-detection (default: city council,city_council,city-council,citycouncil,council meeting)
   -h, --help              Show this help
 
 Formats:
-  airtable  -> QT Filename,📼,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT,Content Type,Is City Council Meeting
-  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Label RT,Label RT Source,Content Type,Is City Council Meeting
+  airtable  -> QT Filename,📼,Tape Name,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT,Is City Council Meeting
+  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Name,Tape Name Source,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Label RT,Label RT Source,Is City Council Meeting
 
 Examples:
   ./export_quicktime_capture_csv.sh -r "/Volumes/Capture Drive/Session_2026_03_01"
@@ -46,10 +44,8 @@ SERIES_MODE="parent"
 SERIES_NAME_OVERRIDE=""
 SEQUENCE_BY="created"
 RECORDING_DATE_OVERRIDE=""
+TAPE_NAME_OVERRIDE=""
 CONTENT_TYPE_OVERRIDE=""
-CITY_LABEL="City Council Meeting"
-OTHER_LABEL="Other"
-CITY_KEYWORDS="city council,city_council,city-council,citycouncil,council meeting"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -89,20 +85,12 @@ while [ $# -gt 0 ]; do
       RECORDING_DATE_OVERRIDE="$2"
       shift 2
       ;;
+    --tape-name)
+      TAPE_NAME_OVERRIDE="$2"
+      shift 2
+      ;;
     --content-type)
       CONTENT_TYPE_OVERRIDE="$2"
-      shift 2
-      ;;
-    --city-label)
-      CITY_LABEL="$2"
-      shift 2
-      ;;
-    --other-label)
-      OTHER_LABEL="$2"
-      shift 2
-      ;;
-    --city-keywords)
-      CITY_KEYWORDS="$2"
       shift 2
       ;;
     -h|--help)
@@ -163,25 +151,35 @@ infer_primary_identifier() {
 
 infer_tape_span() {
   local filename="$1"
-  local lowered=""
+  local stem=""
+  local -a tokens=()
+  local token_count=0
+  local i=0
   local seq_raw=""
   local total_raw=""
+  local of_token=""
   local seq=1
   local total=1
 
-  lowered="$(echo "$filename" | tr '[:upper:]' '[:lower:]')"
+  stem="${filename%.*}"
+  read -r -a tokens <<< "$stem"
+  token_count="${#tokens[@]}"
 
-  if [[ "$lowered" =~ (^|[^0-9])([0-9]{1,3})[[:space:]_-]*of[[:space:]_-]*([0-9]{1,3})([^0-9]|$) ]]; then
-    seq_raw="${BASH_REMATCH[2]}"
-    total_raw="${BASH_REMATCH[3]}"
-    seq=$((10#$seq_raw))
-    total=$((10#$total_raw))
-
-    if [ "$seq" -ge 1 ] && [ "$total" -ge "$seq" ]; then
-      printf '%s\t%s\tfilename_pattern' "$seq" "$total"
-      return
+  for ((i=0; i+2<token_count; i++)); do
+    if [[ "${tokens[$i]}" =~ ^[0-9]{1,3}$ ]] && [[ "${tokens[$((i+2))]}" =~ ^[0-9]{1,3}$ ]]; then
+      of_token="$(echo "${tokens[$((i+1))]}" | tr '[:upper:]' '[:lower:]')"
+      if [ "$of_token" = "of" ]; then
+        seq_raw="${tokens[$i]}"
+        total_raw="${tokens[$((i+2))]}"
+        seq=$((10#$seq_raw))
+        total=$((10#$total_raw))
+        if [ "$seq" -ge 1 ] && [ "$total" -ge "$seq" ]; then
+          printf '%s\t%s\tfilename_pattern' "$seq" "$total"
+          return
+        fi
+      fi
     fi
-  fi
+  done
 
   printf '1\t1\tdefault_single'
 }
@@ -215,8 +213,9 @@ infer_recording_date() {
 infer_label_runtime() {
   local filename="$1"
   local stem=""
-  local token=""
-  local selected=""
+  local -a tokens=()
+  local token_count=0
+  local candidate=""
   local h=""
   local m=""
   local s=""
@@ -225,65 +224,131 @@ infer_label_runtime() {
   local s_n=0
 
   stem="${filename%.*}"
-  while IFS= read -r token; do
-    [ -z "$token" ] && continue
-    if [[ "$token" =~ ^([0-9]{1,4})[.:]([0-9]{1,2})[.:]([0-9]{1,2})$ ]]; then
-      h="${BASH_REMATCH[1]}"
-      m="${BASH_REMATCH[2]}"
-      s="${BASH_REMATCH[3]}"
-
-      h_n=$((10#$h))
-      m_n=$((10#$m))
-      s_n=$((10#$s))
-
-      # Ignore date-like triples such as 2000.10.23.
-      if [ "$h_n" -lt 100 ] && [ "$m_n" -ge 0 ] && [ "$m_n" -le 59 ] && [ "$s_n" -ge 0 ] && [ "$s_n" -le 59 ]; then
-        selected="$token"
-      fi
-    fi
-  done < <(echo "$stem" | grep -Eo '[0-9]{1,4}[.:][0-9]{1,2}[.:][0-9]{1,2}' || true)
-
-  if [ -z "$selected" ]; then
+  read -r -a tokens <<< "$stem"
+  token_count="${#tokens[@]}"
+  if [ "$token_count" -eq 0 ]; then
     printf '\tmissing'
     return
   fi
 
-  IFS=':.' read -r h m s <<< "$selected"
-  h_n=$((10#$h))
-  m_n=$((10#$m))
-  s_n=$((10#$s))
+  candidate="${tokens[$((token_count - 1))]}"
+  if [[ "$candidate" =~ ^([0-9]{1,4})[.:]([0-9]{1,2})[.:]([0-9]{1,2})$ ]]; then
+    h="${BASH_REMATCH[1]}"
+    m="${BASH_REMATCH[2]}"
+    s="${BASH_REMATCH[3]}"
+    h_n=$((10#$h))
+    m_n=$((10#$m))
+    s_n=$((10#$s))
 
-  printf '%d:%02d:%02d\tfilename_pattern' "$h_n" "$m_n" "$s_n"
+    # Only accept runtime-like triples at end of filename token list.
+    if [ "$h_n" -lt 100 ] && [ "$m_n" -ge 0 ] && [ "$m_n" -le 59 ] && [ "$s_n" -ge 0 ] && [ "$s_n" -le 59 ]; then
+      printf '%d:%02d:%02d\tfilename_pattern' "$h_n" "$m_n" "$s_n"
+      return
+    fi
+  fi
+
+  printf '\tmissing'
 }
 
-infer_content_type() {
-  local path="$1"
-  local lowered_path=""
-  local keyword=""
+infer_tape_name() {
+  local filename="$1"
+  local stem=""
+  local working=""
+  local -a tokens=()
+  local token_count=0
+  local i=0
+  local date_index=-1
+  local start_index=0
+  local sequence_index=-1
+  local end_index=0
+  local of_token=""
+  local label=""
 
-  if [ -n "$CONTENT_TYPE_OVERRIDE" ]; then
-    printf '%s' "$CONTENT_TYPE_OVERRIDE"
+  if [ -n "$TAPE_NAME_OVERRIDE" ]; then
+    printf '%s\tmanual' "$TAPE_NAME_OVERRIDE"
     return
   fi
 
-  lowered_path="$(echo "$path" | tr '[:upper:]' '[:lower:]')"
+  if [ -n "$CONTENT_TYPE_OVERRIDE" ]; then
+    printf '%s\tmanual' "$CONTENT_TYPE_OVERRIDE"
+    return
+  fi
 
-  IFS=',' read -r -a keyword_array <<< "$CITY_KEYWORDS"
-  for keyword in "${keyword_array[@]}"; do
-    keyword="$(echo "$keyword" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr '[:upper:]' '[:lower:]')"
-    [ -z "$keyword" ] && continue
-    if [[ "$lowered_path" == *"$keyword"* ]]; then
-      printf '%s' "$CITY_LABEL"
-      return
+  stem="${filename%.*}"
+  working="$(echo "$stem" | sed -E 's/^[[:space:]]*[Vv][Hh][Ss][-_[:space:]]*[0-9]+[[:space:]_-]*//')"
+  read -r -a tokens <<< "$working"
+  token_count="${#tokens[@]}"
+
+  if [ "$token_count" -eq 0 ]; then
+    printf '\tmissing'
+    return
+  fi
+
+  for ((i=0; i<token_count; i++)); do
+    if [[ "${tokens[$i]}" =~ ^[12][0-9]{3}[-_.][01][0-9][-_.][0-3][0-9]$ ]] || [[ "${tokens[$i]}" =~ ^[12][0-9]{7}$ ]]; then
+      date_index="$i"
+      break
     fi
   done
 
-  printf '%s' "$OTHER_LABEL"
+  if [ "$date_index" -ge 0 ]; then
+    start_index=$((date_index + 1))
+  fi
+
+  for ((i=start_index; i+2<token_count; i++)); do
+    if [[ "${tokens[$i]}" =~ ^[0-9]{1,3}$ ]] && [[ "${tokens[$((i+2))]}" =~ ^[0-9]{1,3}$ ]]; then
+      of_token="$(echo "${tokens[$((i+1))]}" | tr '[:upper:]' '[:lower:]')"
+      if [ "$of_token" = "of" ]; then
+        sequence_index="$i"
+        break
+      fi
+    fi
+  done
+
+  if [ "$sequence_index" -ge 0 ]; then
+    end_index=$((sequence_index - 1))
+  else
+    end_index=$((token_count - 1))
+  fi
+
+  # Exclude trailing runtime token only when it is at the end.
+  if [ "$end_index" -ge "$start_index" ] && [[ "${tokens[$end_index]}" =~ ^([0-9]{1,4})[.:]([0-9]{1,2})[.:]([0-9]{1,2})$ ]]; then
+    h_n=$((10#${BASH_REMATCH[1]}))
+    m_n=$((10#${BASH_REMATCH[2]}))
+    s_n=$((10#${BASH_REMATCH[3]}))
+    if [ "$h_n" -lt 100 ] && [ "$m_n" -ge 0 ] && [ "$m_n" -le 59 ] && [ "$s_n" -ge 0 ] && [ "$s_n" -le 59 ]; then
+      end_index=$((end_index - 1))
+    fi
+  fi
+
+  if [ "$end_index" -lt "$start_index" ]; then
+    printf '\tmissing'
+    return
+  fi
+
+  for ((i=start_index; i<=end_index; i++)); do
+    if [ -n "$label" ]; then
+      label="$label ${tokens[$i]}"
+    else
+      label="${tokens[$i]}"
+    fi
+  done
+
+  label="$(echo "$label" | sed -E 's/^[[:space:]_-]+//;s/[[:space:]_-]+$//')"
+  if [ -z "$label" ]; then
+    printf '\tmissing'
+    return
+  fi
+
+  printf '%s\tfilename_segment' "$label"
 }
 
 is_city_flag() {
-  local content_type="$1"
-  if [ "$content_type" = "$CITY_LABEL" ]; then
+  local tape_name="$1"
+  local lowered=""
+
+  lowered="$(echo "$tape_name" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$lowered" == *"city council"* ]]; then
     printf '1'
   else
     printf '0'
@@ -328,9 +393,9 @@ exec 3>"$OUTPUT"
 
 if [ "$FORMAT" = "airtable" ]; then
   id_field_escaped="${ID_FIELD//\"/\"\"}"
-  printf '"QT Filename","%s","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Label RT","Content Type","Is City Council Meeting"\n' "$id_field_escaped" >&3
+  printf '"QT Filename","%s","Tape Name","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Label RT","Is City Council Meeting"\n' "$id_field_escaped" >&3
 else
-  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Label RT","Label RT Source","Content Type","Is City Council Meeting"\n' >&3
+  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Name","Tape Name Source","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Label RT","Label RT Source","Is City Council Meeting"\n' >&3
 fi
 
 FIND_ARGS=()
@@ -374,19 +439,23 @@ while IFS= read -r -d '' file; do
   recording_result="$(infer_recording_date "$filename")"
   recording_date="${recording_result%%$'\t'*}"
   recording_source="${recording_result#*$'\t'}"
+  tape_name_result="$(infer_tape_name "$filename")"
+  tape_name="${tape_name_result%%$'\t'*}"
+  tape_name_source="${tape_name_result#*$'\t'}"
   label_rt_result="$(infer_label_runtime "$filename")"
   label_rt="${label_rt_result%%$'\t'*}"
   label_rt_source="${label_rt_result#*$'\t'}"
-  content_type="$(infer_content_type "$file")"
-  city_flag="$(is_city_flag "$content_type")"
+  city_flag="$(is_city_flag "$tape_name")"
 
-  printf '%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n' \
+  printf '%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n' \
     "$filename" \
     "$file" \
     "$created_at" \
     "$created_epoch" \
     "$source" \
     "$series_name" \
+    "$tape_name" \
+    "$tape_name_source" \
     "$tape_sequence" \
     "$tapes_in_sequence" \
     "$tape_span_source" \
@@ -394,7 +463,6 @@ while IFS= read -r -d '' file; do
     "$recording_source" \
     "$label_rt" \
     "$label_rt_source" \
-    "$content_type" \
     "$city_flag" \
     "$primary_id" >> "$TMP_META"
   count=$((count + 1))
@@ -412,12 +480,14 @@ else
   sort -t "$META_DELIM" -k4,4n -k1,1 "$TMP_META" > "$TMP_SORTED"
 fi
 
-while IFS="$META_DELIM" read -r filename file created_at created_epoch source series_name tape_sequence tapes_in_sequence tape_span_source recording_date recording_source label_rt label_rt_source content_type city_flag primary_id; do
+while IFS="$META_DELIM" read -r filename file created_at created_epoch source series_name tape_name tape_name_source tape_sequence tapes_in_sequence tape_span_source recording_date recording_source label_rt label_rt_source city_flag primary_id; do
 
   if [ "$FORMAT" = "airtable" ]; then
     csv_escape "$filename" >&3
     printf ',' >&3
     csv_escape "$primary_id" >&3
+    printf ',' >&3
+    csv_escape "$tape_name" >&3
     printf ',' >&3
     csv_escape "$created_at" >&3
     printf ',' >&3
@@ -432,8 +502,6 @@ while IFS="$META_DELIM" read -r filename file created_at created_epoch source se
     csv_escape "$recording_date" >&3
     printf ',' >&3
     csv_escape "$label_rt" >&3
-    printf ',' >&3
-    csv_escape "$content_type" >&3
     printf ',' >&3
     csv_escape "$city_flag" >&3
     printf '\n' >&3
@@ -452,6 +520,10 @@ while IFS="$META_DELIM" read -r filename file created_at created_epoch source se
     printf ',' >&3
     csv_escape "$series_name" >&3
     printf ',' >&3
+    csv_escape "$tape_name" >&3
+    printf ',' >&3
+    csv_escape "$tape_name_source" >&3
+    printf ',' >&3
     csv_escape "$tape_sequence" >&3
     printf ',' >&3
     csv_escape "$tapes_in_sequence" >&3
@@ -465,8 +537,6 @@ while IFS="$META_DELIM" read -r filename file created_at created_epoch source se
     csv_escape "$label_rt" >&3
     printf ',' >&3
     csv_escape "$label_rt_source" >&3
-    printf ',' >&3
-    csv_escape "$content_type" >&3
     printf ',' >&3
     csv_escape "$city_flag" >&3
     printf '\n' >&3
