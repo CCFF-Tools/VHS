@@ -609,6 +609,66 @@ export const KERMAN_QUOTE_BANK: readonly KermanQuote[] = [
     theme: "status",
     tags: ["general", "quarantine", "launch_hold"],
   },
+  {
+    speaker: "Bitra Kerman",
+    line: "Audit pass is clean: tape IDs, content dates, and runtimes reconcile.",
+    theme: "status",
+    tags: ["general", "planning_push", "archive", "launch_ready"],
+  },
+  {
+    speaker: "Bitra Kerman",
+    line: "Before sign-off, confirm source filename, content date, and operator initials.",
+    theme: "tasks",
+    tags: ["general", "planning_push", "seal_push"],
+  },
+  {
+    speaker: "Splicia Kerman",
+    line: "If lineage is missing, treat the file as unknown until it is corrected.",
+    theme: "wisdom",
+    tags: ["general", "planning_push", "quarantine"],
+  },
+  {
+    speaker: "Nora Kerman",
+    line: "Seal checklist: checksum, catalog link, and destination path must all be present.",
+    theme: "tasks",
+    tags: ["general", "seal_push", "archive", "launch_hold"],
+  },
+  {
+    speaker: "Mallo Kerman",
+    line: "Transfer log is clean: retries documented, failures annotated, nothing silent.",
+    theme: "status",
+    tags: ["general", "seal_push", "launch_ready"],
+  },
+  {
+    speaker: "Vexa Kerman",
+    line: "Unlabeled exceptions are how regressions become folklore.",
+    theme: "wisdom",
+    tags: ["general", "quarantine", "planning_push"],
+  },
+  {
+    speaker: "Genev Kerman",
+    line: "Command rule: log decision, owner, and timestamp before the next handoff.",
+    theme: "tasks",
+    tags: ["general", "planning_push", "launch_hold"],
+  },
+  {
+    speaker: "Mira Kerman",
+    line: "Good science starts with reproducible notes, not heroic memory.",
+    theme: "wisdom",
+    tags: ["general", "planning_push", "magnetic"],
+  },
+  {
+    speaker: "Jebrin Kerman",
+    line: "Capture notes must include deck, signal chain, and any intervention applied.",
+    theme: "tasks",
+    tags: ["general", "capture_push", "planning_push"],
+  },
+  {
+    speaker: "Valdo Kerman",
+    line: "A launch-ready queue is one where every item can answer who, what, when, and where.",
+    theme: "wisdom",
+    tags: ["general", "launch_ready", "planning_push", "seal_push"],
+  },
 ] as const;
 
 export interface CommandNote {
