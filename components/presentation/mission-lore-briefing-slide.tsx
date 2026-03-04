@@ -292,10 +292,10 @@ function MissionRouteDiagram() {
         <circle cx="170" cy="276" r="18" fill="#315fb8" opacity="0.55" />
         <circle cx="178" cy="206" r="8" fill="#fbbf24" stroke="#fde68a" strokeWidth="2.6" />
         <path d="M 178 194 L 183 210 L 173 210 Z" fill="#fef3c7" />
-        <text x="178" y="186" textAnchor="middle" fill="#ffe8b4" fontSize="18" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+        <text x="164" y="190" textAnchor="middle" fill="#ffe8b4" fontSize="16" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
           Launch
         </text>
-        <text x="135" y="360" textAnchor="middle" fill="#c7eaff" fontSize="24" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+        <text x="135" y="377" textAnchor="middle" fill="#ecfeff" fontSize="27" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>
           NoCap
         </text>
 
@@ -311,8 +311,8 @@ function MissionRouteDiagram() {
           Fluxfall
         </text>
 
-        <rect x="662" y="188" width="94" height="56" rx="10" fill="#0f2f3f" stroke="#99f6e4" strokeWidth="3" />
-        <text x="709" y="221" textAnchor="middle" fill="#ccfbf1" fontSize="17" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+        <rect x="650" y="188" width="118" height="56" rx="10" fill="#0f2f3f" stroke="#99f6e4" strokeWidth="3" />
+        <text x="709" y="224" textAnchor="middle" fill="#ccfbf1" fontSize="15" style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700 }}>
           The Stacks
         </text>
 
