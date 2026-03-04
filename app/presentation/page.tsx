@@ -768,6 +768,7 @@ export default function PresentationPage() {
 
         {data &&
           current.key !== "deadline" &&
+          current.key !== "assembly" &&
           current.key !== "mission-state" &&
           current.key !== "lore-briefing" &&
           current.key !== "lore-briefing-visuals" && (
