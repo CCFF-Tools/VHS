@@ -19,9 +19,9 @@ import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 const SLIDE_INTERVAL_MS = 20000;
 const MISSION_CHART_CLASS =
-  "h-[220px] md:h-[240px] lg:h-[280px] xl:h-[320px] 2xl:h-[380px] [@media(min-width:2800px)]:h-[520px]";
+  "h-[300px] md:h-[360px] lg:h-[430px] xl:h-[520px] 2xl:h-[650px] [@media(min-width:2800px)]:h-[860px]";
 const MISSION_PIPELINE_CHART_CLASS =
-  "h-[260px] lg:h-[320px] xl:h-[380px] 2xl:h-[460px] [@media(min-width:2800px)]:h-[620px]";
+  "h-[340px] lg:h-[440px] xl:h-[540px] 2xl:h-[690px] [@media(min-width:2800px)]:h-[900px]";
 
 function formatFeedDate(acquiredAt?: string, receivedDate?: string, updatedTime?: string) {
   const source = acquiredAt ?? receivedDate ?? updatedTime;
@@ -60,19 +60,19 @@ function SlideHeader({
   subtitle?: string;
 }) {
   return (
-    <header className="mb-3 flex items-center justify-between gap-4 lg:mb-4">
+    <header className="mb-1.5 flex items-center justify-between gap-4 lg:mb-1.5">
       <div>
-        <p className="font-mono text-[clamp(0.78rem,0.62vw,1.2rem)] uppercase tracking-[0.32em] text-cyan-200/70">
+        <p className="font-mono text-[clamp(0.84rem,0.7vw,1.3rem)] uppercase tracking-[0.32em] text-cyan-200/70">
           VHS Mission Control // Meridia
         </p>
-        <h1 className="mt-1 text-[clamp(2.3rem,2.9vw,5.2rem)] font-extrabold tracking-tight text-white">{title}</h1>
-        {subtitle ? <p className="mt-1 text-[clamp(1rem,0.9vw,1.7rem)] text-cyan-100/80">{subtitle}</p> : null}
+        <h1 className="mt-1 text-[clamp(2.45rem,3.1vw,5.5rem)] font-extrabold tracking-tight text-white">{title}</h1>
+        {subtitle ? <p className="mt-1 text-[clamp(1.08rem,1.02vw,1.86rem)] text-cyan-100/80">{subtitle}</p> : null}
       </div>
       <div className="text-right text-cyan-50">
-        <p className="font-mono text-[clamp(0.78rem,0.62vw,1.2rem)] uppercase tracking-[0.22em] text-cyan-200/70">
+        <p className="font-mono text-[clamp(0.84rem,0.7vw,1.3rem)] uppercase tracking-[0.22em] text-cyan-200/70">
           Live Telemetry
         </p>
-        <p className="font-mono text-[clamp(0.9rem,0.74vw,1.35rem)] opacity-80">
+        <p className="font-mono text-[clamp(0.96rem,0.82vw,1.46rem)] opacity-80">
           {format(new Date(), "yyyy-MM-dd HH:mm:ss")}
         </p>
       </div>
@@ -169,42 +169,40 @@ export default function PresentationPage() {
       subtitle: "Core Cascade countdown against the launch window",
       content: data ? (
         <Card className="launch-card flex h-full flex-col border-slate-700 bg-slate-950 text-slate-100">
-          <CardHeader className="pb-3">
-            <p className="text-[clamp(0.78rem,0.62vw,1.2rem)] font-mono uppercase tracking-[0.3em] text-cyan-200/75">
+          <CardHeader className="pb-2">
+            <p className="text-[clamp(0.84rem,0.7vw,1.3rem)] font-mono uppercase tracking-[0.3em] text-cyan-200/75">
               Great Signal Fade Clock
             </p>
-            <CardTitle className="text-[clamp(1.35rem,1.45vw,2.4rem)] text-cyan-50">
+            <CardTitle className="text-[clamp(1.6rem,1.78vw,2.95rem)] text-cyan-50">
               {formatProjectedLaunch(data.missionState.deadline.iso)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 flex-col justify-between gap-8">
+          <CardContent className="flex min-h-0 flex-1 flex-col justify-between gap-6">
             <p className="launch-digit-glow whitespace-nowrap text-center font-mono text-[clamp(2.8rem,7.5vw,10rem)] font-semibold leading-none tracking-[0.08em] text-cyan-100">
               {deadlineClockLabel}
             </p>
             <div className="grid gap-3 xl:gap-5 lg:grid-cols-3">
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
-                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
+                <p className="text-[clamp(0.78rem,0.66vw,1.1rem)] uppercase tracking-[0.16em] text-cyan-100/70">
                   Projected Launch
                 </p>
-                <p className="mt-1 font-mono text-[clamp(1rem,0.95vw,1.6rem)] text-cyan-50">
+                <p className="mt-1 font-mono text-[clamp(1.15rem,1.08vw,1.9rem)] text-cyan-50">
                   {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
                 </p>
               </div>
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
-                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
+                <p className="text-[clamp(0.78rem,0.66vw,1.1rem)] uppercase tracking-[0.16em] text-cyan-100/70">
                   Signal Fade Status
                 </p>
-                <p className="mt-1 text-[clamp(1.4rem,1.35vw,2.4rem)] font-semibold text-cyan-50">
+                <p className="mt-1 text-[clamp(1.55rem,1.6vw,2.7rem)] font-semibold text-cyan-50">
                   {data.missionState.deadline.status === "missed" ? "Missed Window" : "Inside Window"}
                 </p>
               </div>
               <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-4">
-                <p className="text-[clamp(0.68rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/70">
+                <p className="text-[clamp(0.78rem,0.66vw,1.1rem)] uppercase tracking-[0.16em] text-cyan-100/70">
                   Trajectory
                 </p>
-                <p
-                  className={`mt-1 text-[clamp(1.4rem,1.35vw,2.4rem)] font-semibold ${projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}`}
-                >
+                <p className={`mt-1 text-[clamp(1.55rem,1.6vw,2.7rem)] font-semibold ${projectedAfterDeadline ? "text-rose-200" : "text-emerald-200"}`}>
                   {projectedAfterDeadline ? "Missed Window" : "Inside Window"}
                 </p>
               </div>
@@ -265,46 +263,46 @@ export default function PresentationPage() {
           <div className="md:col-span-2 grid gap-4 sm:grid-cols-2 md:grid-cols-1 [@media(min-width:2800px)]:grid-cols-2">
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                <p className="text-[clamp(0.88rem,0.74vw,1.24rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                   Projected Launch Window
                 </p>
-                <p className="mt-1 font-mono text-[clamp(1.2rem,1.15vw,2rem)] font-semibold text-cyan-50">
+                <p className="mt-1 font-mono text-[clamp(1.3rem,1.25vw,2.2rem)] font-semibold text-cyan-50">
                   {formatProjectedLaunch(data.launchProjection.projectedLaunchAt)}
                 </p>
               </CardContent>
             </Card>
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                <p className="text-[clamp(0.88rem,0.74vw,1.24rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                   Completion Status
                 </p>
-                <p className="mt-1 text-[clamp(2rem,2.2vw,3.9rem)] font-bold leading-none text-white">
+                <p className="mt-1 text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
                   {data.launchProjection.completedCount}/{data.kpis.totalTapes}
                 </p>
               </CardContent>
             </Card>
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                <p className="text-[clamp(0.88rem,0.74vw,1.24rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                   Velocity
                 </p>
-                <p className="mt-1 font-mono text-[clamp(2rem,2.2vw,3.9rem)] font-bold leading-none text-white">
+                <p className="mt-1 font-mono text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
                   {(captureLaunchSummary?.throughputPerDay ?? data.launchProjection.throughputPerDay).toFixed(2)}
                 </p>
-                <p className="mt-1 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
+                <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
                   tapes/day ({captureLaunchSummary?.source ?? data.launchProjection.source})
                 </p>
               </CardContent>
             </Card>
             <Card className="mission-panel">
               <CardContent className="py-4">
-                <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                <p className="text-[clamp(0.88rem,0.74vw,1.24rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                   Confidence
                 </p>
-                <p className="mt-1 text-[clamp(2rem,2.2vw,3.9rem)] font-bold uppercase leading-none text-white">
+                <p className="mt-1 text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold uppercase leading-none text-white">
                   {data.launchProjection.confidence}
                 </p>
-                <p className="mt-1 text-[clamp(0.78rem,0.62vw,1.06rem)] text-cyan-100/65">
+                <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
                   Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}%
                 </p>
               </CardContent>
@@ -339,10 +337,10 @@ export default function PresentationPage() {
             ].map(([label, value]) => (
               <Card key={label} className="mission-panel">
                 <CardContent className="py-4">
-                  <p className="text-[clamp(0.78rem,0.62vw,1.06rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+                  <p className="text-[clamp(0.86rem,0.7vw,1.18rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                     {label}
                   </p>
-                  <p className="text-[clamp(2rem,2.3vw,4rem)] font-bold leading-none text-white">{value}</p>
+                  <p className="text-[clamp(2.2rem,2.5vw,4.4rem)] font-bold leading-none text-white">{value}</p>
                 </CardContent>
               </Card>
             ))}
@@ -471,50 +469,62 @@ export default function PresentationPage() {
       subtitle: "Newest records with runtime + progression flags",
       content: data ? (
         <Card className="mission-panel flex h-full flex-col text-cyan-50">
-          <CardHeader>
-            <CardTitle className="text-cyan-50">Top 30 Most Recent</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-cyan-50">Top 12 Most Recent</CardTitle>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col">
-            <div className="mb-3 grid grid-cols-4 gap-2 text-xs text-cyan-100/70">
-              <p>Avg Label RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</span></p>
-              <p>Avg QT RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</span></p>
-              <p>Avg Final RT: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</span></p>
-              <p>Avg Drift: <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span></p>
+            <div className="mb-3 grid grid-cols-2 gap-2 text-[clamp(0.9rem,0.76vw,1.24rem)] text-cyan-100/80 xl:grid-cols-4">
+              <div className="rounded-md border border-cyan-300/20 bg-slate-900/75 px-3 py-2">
+                Avg Label RT:{" "}
+                <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.labelAverage)}</span>
+              </div>
+              <div className="rounded-md border border-cyan-300/20 bg-slate-900/75 px-3 py-2">
+                Avg QT RT:{" "}
+                <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.qtAverage)}</span>
+              </div>
+              <div className="rounded-md border border-cyan-300/20 bg-slate-900/75 px-3 py-2">
+                Avg Final RT:{" "}
+                <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.finalAverage)}</span>
+              </div>
+              <div className="rounded-md border border-cyan-300/20 bg-slate-900/75 px-3 py-2">
+                Avg Drift:{" "}
+                <span className="font-semibold text-cyan-50">{formatDurationHMSFromMinutes(data.runtimeStats.driftAverage)}</span>
+              </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-auto">
-              <table className="w-full text-sm text-cyan-50">
-                <thead className="sticky top-0 bg-slate-950/90 backdrop-blur-sm">
-                  <tr className="text-left text-cyan-100/70">
-                    <th className="py-2">📼</th>
-                    <th>Name</th>
-                    <th>Cataloged</th>
-                    <th>Label</th>
-                    <th>QT</th>
-                    <th>Final</th>
-                    <th>C/T/Cb/NAS</th>
+            <div className="min-h-0 flex-1 overflow-auto rounded-md border border-cyan-300/25">
+              <table className="w-full text-[clamp(0.92rem,0.8vw,1.3rem)] text-cyan-50">
+                <thead className="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm">
+                  <tr className="text-left text-cyan-100/80">
+                    <th className="px-3 py-2.5 font-mono uppercase tracking-[0.12em]">Tape</th>
+                    <th className="px-3 py-2.5 font-mono uppercase tracking-[0.12em]">Cataloged</th>
+                    <th className="px-3 py-2.5 font-mono uppercase tracking-[0.12em]">Runtimes (L / QT / F)</th>
+                    <th className="px-3 py-2.5 font-mono uppercase tracking-[0.12em]">Progress</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.recentAcquisitions.length > 0 ? (
-                    data.recentAcquisitions.slice(0, 30).map((t) => (
+                    data.recentAcquisitions.slice(0, 12).map((t) => (
                       <tr key={t.id} className="border-t border-cyan-300/20 text-cyan-50">
-                        <td className="py-2 font-mono text-xs">{t.tapeId}</td>
-                        <td className="font-medium text-cyan-50">{t.tapeName}</td>
-                        <td className="font-mono text-xs text-cyan-100/75">
+                        <td className="px-3 py-2.5">
+                          <p className="font-mono text-[clamp(0.8rem,0.66vw,1.08rem)] text-cyan-100/80">{t.tapeId}</p>
+                          <p className="font-semibold text-cyan-50">{t.tapeName}</p>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-[clamp(0.82rem,0.68vw,1.1rem)] text-cyan-100/80">
                           {formatFeedDate(t.acquisitionAt, t.receivedDate, t.updatedTime)}
                         </td>
-                        <td>{formatDurationHMSFromMinutes(t.labelRuntimeMinutes)}</td>
-                        <td>{formatDurationHMSFromMinutes(t.qtRuntimeMinutes)}</td>
-                        <td>{formatDurationHMSFromMinutes(t.finalClipDurationMinutes)}</td>
-                        <td className="font-mono text-xs">
-                          {t.captured ? "Y" : "N"}/{t.trimmed ? "Y" : "N"}/{t.combined ? "Y" : "N"}/
+                        <td className="px-3 py-2.5 font-mono text-[clamp(0.84rem,0.7vw,1.12rem)]">
+                          L {formatDurationHMSFromMinutes(t.labelRuntimeMinutes)} | QT {formatDurationHMSFromMinutes(t.qtRuntimeMinutes)} | F{" "}
+                          {formatDurationHMSFromMinutes(t.finalClipDurationMinutes)}
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-[clamp(0.84rem,0.7vw,1.12rem)]">
+                          C {t.captured ? "Y" : "N"} · T {t.trimmed ? "Y" : "N"} · Cb {t.combined ? "Y" : "N"} · NAS{" "}
                           {t.transferredToNas ? "Y" : "N"}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr className="border-t border-cyan-300/20">
-                      <td colSpan={7} className="py-4 text-center text-sm text-cyan-100/65">
+                      <td colSpan={4} className="py-4 text-center text-sm text-cyan-100/65">
                         No catalog rows available yet.
                       </td>
                     </tr>
@@ -578,7 +588,7 @@ export default function PresentationPage() {
   const current = slides[slide];
 
   return (
-    <div className="presentation-mission-bg h-screen overflow-hidden p-3 text-white md:p-5 xl:p-7 [@media(min-width:2800px)]:p-10">
+    <div className="presentation-wallboard presentation-mission-bg h-screen overflow-hidden p-1.5 text-white md:p-2 xl:p-3 [@media(min-width:2800px)]:p-4">
       <div className="relative z-10 mx-auto flex h-full w-full flex-col">
         <SlideHeader
           title={current.title}
@@ -593,7 +603,7 @@ export default function PresentationPage() {
           current.key !== "lore-briefing-visuals" &&
           current.key !== "colonization-repeat" &&
           current.key !== "colonization" && (
-          <div className="mission-alert-box mb-3 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6 lg:py-4 [@media(min-width:2800px)]:px-8 [@media(min-width:2800px)]:py-5">
+          <div className="mission-alert-box mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:py-3 [@media(min-width:2800px)]:px-6 [@media(min-width:2800px)]:py-4">
             <div>
               <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] font-mono uppercase tracking-[0.22em] text-cyan-100/70">
                 Signal Fade Window
@@ -633,7 +643,7 @@ export default function PresentationPage() {
 
         {data && <div className="min-h-0 flex-1 animate-floatIn">{current.content}</div>}
 
-        <footer className="mt-3 flex items-center justify-between text-[clamp(0.82rem,0.7vw,1.22rem)] text-cyan-100/85">
+        <footer className="mt-1.5 flex items-center justify-between text-[clamp(0.84rem,0.72vw,1.26rem)] text-cyan-100/85">
           <p className="font-mono text-[clamp(0.76rem,0.62vw,1rem)] uppercase tracking-[0.12em] text-cyan-100/70">
             {autoRotateLabel}
           </p>

@@ -138,27 +138,27 @@ export function LaunchCountdown({
     >
       {showFrameHeader && (
         <CardHeader className="relative pb-1">
-          <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-cyan-200/80">
+          <p className="text-[clamp(0.78rem,0.64vw,1.08rem)] font-mono uppercase tracking-[0.32em] text-cyan-200/80">
             Artemis Archive Program
           </p>
-          <CardTitle className="mt-2 text-2xl font-bold tracking-wide text-white md:text-3xl">
+          <CardTitle className="mt-2 text-[clamp(1.9rem,2.1vw,3.5rem)] font-bold tracking-wide text-white">
             Countdown to Launch
           </CardTitle>
-          <p className="mt-1 text-xs text-cyan-100/80">
+          <p className="mt-1 text-[clamp(0.84rem,0.7vw,1.16rem)] text-cyan-100/80">
             Projected from live tape completion velocity and queue depth.
           </p>
         </CardHeader>
       )}
 
-      <CardContent className="relative space-y-5">
-        <div className="rounded-md border border-cyan-300/25 bg-slate-950/65 p-4">
+      <CardContent className="relative space-y-6">
+        <div className="rounded-md border border-cyan-300/25 bg-slate-950/65 p-5">
           <p className="font-mono text-[clamp(0.78rem,0.64vw,1.18rem)] uppercase tracking-[0.3em] text-cyan-100/75">
             Mission Clock
           </p>
-          <p className="launch-digit-glow mt-2 font-mono text-[clamp(2.2rem,2.8vw,5.1rem)] font-semibold tracking-[0.14em] text-cyan-100">
+          <p className="launch-digit-glow mt-2 font-mono text-[clamp(2.5rem,3.2vw,5.8rem)] font-semibold tracking-[0.14em] text-cyan-100">
             {missionClock}
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-[clamp(0.78rem,0.64vw,1.1rem)]">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[clamp(0.86rem,0.72vw,1.2rem)]">
             <span
               className={`inline-flex rounded-full border px-2.5 py-1 font-mono uppercase tracking-[0.18em] ${confidenceClass(projection.confidence)}`}
             >
@@ -168,17 +168,17 @@ export function LaunchCountdown({
               {projection.status === "counting" ? "Go for launch" : projection.status === "launched" ? "Mission complete" : "Waiting for telemetry"}
             </span>
           </div>
-          <p className="mt-3 text-[clamp(0.8rem,0.66vw,1.16rem)] text-slate-300">
+          <p className="mt-3 text-[clamp(0.9rem,0.76vw,1.26rem)] text-slate-300">
             Projected launch window:{" "}
             <span className="font-mono text-slate-100">{formatProjectionTime(projection.projectedLaunchAt)}</span>
           </p>
           {deadlineMs != null && (
             <>
-              <p className="mt-2 text-[clamp(0.8rem,0.66vw,1.16rem)] text-slate-300">
+              <p className="mt-2 text-[clamp(0.9rem,0.76vw,1.26rem)] text-slate-300">
                 Launch window deadline:{" "}
                 <span className="font-mono text-slate-100">{formatDeadlineTime(deadlineAt)}</span>
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[clamp(0.78rem,0.64vw,1.1rem)]">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[clamp(0.86rem,0.72vw,1.2rem)]">
                 <span className="rounded-full border border-cyan-300/35 bg-cyan-500/15 px-2.5 py-1 font-mono uppercase tracking-[0.18em] text-cyan-100">
                   {deadlineReached || !deadlineCountdown
                     ? "Window closed"
@@ -196,16 +196,16 @@ export function LaunchCountdown({
 
         <div className="grid gap-3 md:grid-cols-3">
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">{backlogLabel}</p>
-            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{summaryBacklog}</p>
+            <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.2em] text-slate-400">{backlogLabel}</p>
+            <p className="mt-1 font-mono text-[clamp(2rem,2.3vw,3.8rem)] text-white">{summaryBacklog}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">{velocityLabel}</p>
-            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">{summaryThroughput.toFixed(2)} {throughputUnit}</p>
+            <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.2em] text-slate-400">{velocityLabel}</p>
+            <p className="mt-1 font-mono text-[clamp(2rem,2.3vw,3.8rem)] text-white">{summaryThroughput.toFixed(2)} {throughputUnit}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.2em] text-slate-400">{etaLabel}</p>
-            <p className="mt-1 font-mono text-[clamp(1.8rem,2vw,3.4rem)] text-white">
+            <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.2em] text-slate-400">{etaLabel}</p>
+            <p className="mt-1 font-mono text-[clamp(2rem,2.3vw,3.8rem)] text-white">
               {summaryEta != null ? `${summaryEta} days` : "TBD"}
             </p>
           </div>
@@ -213,10 +213,10 @@ export function LaunchCountdown({
 
         <div className="space-y-3 rounded-md border border-slate-700/70 bg-slate-950/70 p-4">
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[clamp(0.76rem,0.6vw,1.06rem)] uppercase tracking-[0.26em] text-slate-300">
+            <p className="font-mono text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.26em] text-slate-300">
               Subsystem Readiness
             </p>
-            <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] text-slate-400">
+            <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] text-slate-400">
               Recent completions: <span className="font-mono text-slate-200">{projection.recentCompletions}</span>
             </p>
           </div>
@@ -224,13 +224,13 @@ export function LaunchCountdown({
             const pct = Math.max(0, Math.min(100, (phase.count / total) * 100));
             return (
               <div key={phase.label} className="space-y-1">
-                <div className="flex items-center justify-between text-[clamp(0.78rem,0.64vw,1.1rem)] text-slate-300">
+                <div className="flex items-center justify-between text-[clamp(0.88rem,0.74vw,1.22rem)] text-slate-300">
                   <span className="font-mono uppercase tracking-[0.14em]">{phase.label}</span>
                   <span className="font-mono text-slate-100">
                     {phase.count}/{kpis.totalTapes}
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-slate-800">
+                <div className="h-2 rounded-full bg-slate-800">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-300 to-emerald-300 transition-all duration-700"
                     style={{ width: `${pct}%` }}
@@ -239,7 +239,7 @@ export function LaunchCountdown({
               </div>
             );
           })}
-          <p className="text-[clamp(0.76rem,0.6vw,1.06rem)] text-slate-400">
+          <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] text-slate-400">
             Basis: <span className="font-mono text-slate-300">{projectionBasis(projection)}</span> | Completion-date
             coverage: <span className="font-mono text-slate-300">{projection.completionDateCoveragePercent}%</span>
           </p>

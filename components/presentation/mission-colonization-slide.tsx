@@ -60,13 +60,13 @@ export function MissionColonizationSlide({
     <div className="grid h-full gap-4 md:grid-cols-5">
       <Card className="mission-panel flex h-full min-h-0 flex-col md:col-span-4">
         <CardHeader className="pb-2">
-          <CardTitle className="text-cyan-50">Colonization Timeline: Meridia Run</CardTitle>
-          <p className="text-[clamp(0.8rem,0.64vw,1.08rem)] text-cyan-100/75">
+          <CardTitle className="text-[clamp(1.45rem,1.34vw,2.1rem)] text-cyan-50">Colonization Timeline: Meridia Run</CardTitle>
+          <p className="text-[clamp(0.98rem,0.84vw,1.32rem)] text-cyan-100/75">
             Archived cargo advances mission phase from launch through Fluxfall Basin to The Stacks.
           </p>
         </CardHeader>
-        <CardContent className="min-h-0 space-y-3 overflow-auto pr-1">
-          <div className="grid gap-2 lg:grid-cols-9">
+        <CardContent className="min-h-0 space-y-4 overflow-auto pr-1">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {PHASES.map((row, index) => (
               <div
                 key={row.phase}
@@ -76,10 +76,10 @@ export function MissionColonizationSlide({
                   quarantine: missionState.overlays.quarantine && index === activeIndex,
                 })}`}
               >
-                <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em]">Phase {index + 1}</p>
-                <p className="mt-1 text-[0.88rem] font-semibold leading-tight">{row.title}</p>
-                <p className="mt-1 text-[0.68rem] uppercase tracking-[0.1em] opacity-80">{row.crew} owns</p>
-                <p className="mt-1 font-mono text-[0.64rem] uppercase tracking-[0.12em]">
+                <p className="font-mono text-[clamp(0.8rem,0.68vw,1.08rem)] uppercase tracking-[0.14em]">Phase {index + 1}</p>
+                <p className="mt-1 text-[clamp(1.04rem,0.92vw,1.44rem)] font-semibold leading-tight">{row.title}</p>
+                <p className="mt-1 text-[clamp(0.8rem,0.68vw,1.08rem)] uppercase tracking-[0.1em] opacity-80">{row.crew} owns</p>
+                <p className="mt-1 font-mono text-[clamp(0.76rem,0.64vw,1.02rem)] uppercase tracking-[0.12em]">
                   {index < activeIndex ? "COMPLETE" : index === activeIndex ? "ACTIVE" : "LOCKED"}
                 </p>
               </div>
@@ -88,39 +88,39 @@ export function MissionColonizationSlide({
 
           <div className="grid gap-3 lg:grid-cols-3">
             <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3">
-              <p className="font-mono text-[clamp(0.72rem,0.56vw,0.94rem)] uppercase tracking-[0.14em] text-cyan-100/70">
+              <p className="font-mono text-[clamp(0.84rem,0.72vw,1.1rem)] uppercase tracking-[0.14em] text-cyan-100/70">
                 Archiving Coverage
               </p>
-              <p className="mt-1 text-[clamp(1.6rem,1.7vw,2.8rem)] font-semibold leading-none text-cyan-50">
+              <p className="mt-1 text-[clamp(1.84rem,2vw,3.2rem)] font-semibold leading-none text-cyan-50">
                 {missionState.counts.archived}/{missionState.counts.total}
               </p>
-              <p className="mt-1 font-mono text-[clamp(0.74rem,0.58vw,0.98rem)] text-cyan-100/80">
+              <p className="mt-1 font-mono text-[clamp(0.86rem,0.74vw,1.14rem)] text-cyan-100/80">
                 Colonization progress: {percent(missionState.progress.colonization)}
               </p>
             </div>
             <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3">
-              <p className="font-mono text-[clamp(0.72rem,0.56vw,0.94rem)] uppercase tracking-[0.14em] text-cyan-100/70">
+              <p className="font-mono text-[clamp(0.84rem,0.72vw,1.1rem)] uppercase tracking-[0.14em] text-cyan-100/70">
                 Route
               </p>
-              <p className="mt-1 text-[clamp(0.84rem,0.68vw,1.12rem)] text-cyan-100/85">
-                Origin pad - Launch arc - Meridia approach - Fluxfall Basin touchdown - The Stacks expansion.
+              <p className="mt-1 text-[clamp(0.98rem,0.84vw,1.32rem)] text-cyan-100/85">
+                NoCap launch pad - Launch arc - Meridia approach - Fluxfall Basin touchdown - The Stacks expansion.
               </p>
             </div>
             <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3">
-              <p className="font-mono text-[clamp(0.72rem,0.56vw,0.94rem)] uppercase tracking-[0.14em] text-cyan-100/70">
+              <p className="font-mono text-[clamp(0.84rem,0.72vw,1.1rem)] uppercase tracking-[0.14em] text-cyan-100/70">
                 Trajectory
               </p>
-              <p className={projectedAfterDeadline ? "mt-1 font-semibold text-rose-100" : "mt-1 font-semibold text-emerald-100"}>
+              <p className={projectedAfterDeadline ? "mt-1 text-[clamp(1.1rem,0.96vw,1.52rem)] font-semibold text-rose-100" : "mt-1 text-[clamp(1.1rem,0.96vw,1.52rem)] font-semibold text-emerald-100"}>
                 {projectedAfterDeadline ? "Missed Window Risk" : "Inside Window"}
               </p>
-              <p className="mt-1 text-[clamp(0.74rem,0.58vw,0.98rem)] text-cyan-100/80">
+              <p className="mt-1 text-[clamp(0.86rem,0.74vw,1.14rem)] text-cyan-100/80">
                 {missionState.deadline.status === "missed"
                   ? "Signal Fade threshold exceeded."
                   : "Launch window still open against Signal Fade."}
               </p>
             </div>
           </div>
-          <p className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2 text-[clamp(0.74rem,0.58vw,0.98rem)] text-cyan-100">
+          <p className="rounded-md border border-cyan-300/30 bg-cyan-950/35 px-3 py-2 text-[clamp(0.9rem,0.78vw,1.2rem)] text-cyan-100">
             {activeCallout(missionState)}
           </p>
         </CardContent>
@@ -128,29 +128,29 @@ export function MissionColonizationSlide({
 
       <Card className="mission-panel min-h-0 md:col-span-1">
         <CardHeader className="pb-2">
-          <CardTitle className="text-cyan-50">Gate Locks</CardTitle>
+          <CardTitle className="text-[clamp(1.25rem,1.1vw,1.8rem)] text-cyan-50">Gate Locks</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-[clamp(0.8rem,0.64vw,1.04rem)]">
+        <CardContent className="space-y-2.5 text-[clamp(0.94rem,0.82vw,1.26rem)]">
           <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 px-3 py-2">
-            <p className="font-mono uppercase tracking-[0.14em] text-cyan-100/70">Launch</p>
+            <p className="font-mono text-[clamp(0.82rem,0.7vw,1.08rem)] uppercase tracking-[0.14em] text-cyan-100/70">Launch</p>
             <p className={missionState.gates.launchAllowed ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>
               {missionState.gates.launchAllowed ? "OPEN" : "HOLD"}
             </p>
           </div>
           <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 px-3 py-2">
-            <p className="font-mono uppercase tracking-[0.14em] text-cyan-100/70">Landing</p>
+            <p className="font-mono text-[clamp(0.82rem,0.7vw,1.08rem)] uppercase tracking-[0.14em] text-cyan-100/70">Landing</p>
             <p className={missionState.gates.landingAllowed ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>
               {missionState.gates.landingAllowed ? "OPEN" : "HOLD"}
             </p>
           </div>
           <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 px-3 py-2">
-            <p className="font-mono uppercase tracking-[0.14em] text-cyan-100/70">Stacks Growth</p>
+            <p className="font-mono text-[clamp(0.82rem,0.7vw,1.08rem)] uppercase tracking-[0.14em] text-cyan-100/70">Stacks Growth</p>
             <p className={missionState.gates.stacksGrowthAllowed ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>
               {missionState.gates.stacksGrowthAllowed ? "OPEN" : "HOLD"}
             </p>
           </div>
           <div className="rounded-md border border-rose-300/30 bg-rose-950/35 px-3 py-2 text-rose-100">
-            <p className="font-mono uppercase tracking-[0.14em] text-rose-100/80">Quarantine</p>
+            <p className="font-mono text-[clamp(0.82rem,0.7vw,1.08rem)] uppercase tracking-[0.14em] text-rose-100/80">Quarantine</p>
             <p className="mt-1 font-semibold">
               {missionState.overlays.quarantine
                 ? `${missionState.overlays.anomaliesCount} blocked`

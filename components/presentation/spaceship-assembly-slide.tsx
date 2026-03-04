@@ -349,17 +349,17 @@ export function SpaceshipAssemblySlide({
         <CardHeader className="pb-2">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[clamp(0.78rem,0.62vw,1.08rem)] uppercase tracking-[0.16em] text-cyan-100/65">
+              <p className="text-[clamp(0.88rem,0.76vw,1.22rem)] uppercase tracking-[0.16em] text-cyan-100/65">
                 Assembly Phase
               </p>
-              <CardTitle className="mt-1 text-[clamp(1.45rem,1.6vw,2.5rem)] text-cyan-50">{phase.name}</CardTitle>
-              <p className="mt-1 text-[clamp(0.82rem,0.66vw,1.16rem)] text-cyan-100/75">{phase.detail}</p>
+              <CardTitle className="mt-1 text-[clamp(1.65rem,1.86vw,2.9rem)] text-cyan-50">{phase.name}</CardTitle>
+              <p className="mt-1 text-[clamp(0.96rem,0.84vw,1.34rem)] text-cyan-100/75">{phase.detail}</p>
             </div>
             <div className="rounded-md border border-cyan-300/30 bg-slate-900/80 px-4 py-2 text-right">
-              <p className="text-[clamp(0.74rem,0.56vw,0.98rem)] uppercase tracking-[0.16em] text-cyan-100/60">
+              <p className="text-[clamp(0.84rem,0.72vw,1.12rem)] uppercase tracking-[0.16em] text-cyan-100/60">
                 Overall Build
               </p>
-              <p className="font-mono text-[clamp(1.45rem,1.7vw,2.6rem)] font-semibold text-cyan-50">
+              <p className="font-mono text-[clamp(1.7rem,1.94vw,3rem)] font-semibold text-cyan-50">
                 {percent(overallProgress)}
               </p>
             </div>
@@ -373,7 +373,7 @@ export function SpaceshipAssemblySlide({
         </CardHeader>
 
         <CardContent className="min-h-0 flex-1">
-          <div className="relative h-full min-h-[320px] overflow-hidden rounded-xl border border-cyan-200/40 bg-[#0d3b95] shadow-[inset_0_0_0_1px_rgba(214,239,255,0.14)]">
+          <div className="relative h-full min-h-[380px] overflow-hidden rounded-xl border border-cyan-200/40 bg-[#0d3b95] shadow-[inset_0_0_0_1px_rgba(214,239,255,0.14)]">
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)] bg-[size:22px_22px] opacity-55" />
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.14)_1px,transparent_1px)] bg-[size:110px_110px] opacity-30" />
             <div className="pointer-events-none absolute inset-2 border border-cyan-100/55" />
@@ -586,17 +586,17 @@ export function SpaceshipAssemblySlide({
               return (
                 <div
                   key={box.title}
-                  className={`absolute z-20 max-w-[250px] rounded-md border-2 border-cyan-50/95 bg-[#082968]/98 px-3 py-2 text-cyan-50 shadow-[0_8px_22px_rgba(1,8,24,0.45)] ${box.className}`}
+                  className={`absolute z-20 max-w-[300px] rounded-md border-2 border-cyan-50/95 bg-[#082968]/98 px-3 py-2.5 text-cyan-50 shadow-[0_8px_22px_rgba(1,8,24,0.45)] ${box.className}`}
                 >
                   <div className="rounded-[0.28rem] border border-cyan-100/60 px-2 py-1">
-                    <p className="text-[clamp(0.92rem,0.74vw,1.34rem)] uppercase tracking-[0.08em] text-cyan-50">
+                    <p className="text-[clamp(1rem,0.86vw,1.5rem)] uppercase tracking-[0.08em] text-cyan-50">
                       {box.title}
                     </p>
-                    <p className="mt-1 text-[clamp(0.78rem,0.6vw,1.06rem)] leading-snug text-cyan-100/90">{box.task}</p>
+                    <p className="mt-1 text-[clamp(0.9rem,0.76vw,1.24rem)] leading-snug text-cyan-100/90">{box.task}</p>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-3 border-t border-cyan-100/45 pt-1.5">
-                    <p className="font-mono text-[clamp(0.9rem,0.7vw,1.2rem)] text-cyan-50">{percent(box.value)}</p>
-                    <span className="font-mono text-[clamp(0.72rem,0.56vw,0.94rem)] text-amber-100">{state}</span>
+                    <p className="font-mono text-[clamp(1rem,0.84vw,1.4rem)] text-cyan-50">{percent(box.value)}</p>
+                    <span className="font-mono text-[clamp(0.84rem,0.7vw,1.14rem)] text-amber-100">{state}</span>
                   </div>
                 </div>
               );
@@ -604,16 +604,16 @@ export function SpaceshipAssemblySlide({
 
             <div className="absolute inset-x-2 bottom-2 grid grid-cols-12 gap-2 text-cyan-50">
               <div className="col-span-7 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
-                <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
-                <p className="mt-1 text-[clamp(0.68rem,0.5vw,0.9rem)] leading-snug text-cyan-100/80">
+                <p className="text-[clamp(0.86rem,0.72vw,1.12rem)] uppercase tracking-[0.14em] text-cyan-100/85">Orbital Assembly Brief</p>
+                <p className="mt-1 text-[clamp(0.82rem,0.68vw,1.08rem)] leading-snug text-cyan-100/80">
                   Capture builds the ship. Trim + Combine lock the plan. Archiving pushes Meridia colonization.
                 </p>
               </div>
               <div className="col-span-5 rounded-sm border border-cyan-100/45 bg-[#07235a]/90 px-3 py-2">
-                <p className="text-[clamp(0.7rem,0.52vw,0.92rem)] uppercase tracking-[0.14em] text-cyan-100/85">Crewed Build Index</p>
-                <p className="mt-1 font-mono text-[clamp(0.68rem,0.5vw,0.9rem)] text-cyan-100/85">Capture+ {percent(captureOrBetter)}</p>
-                <p className="font-mono text-[clamp(0.68rem,0.5vw,0.9rem)] text-cyan-100/85">Trim+ {percent(trimOrBetter)}</p>
-                <p className="font-mono text-[clamp(0.68rem,0.5vw,0.9rem)] text-cyan-100/85">Archived {percent(archivedRatio)}</p>
+                <p className="text-[clamp(0.86rem,0.72vw,1.12rem)] uppercase tracking-[0.14em] text-cyan-100/85">Crewed Build Index</p>
+                <p className="mt-1 font-mono text-[clamp(0.82rem,0.68vw,1.08rem)] text-cyan-100/85">Capture+ {percent(captureOrBetter)}</p>
+                <p className="font-mono text-[clamp(0.82rem,0.68vw,1.08rem)] text-cyan-100/85">Trim+ {percent(trimOrBetter)}</p>
+                <p className="font-mono text-[clamp(0.82rem,0.68vw,1.08rem)] text-cyan-100/85">Archived {percent(archivedRatio)}</p>
               </div>
             </div>
           </div>
@@ -623,12 +623,12 @@ export function SpaceshipAssemblySlide({
       <div className="grid h-full min-h-0 gap-3 md:col-span-2 md:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card className="mission-panel min-h-0 flex flex-col">
           <CardHeader className="pb-2">
-            <CardTitle className="text-cyan-50">Subsystem Completion</CardTitle>
+            <CardTitle className="text-[clamp(1.22rem,1.08vw,1.75rem)] text-cyan-50">Subsystem Completion</CardTitle>
           </CardHeader>
           <CardContent className="min-h-0 space-y-2 overflow-auto pr-1">
             {milestoneRows.map((milestone) => (
               <div key={milestone.label} className="space-y-1">
-                <div className="flex items-center justify-between text-[clamp(0.78rem,0.62vw,1.05rem)] text-cyan-100/80">
+                <div className="flex items-center justify-between text-[clamp(0.92rem,0.8vw,1.28rem)] text-cyan-100/80">
                   <p className="font-mono uppercase tracking-[0.12em]">{milestone.label}</p>
                   <p className="font-mono text-cyan-50">
                     {percent(milestone.value)} <span className="text-cyan-100/60">({milestone.hint})</span>
@@ -643,7 +643,7 @@ export function SpaceshipAssemblySlide({
               </div>
             ))}
             <div className="rounded-md border border-cyan-200/30 bg-slate-900/70 p-3">
-              <p className="text-[clamp(0.82rem,0.66vw,1.16rem)] font-semibold uppercase tracking-[0.12em] text-cyan-100/88">
+              <p className="text-[clamp(0.94rem,0.82vw,1.3rem)] font-semibold uppercase tracking-[0.12em] text-cyan-100/88">
                 Assembly Steps
               </p>
               <div className="mt-2 space-y-1.5">
@@ -652,13 +652,13 @@ export function SpaceshipAssemblySlide({
                   return (
                     <div
                       key={step.label}
-                      className="flex items-center justify-between text-[clamp(0.8rem,0.63vw,1.08rem)]"
+                      className="flex items-center justify-between text-[clamp(0.92rem,0.8vw,1.24rem)]"
                     >
                       <p className={complete ? "font-semibold text-cyan-50" : "font-semibold text-cyan-100/70"}>
                         {step.label}
                       </p>
                       <span
-                        className={`font-mono text-[clamp(0.7rem,0.54vw,0.92rem)] ${
+                        className={`font-mono text-[clamp(0.8rem,0.68vw,1.04rem)] ${
                           complete ? "text-emerald-200" : "text-amber-200/90"
                         }`}
                       >
@@ -674,21 +674,21 @@ export function SpaceshipAssemblySlide({
 
         <Card className="mission-panel min-h-0 flex flex-col">
           <CardHeader className="pb-2">
-            <CardTitle className="text-cyan-50">Pipeline to Assembly Mapping</CardTitle>
+            <CardTitle className="text-[clamp(1.22rem,1.08vw,1.75rem)] text-cyan-50">Systems to Assembly Mapping</CardTitle>
           </CardHeader>
           <CardContent className="min-h-0 space-y-2 overflow-auto pr-1">
             <div className="rounded-md border border-cyan-300/20 bg-slate-900/70 p-3">
-              <p className="text-[clamp(0.76rem,0.58vw,0.98rem)] uppercase tracking-[0.15em] text-cyan-100/60">
+              <p className="text-[clamp(0.84rem,0.72vw,1.12rem)] uppercase tracking-[0.15em] text-cyan-100/60">
                 Cataloged Today
               </p>
-              <p className="mt-1 text-[clamp(1.35rem,1.45vw,2.1rem)] font-semibold text-cyan-50">{kpis.receivedToday}</p>
+              <p className="mt-1 text-[clamp(1.55rem,1.68vw,2.5rem)] font-semibold text-cyan-50">{kpis.receivedToday}</p>
             </div>
             {stageRows.map((stage) => {
               const count = counts[stage];
               const share = ratio(count, total);
               return (
                 <div key={stage} className="space-y-1">
-                  <div className="flex items-center justify-between text-[clamp(0.78rem,0.62vw,1.05rem)] text-cyan-100/80">
+                  <div className="flex items-center justify-between text-[clamp(0.92rem,0.8vw,1.28rem)] text-cyan-100/80">
                     <p className="font-mono uppercase tracking-[0.12em]">{stageLabel(stage)}</p>
                     <p className="font-mono text-cyan-50">
                       {count} <span className="text-cyan-100/60">({percent(share)})</span>
