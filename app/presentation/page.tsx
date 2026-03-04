@@ -768,12 +768,9 @@ export default function PresentationPage() {
 
         {data &&
           current.key !== "deadline" &&
-          current.key !== "assembly" &&
           current.key !== "mission-state" &&
           current.key !== "lore-briefing" &&
-          current.key !== "lore-briefing-visuals" &&
-          current.key !== "colonization-repeat" &&
-          current.key !== "colonization" && (
+          current.key !== "lore-briefing-visuals" && (
           <div className="mission-alert-box mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:py-3 [@media(min-width:2800px)]:px-6 [@media(min-width:2800px)]:py-4">
             <div>
               <p className="text-[clamp(0.8rem,0.66vw,1.15rem)] font-mono uppercase tracking-[0.22em] text-cyan-100/70">
