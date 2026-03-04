@@ -250,28 +250,7 @@ export default function PresentationPage() {
       .slice(-throughputWindowDays)
       .reduce((sum, day) => sum + day.count, 0);
 
-    let captureThroughputPerDay = recentCapturedCount / throughputWindowDays;
-    let source = `captured-at (${throughputWindowDays}d window)`;
-
-    if (captureThroughputPerDay <= 0 && data.kpis.capturedCount > 0) {
-      const timelineStartCandidates = data.tapes
-        .map((tape) => {
-          const raw = tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.capturedAt;
-          if (!raw) return null;
-          const parsed = Date.parse(raw);
-          return Number.isFinite(parsed) ? parsed : null;
-        })
-        .filter((timestamp): timestamp is number => timestamp != null);
-
-      if (timelineStartCandidates.length > 0) {
-        const timelineStartMs = Math.min(...timelineStartCandidates);
-        const activeDays = Math.max(1, Math.floor((Date.now() - timelineStartMs) / 86400000) + 1);
-        captureThroughputPerDay = data.kpis.capturedCount / activeDays;
-        source = "historical capture ratio";
-      }
-    }
-
-    const throughputPerDay = Number(captureThroughputPerDay.toFixed(2));
+    const throughputPerDay = Number((recentCapturedCount / throughputWindowDays).toFixed(2));
     const estimatedDaysRemaining =
       captureBacklogCount === 0
         ? 0
@@ -283,8 +262,51 @@ export default function PresentationPage() {
       backlogCount: captureBacklogCount,
       throughputPerDay,
       estimatedDaysRemaining,
-      source,
+      source: `captured-at (${throughputWindowDays}d window)`,
     };
+  }, [data]);
+
+  const historicalCaptureVelocity = useMemo(() => {
+    if (!data) return null;
+    if (data.kpis.capturedCount <= 0) {
+      return {
+        throughputPerDay: 0,
+        source: "historical capture ratio",
+      };
+    }
+
+    const captureStartCandidates = data.tapes
+      .map((tape) => {
+        if (!tape.capturedAt) return null;
+        const parsed = Date.parse(tape.capturedAt);
+        return Number.isFinite(parsed) ? parsed : null;
+      })
+      .filter((timestamp): timestamp is number => timestamp != null);
+
+    if (captureStartCandidates.length === 0) {
+      return {
+        throughputPerDay: 0,
+        source: "historical capture ratio",
+      };
+    }
+
+    const captureStartMs = Math.min(...captureStartCandidates);
+    const nowStartMs = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+    const captureStartDayMs = new Date(new Date(captureStartMs).setHours(0, 0, 0, 0)).getTime();
+    const elapsedDays = Math.max(1, Math.floor((nowStartMs - captureStartDayMs) / 86400000) + 1);
+    const throughputPerDay = Number((data.kpis.capturedCount / elapsedDays).toFixed(2));
+
+    return {
+      throughputPerDay,
+      source: "historical capture ratio",
+    };
+  }, [data]);
+
+  const capturedTodayCount = useMemo(() => {
+    if (!data) return 0;
+    const todayKey = format(new Date(), "yyyy-MM-dd");
+    const todayRow = data.capturedDaily.find((row) => row.date === todayKey);
+    return todayRow?.count ?? 0;
   }, [data]);
 
   const baseSlides = [
@@ -413,10 +435,10 @@ export default function PresentationPage() {
                   Velocity
                 </p>
                 <p className="mt-1 font-mono text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
-                  {(captureLaunchSummary?.throughputPerDay ?? data.launchProjection.throughputPerDay).toFixed(2)}
+                  {(historicalCaptureVelocity?.throughputPerDay ?? data.launchProjection.throughputPerDay).toFixed(2)}
                 </p>
                 <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
-                  tapes/day ({captureLaunchSummary?.source ?? formatLaunchProjectionSource(data.launchProjection)})
+                  tapes/day ({historicalCaptureVelocity?.source ?? formatLaunchProjectionSource(data.launchProjection)})
                 </p>
               </CardContent>
             </Card>
@@ -461,6 +483,7 @@ export default function PresentationPage() {
               ["Total Tapes", data.kpis.totalTapes],
               ["Awaiting Capture", data.kpis.awaitingCaptureCount],
               ["Captured", data.kpis.capturedCount],
+              ["Captured Today", capturedTodayCount],
               ["Trimmed", data.kpis.trimmedCount],
               ["Combined", data.kpis.combinedCount],
               ["Transferred", data.kpis.transferredCount],
