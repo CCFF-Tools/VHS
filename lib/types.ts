@@ -73,7 +73,7 @@ export interface LaunchProjection {
   completionDateCoveragePercent: number;
   runtimeCoveragePercent: number;
   confidence: "high" | "medium" | "low";
-  source: "completion-dates-runtime" | "historical-runtime" | "historical-count" | "none";
+  source: "capture-dates-count" | "historical-capture-count" | "none";
 }
 
 export interface MissionRuntimeProgress {

@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ColonizationPhase, MissionState } from "@/lib/types";
-import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 
 const PHASES: Array<{ phase: ColonizationPhase; title: string; crew: string }> = [
   { phase: "cargo_staged", title: "Cargo Staged", crew: "Nora" },
@@ -52,6 +51,8 @@ export function MissionColonizationSlide({
   missionState: MissionState;
   projectedAfterDeadline: boolean;
 }) {
+  const archivedTapeRatio =
+    missionState.counts.total > 0 ? missionState.counts.archived / missionState.counts.total : 0;
   const activeIndex = Math.max(
     0,
     PHASES.findIndex((row) => row.phase === missionState.milestones.colonization)
@@ -93,18 +94,13 @@ export function MissionColonizationSlide({
                 Archiving Coverage
               </p>
               <p className="mt-1 text-[clamp(1.84rem,2vw,3.2rem)] font-semibold leading-none text-cyan-50">
-                {missionState.runtime.coveragePercent > 0
-                  ? `${formatDurationHMSFromMinutes(missionState.runtime.cumulativeMinutes.archived)} / ${formatDurationHMSFromMinutes(missionState.runtime.totalMinutes)}`
-                  : `${missionState.counts.archived}/${missionState.counts.total}`}
+                {missionState.counts.archived}/{missionState.counts.total}
               </p>
               <p className="mt-1 font-mono text-[clamp(0.86rem,0.74vw,1.14rem)] text-cyan-100/80">
-                {missionState.runtime.coveragePercent > 0
-                  ? `Runtime-weighted progress: ${percent(missionState.progress.colonization)}`
-                  : `Count fallback progress: ${percent(missionState.progress.colonization)}`}
+                Tape-count progress: {percent(archivedTapeRatio)}
               </p>
               <p className="mt-1 text-[clamp(0.78rem,0.66vw,1.02rem)] text-cyan-100/65">
-                Tape count: {missionState.counts.archived}/{missionState.counts.total} | Runtime coverage:{" "}
-                {missionState.runtime.coveragePercent}%
+                Archived coverage now tracks total tape manifest.
               </p>
             </div>
             <div className="rounded-md border border-cyan-300/25 bg-slate-900/75 p-3">

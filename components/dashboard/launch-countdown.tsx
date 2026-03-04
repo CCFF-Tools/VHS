@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 import { cn } from "@/lib/utils";
-import type { LaunchProjection, MissionState } from "@/lib/types";
+import type { DashboardKpis, LaunchProjection } from "@/lib/types";
 
 function formatProjectionTime(value?: string) {
   if (!value) return "Awaiting sufficient throughput signal";
@@ -37,16 +36,13 @@ function confidenceClass(confidence: LaunchProjection["confidence"]) {
 }
 
 function projectionBasis(projection: LaunchProjection) {
-  if (projection.source === "completion-dates-runtime") {
-    return `Runtime completion timestamps (${projection.throughputWindowDays}d window)`;
+  if (projection.source === "capture-dates-count") {
+    return `Capture timestamps (${projection.throughputWindowDays}d window)`;
   }
-  if (projection.source === "historical-runtime") {
-    return "Historical runtime throughput";
+  if (projection.source === "historical-capture-count") {
+    return "Historical capture count throughput";
   }
-  if (projection.source === "historical-count") {
-    return "Historical completion count throughput";
-  }
-  return "Insufficient completed records";
+  return "Insufficient capture records";
 }
 
 function formatDeadlineTime(value?: string) {
@@ -56,32 +52,28 @@ function formatDeadlineTime(value?: string) {
   return format(new Date(parsed), "MMM d, yyyy HH:mm:ss");
 }
 
-function formatBacklogValue(projection: LaunchProjection) {
-  if (projection.throughputUnit === "runtime-minutes/day") {
-    return formatDurationHMSFromMinutes(projection.backlogRuntimeMinutes);
-  }
-  return String(projection.backlogCount);
-}
-
-function formatVelocityValue(projection: LaunchProjection) {
-  if (projection.throughputUnit === "runtime-minutes/day") {
-    return `${formatDurationHMSFromMinutes(projection.throughputPerDay)} / day`;
-  }
-  return `${projection.throughputPerDay.toFixed(2)} tapes/day`;
+interface SummaryOverride {
+  backlogCount: number;
+  throughputPerDay: number;
+  estimatedDaysRemaining?: number;
+  labelPrefix?: string;
+  throughputUnit?: string;
 }
 
 export function LaunchCountdown({
   projection,
-  missionState,
+  kpis,
   deadlineAt,
   className,
   showFrameHeader = true,
+  summaryOverride,
 }: {
   projection: LaunchProjection;
-  missionState: MissionState;
+  kpis: DashboardKpis;
   deadlineAt?: string;
   className?: string;
   showFrameHeader?: boolean;
+  summaryOverride?: SummaryOverride;
 }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -121,37 +113,22 @@ export function LaunchCountdown({
         ? "LIFTOFF"
         : "TRAJECTORY PENDING";
 
-  const runtimeMode = missionState.runtime.coveragePercent > 0;
-  const totalRuntimeMinutes = missionState.runtime.totalMinutes;
+  const total = Math.max(1, kpis.totalTapes);
   const phaseProgress = [
-    {
-      label: "Capture",
-      ratio: missionState.runtime.progress.captureOrBetter,
-      minutes: missionState.runtime.cumulativeMinutes.captureOrBetter,
-      count: missionState.counts.captured,
-    },
-    {
-      label: "Trim",
-      ratio: missionState.runtime.progress.trimOrBetter,
-      minutes: missionState.runtime.cumulativeMinutes.trimOrBetter,
-      count: missionState.counts.trimmed,
-    },
-    {
-      label: "Combine",
-      ratio: missionState.runtime.progress.combineOrBetter,
-      minutes: missionState.runtime.cumulativeMinutes.combineOrBetter,
-      count: missionState.counts.combined,
-    },
-    {
-      label: "Transfer",
-      ratio: missionState.runtime.progress.transferOrBetter,
-      minutes: missionState.runtime.cumulativeMinutes.transferOrBetter,
-      count: missionState.counts.transferred,
-    },
+    { label: "Capture", count: kpis.capturedCount },
+    { label: "Trim", count: kpis.trimmedCount },
+    { label: "Combine", count: kpis.combinedCount },
+    { label: "Transfer", count: kpis.transferredCount },
   ];
-  const backlogLabel = projection.throughputUnit === "runtime-minutes/day" ? "Runtime Backlog" : "Backlog";
-  const velocityLabel = projection.throughputUnit === "runtime-minutes/day" ? "Runtime Velocity" : "Velocity";
-  const etaLabel = projection.throughputUnit === "runtime-minutes/day" ? "Runtime ETA" : "ETA";
+
+  const summaryPrefix = summaryOverride?.labelPrefix?.trim();
+  const backlogLabel = summaryPrefix ? `${summaryPrefix} Backlog` : "Backlog";
+  const velocityLabel = summaryPrefix ? `${summaryPrefix} Velocity` : "Velocity";
+  const etaLabel = summaryPrefix ? `${summaryPrefix} ETA` : "ETA";
+  const summaryBacklog = summaryOverride?.backlogCount ?? projection.backlogCount;
+  const summaryThroughput = summaryOverride?.throughputPerDay ?? projection.throughputPerDay;
+  const summaryEta = summaryOverride?.estimatedDaysRemaining ?? projection.estimatedDaysRemaining;
+  const throughputUnit = summaryOverride?.throughputUnit ?? "tapes/day";
 
   return (
     <Card
@@ -169,7 +146,7 @@ export function LaunchCountdown({
             Countdown to Launch
           </CardTitle>
           <p className="mt-1 text-[clamp(0.84rem,0.7vw,1.16rem)] text-cyan-100/80">
-            Projected from live completion velocity and queue depth.
+            Projected from live tape completion velocity and queue depth.
           </p>
         </CardHeader>
       )}
@@ -221,16 +198,16 @@ export function LaunchCountdown({
         <div className="grid gap-3 md:grid-cols-3">
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
             <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.2em] text-slate-400">{backlogLabel}</p>
-            <p className="mt-1 font-mono text-[clamp(1.6rem,2vw,3.2rem)] text-white">{formatBacklogValue(projection)}</p>
+            <p className="mt-1 font-mono text-[clamp(2rem,2.3vw,3.8rem)] text-white">{summaryBacklog}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
             <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.2em] text-slate-400">{velocityLabel}</p>
-            <p className="mt-1 font-mono text-[clamp(1.6rem,2vw,3.2rem)] text-white">{formatVelocityValue(projection)}</p>
+            <p className="mt-1 font-mono text-[clamp(2rem,2.3vw,3.8rem)] text-white">{summaryThroughput.toFixed(2)} {throughputUnit}</p>
           </div>
           <div className="rounded-md border border-slate-600/45 bg-slate-900/80 p-3">
             <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] uppercase tracking-[0.2em] text-slate-400">{etaLabel}</p>
             <p className="mt-1 font-mono text-[clamp(2rem,2.3vw,3.8rem)] text-white">
-              {projection.estimatedDaysRemaining != null ? `${projection.estimatedDaysRemaining} days` : "TBD"}
+              {summaryEta != null ? `${summaryEta} days` : "TBD"}
             </p>
           </div>
         </div>
@@ -245,16 +222,13 @@ export function LaunchCountdown({
             </p>
           </div>
           {phaseProgress.map((phase) => {
-            const pct = Math.max(0, Math.min(100, phase.ratio * 100));
+            const pct = Math.max(0, Math.min(100, (phase.count / total) * 100));
             return (
               <div key={phase.label} className="space-y-1">
                 <div className="flex items-center justify-between text-[clamp(0.88rem,0.74vw,1.22rem)] text-slate-300">
                   <span className="font-mono uppercase tracking-[0.14em]">{phase.label}</span>
                   <span className="font-mono text-slate-100">
-                    {runtimeMode
-                      ? `${formatDurationHMSFromMinutes(phase.minutes)} / ${formatDurationHMSFromMinutes(totalRuntimeMinutes)} | ${phase.count}/${missionState.counts.total} tapes`
-                      : `${phase.count}/${missionState.counts.total}`}{" "}
-                    ({Math.round(pct)}%)
+                    {phase.count}/{kpis.totalTapes}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-slate-800">
@@ -268,8 +242,7 @@ export function LaunchCountdown({
           })}
           <p className="text-[clamp(0.84rem,0.7vw,1.18rem)] text-slate-400">
             Basis: <span className="font-mono text-slate-300">{projectionBasis(projection)}</span> | Completion-date
-            coverage: <span className="font-mono text-slate-300">{projection.completionDateCoveragePercent}%</span> |
-            Runtime coverage: <span className="font-mono text-slate-300">{projection.runtimeCoveragePercent}%</span>
+            coverage: <span className="font-mono text-slate-300">{projection.completionDateCoveragePercent}%</span>
           </p>
         </div>
       </CardContent>

@@ -42,7 +42,7 @@ Default behavior:
 - Tries to infer `Original Recording Date` from filename patterns like `YYYY-MM-DD`, `YYYY_MM_DD`, or `YYYYMMDD`
 - Extracts `Tape Name` from words between recording date and `X of Y` (or end-of-name when no `X of Y`)
 - Parses `Label RT` from runtime token in filename, like `2.23.10` -> `2:23:10` (ignores date-like tokens such as `2000.10.23`)
-- Runtime is only captured when runtime token is at the end of filename; otherwise `Label RT` is left blank
+- If runtime token is not present at end of filename, falls back to file metadata duration (`mdls kMDItemDurationSeconds`) and writes `HH:MM:SS` to `Label RT`
 - Writes Airtable-ready columns:
   - `QT Filename`
   - `📼` (Primary Identifier)
@@ -75,7 +75,7 @@ On the connected machine, set credentials in `.env.local` (or export them in she
 - Optional: `AIRTABLE_LATEST_CSV_GLOB=/Volumes/USB/quicktime_capture_export_*.csv` to auto-pick newest matching export
 - Optional: `AIRTABLE_CAPTURED_VALUE=Yes` if your `Captured` field expects text/select instead of checkbox boolean
 
-Dry-run first (no Airtable writes):
+Dry-run first (no Airtable writes; lists planned field-level changes):
 
 ```bash
 ./scripts/upsert_capture_csv_to_airtable.sh "/Volumes/USB/capture_export_2026_03_01.csv" --dry-run
@@ -114,6 +114,7 @@ Schema-guided run with newest-file auto-select:
 
 By default, this import step forces `Captured` for every row (default value: boolean `true`).  
 If your Airtable field expects text/single-select, pass `--captured-value "Yes"`.
+`Tape Name` is sourced from the exact text parsed out of `QT Filename` (date-to-sequence segment), not from category lists.
 
 Useful options:
 - `--key-field "📼"` (default; change upsert key if needed)

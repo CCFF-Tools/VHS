@@ -17,7 +17,7 @@ import { useOpsSummary } from "@/lib/hooks/use-api";
 import { stageLabel } from "@/lib/stage-label";
 import { formatDurationHMSFromMinutes } from "@/lib/runtime-format";
 import { RUNTIME_BUCKETS } from "@/lib/runtime-buckets";
-import type { TapeRecord } from "@/lib/types";
+import type { LaunchProjection, TapeRecord } from "@/lib/types";
 
 const SLIDE_INTERVAL_MS = 20000;
 const MISSION_CHART_CLASS =
@@ -38,6 +38,16 @@ function formatProjectedLaunch(value?: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "TBD";
   return format(parsed, "yyyy-MM-dd HH:mm:ss");
+}
+
+function formatLaunchProjectionSource(projection: LaunchProjection) {
+  if (projection.source === "capture-dates-count") {
+    return `capture timestamps (${projection.throughputWindowDays}d window)`;
+  }
+  if (projection.source === "historical-capture-count") {
+    return "historical capture throughput";
+  }
+  return "insufficient capture records";
 }
 
 function runtimeMinutesForTape(tape: TapeRecord, fallbackMinutes: number) {
@@ -227,6 +237,51 @@ export default function PresentationPage() {
       : !deadlineCountdown
         ? "TELEMETRY PENDING"
       : `D-${deadlineCountdown.days}:${deadlineCountdown.hours}:${deadlineCountdown.minutes}:${deadlineCountdown.seconds}`;
+  const captureLaunchSummary = useMemo(() => {
+    if (!data) return null;
+
+    const throughputWindowDays = 21;
+    const captureBacklogCount = Math.max(0, data.kpis.totalTapes - data.kpis.capturedCount);
+    const recentCapturedCount = data.capturedDaily
+      .slice(-throughputWindowDays)
+      .reduce((sum, day) => sum + day.count, 0);
+
+    let captureThroughputPerDay = recentCapturedCount / throughputWindowDays;
+    let source = `captured-at (${throughputWindowDays}d window)`;
+
+    if (captureThroughputPerDay <= 0 && data.kpis.capturedCount > 0) {
+      const timelineStartCandidates = data.tapes
+        .map((tape) => {
+          const raw = tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.capturedAt;
+          if (!raw) return null;
+          const parsed = Date.parse(raw);
+          return Number.isFinite(parsed) ? parsed : null;
+        })
+        .filter((timestamp): timestamp is number => timestamp != null);
+
+      if (timelineStartCandidates.length > 0) {
+        const timelineStartMs = Math.min(...timelineStartCandidates);
+        const activeDays = Math.max(1, Math.floor((Date.now() - timelineStartMs) / 86400000) + 1);
+        captureThroughputPerDay = data.kpis.capturedCount / activeDays;
+        source = "historical capture ratio";
+      }
+    }
+
+    const throughputPerDay = Number(captureThroughputPerDay.toFixed(2));
+    const estimatedDaysRemaining =
+      captureBacklogCount === 0
+        ? 0
+        : throughputPerDay > 0
+          ? Number((captureBacklogCount / throughputPerDay).toFixed(1))
+          : undefined;
+
+    return {
+      backlogCount: captureBacklogCount,
+      throughputPerDay,
+      estimatedDaysRemaining,
+      source,
+    };
+  }, [data]);
 
   const baseSlides = [
     {
@@ -309,10 +364,21 @@ export default function PresentationPage() {
           <div className="md:col-span-3">
             <LaunchCountdown
               projection={data.launchProjection}
-              missionState={data.missionState}
+              kpis={data.kpis}
               deadlineAt={data.missionState.deadline.iso}
               className="h-full"
               showFrameHeader={false}
+              summaryOverride={
+                captureLaunchSummary
+                  ? {
+                      backlogCount: captureLaunchSummary.backlogCount,
+                      throughputPerDay: captureLaunchSummary.throughputPerDay,
+                      estimatedDaysRemaining: captureLaunchSummary.estimatedDaysRemaining,
+                      labelPrefix: "Capture",
+                      throughputUnit: "tapes/day",
+                    }
+                  : undefined
+              }
             />
           </div>
           <div className="md:col-span-2 grid gap-4 sm:grid-cols-2 md:grid-cols-1 [@media(min-width:2800px)]:grid-cols-2">
@@ -329,15 +395,10 @@ export default function PresentationPage() {
             <Card className="mission-panel">
               <CardContent className="py-4">
                 <p className="text-[clamp(0.88rem,0.74vw,1.24rem)] uppercase tracking-[0.16em] text-cyan-100/65">
-                  {data.launchProjection.runtimeCoveragePercent > 0 ? "Runtime Completed" : "Completion Status"}
+                  Completion Status
                 </p>
                 <p className="mt-1 text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
-                  {data.launchProjection.runtimeCoveragePercent > 0
-                    ? `${formatDurationHMSFromMinutes(data.launchProjection.completedRuntimeMinutes)} / ${formatDurationHMSFromMinutes(data.missionState.runtime.totalMinutes)}`
-                    : `${data.launchProjection.completedCount}/${data.kpis.totalTapes}`}
-                </p>
-                <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
-                  Tape count: {data.launchProjection.completedCount}/{data.kpis.totalTapes}
+                  {data.launchProjection.completedCount}/{data.kpis.totalTapes}
                 </p>
               </CardContent>
             </Card>
@@ -347,13 +408,10 @@ export default function PresentationPage() {
                   Velocity
                 </p>
                 <p className="mt-1 font-mono text-[clamp(2.2rem,2.45vw,4.3rem)] font-bold leading-none text-white">
-                  {data.launchProjection.throughputUnit === "runtime-minutes/day"
-                    ? formatDurationHMSFromMinutes(data.launchProjection.throughputPerDay)
-                    : data.launchProjection.throughputPerDay.toFixed(2)}
+                  {(captureLaunchSummary?.throughputPerDay ?? data.launchProjection.throughputPerDay).toFixed(2)}
                 </p>
                 <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
-                  {data.launchProjection.throughputUnit === "runtime-minutes/day" ? "runtime/day" : "tapes/day"} (
-                  {data.launchProjection.source})
+                  tapes/day ({captureLaunchSummary?.source ?? formatLaunchProjectionSource(data.launchProjection)})
                 </p>
               </CardContent>
             </Card>
@@ -366,8 +424,7 @@ export default function PresentationPage() {
                   {data.launchProjection.confidence}
                 </p>
                 <p className="mt-1 text-[clamp(0.86rem,0.7vw,1.16rem)] text-cyan-100/65">
-                  Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}% | Runtime coverage:{" "}
-                  {data.launchProjection.runtimeCoveragePercent}%
+                  Completion-date coverage: {data.launchProjection.completionDateCoveragePercent}%
                 </p>
               </CardContent>
             </Card>

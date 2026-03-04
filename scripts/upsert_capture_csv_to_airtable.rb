@@ -83,7 +83,7 @@ def usage_banner
       --pause-ms N           Delay between API calls in ms (default: 225)
       --no-typecast          Disable Airtable typecast (default: enabled)
       --include-empty        Include empty values in updates (default: skip empty)
-      --dry-run              Parse and plan only; do not call Airtable
+      --dry-run              Plan only; do not write Airtable
       -h, --help             Show this help
   USAGE
 end
@@ -210,6 +210,61 @@ def coerce_value(source_field, raw_value)
   value
 end
 
+def looks_like_recording_date_token?(token)
+  token.match?(/^[12][0-9]{3}[-_.][01][0-9][-_.][0-3][0-9]$/) || token.match?(/^[12][0-9]{7}$/)
+end
+
+def looks_like_sequence_triplet?(tokens, index)
+  return false if index + 2 >= tokens.length
+  return false unless tokens[index].match?(/^[0-9]{1,3}$/)
+  return false unless tokens[index + 1].casecmp("of").zero?
+  return false unless tokens[index + 2].match?(/^[0-9]{1,3}$/)
+
+  true
+end
+
+def runtime_like_token?(token)
+  match = token.match(/^([0-9]{1,4})[.:]([0-9]{1,2})[.:]([0-9]{1,2})$/)
+  return false unless match
+
+  h = match[1].to_i
+  m = match[2].to_i
+  s = match[3].to_i
+  h < 100 && m >= 0 && m <= 59 && s >= 0 && s <= 59
+end
+
+def infer_tape_name_from_qt_filename(filename_value)
+  return "" if filename_value.to_s.strip.empty?
+
+  basename = File.basename(filename_value.to_s.strip)
+  stem = basename.sub(/\.[^.]+\z/, "")
+  working = stem.sub(/^\s*[Vv][Hh][Ss][-_[:space:]]*[0-9]+[[:space:]_-]*/, "")
+  tokens = working.split(/\s+/).reject(&:empty?)
+  return "" if tokens.empty?
+
+  date_index = tokens.index { |token| looks_like_recording_date_token?(token) }
+  start_index = date_index ? date_index + 1 : 0
+
+  sequence_index = nil
+  i = start_index
+  while i < tokens.length
+    if looks_like_sequence_triplet?(tokens, i)
+      sequence_index = i
+      break
+    end
+    i += 1
+  end
+
+  end_index = sequence_index ? sequence_index - 1 : tokens.length - 1
+  if end_index >= start_index && runtime_like_token?(tokens[end_index])
+    end_index -= 1
+  end
+
+  return "" if end_index < start_index
+
+  tokens[start_index..end_index].join(" ").strip
+end
+
 def resolve_upload_fields(csv_headers, requested_fields, schema_headers)
   source_fields = (requested_fields && !requested_fields.empty? ? requested_fields : csv_headers).reject { |name| name == "__row_number" }
 
@@ -260,9 +315,20 @@ def resolve_upload_fields(csv_headers, requested_fields, schema_headers)
   }
 end
 
-def build_payload_rows(rows, key_field, include_empty, source_target_pairs, captured_field, mark_captured, captured_value)
+def build_payload_rows(
+  rows,
+  key_field,
+  include_empty,
+  source_target_pairs,
+  captured_field,
+  mark_captured,
+  captured_value,
+  allow_derived_tape_name
+)
   payload_rows = []
   skipped_missing_key = 0
+  tape_name_derived_count = 0
+  tape_name_overwritten_count = 0
 
   rows.each do |row|
     key_value = row[key_field].to_s.strip
@@ -286,6 +352,19 @@ def build_payload_rows(rows, key_field, include_empty, source_target_pairs, capt
 
     fields[key_field] = key_value unless fields.key?(key_field)
     fields[captured_field] = normalize_captured_value(captured_value) if mark_captured
+    if allow_derived_tape_name
+      inferred_tape_name = infer_tape_name_from_qt_filename(row["QT Filename"] || fields["QT Filename"])
+      unless inferred_tape_name.empty?
+        previous_tape_name = fields["Tape Name"]
+        previous_text = previous_tape_name.to_s.strip
+        fields["Tape Name"] = inferred_tape_name
+        if previous_text.empty?
+          tape_name_derived_count += 1
+        elsif previous_text != inferred_tape_name
+          tape_name_overwritten_count += 1
+        end
+      end
+    end
 
     payload_rows << {
       key_value: key_value,
@@ -294,7 +373,14 @@ def build_payload_rows(rows, key_field, include_empty, source_target_pairs, capt
     }
   end
 
-  [payload_rows, skipped_missing_key]
+  [
+    payload_rows,
+    skipped_missing_key,
+    {
+      tape_name_derived_count: tape_name_derived_count,
+      tape_name_overwritten_count: tape_name_overwritten_count,
+    },
+  ]
 end
 
 def chunk(array, size)
@@ -387,14 +473,18 @@ def table_endpoint(base_id, table_name)
   "https://api.airtable.com/v0/#{base_id}/#{encoded_table}"
 end
 
-def fetch_existing_record_map(base_id, table_name, api_key, key_field)
+def fetch_existing_record_map(base_id, table_name, api_key, key_field, fields_to_fetch)
   endpoint = table_endpoint(base_id, table_name)
-  record_id_by_key = {}
+  record_by_key = {}
   duplicate_keys = {}
   offset = nil
+  selected_fields = ([key_field] + fields_to_fetch).uniq
 
   loop do
-    query = [["pageSize", "100"], ["fields[]", key_field]]
+    query = [["pageSize", "100"]]
+    selected_fields.each do |field|
+      query << ["fields[]", field]
+    end
     query << ["offset", offset] if offset
     query_string = URI.encode_www_form(query)
     url = "#{endpoint}?#{query_string}"
@@ -409,10 +499,13 @@ def fetch_existing_record_map(base_id, table_name, api_key, key_field)
       key = fields[key_field].to_s.strip
       next if key.empty?
 
-      if record_id_by_key.key?(key)
+      if record_by_key.key?(key)
         duplicate_keys[key] = true
       else
-        record_id_by_key[key] = record["id"]
+        record_by_key[key] = {
+          id: record["id"],
+          fields: fields,
+        }
       end
     end
 
@@ -420,7 +513,125 @@ def fetch_existing_record_map(base_id, table_name, api_key, key_field)
     break if offset.nil? || offset.to_s.empty?
   end
 
-  [record_id_by_key, duplicate_keys.keys]
+  [record_by_key, duplicate_keys.keys]
+end
+
+def values_equivalent?(old_value, new_value)
+  return true if old_value == new_value
+
+  if old_value.is_a?(Numeric) && new_value.is_a?(Numeric)
+    return old_value.to_f == new_value.to_f
+  end
+
+  false
+end
+
+def compute_field_changes(existing_fields, desired_fields)
+  changes = []
+  desired_fields.each do |field_name, new_value|
+    old_value = existing_fields[field_name]
+    next if values_equivalent?(old_value, new_value)
+
+    changes << {
+      field: field_name,
+      from: old_value,
+      to: new_value,
+    }
+  end
+  changes
+end
+
+def build_upsert_plan(rows, existing_by_key)
+  updates = []
+  creates = []
+  unchanged = []
+
+  rows.each do |row|
+    existing = existing_by_key[row[:key_value]]
+    if existing.nil?
+      creates << {
+        key_value: row[:key_value],
+        row_number: row[:row_number],
+        fields: row[:fields],
+      }
+      next
+    end
+
+    changes = compute_field_changes(existing[:fields] || {}, row[:fields])
+    if changes.empty?
+      unchanged << {
+        key_value: row[:key_value],
+        row_number: row[:row_number],
+        id: existing[:id],
+      }
+      next
+    end
+
+    fields = {}
+    changes.each do |change|
+      fields[change[:field]] = change[:to]
+    end
+    updates << {
+      key_value: row[:key_value],
+      row_number: row[:row_number],
+      id: existing[:id],
+      fields: fields,
+      changes: changes,
+    }
+  end
+
+  {
+    updates: updates,
+    creates: creates,
+    unchanged: unchanged,
+  }
+end
+
+def format_diff_value(value)
+  return "null" if value.nil?
+
+  if value.is_a?(String)
+    return value.inspect
+  end
+
+  begin
+    JSON.generate(value)
+  rescue
+    value.inspect
+  end
+end
+
+def print_dry_run_plan(plan)
+  puts "Dry run enabled; Airtable was not modified."
+  puts "Will update: #{plan[:updates].length}"
+  puts "Will create: #{plan[:creates].length}"
+  puts "Unchanged: #{plan[:unchanged].length}"
+  puts "No changes detected." if plan[:updates].empty? && plan[:creates].empty?
+
+  plan[:updates].each do |item|
+    puts "UPDATE #{item[:key_value]} (record #{item[:id]}, CSV row #{item[:row_number]})"
+    item[:changes].each do |change|
+      puts "  - #{change[:field]}: #{format_diff_value(change[:from])} -> #{format_diff_value(change[:to])}"
+    end
+  end
+
+  plan[:creates].each do |item|
+    puts "CREATE #{item[:key_value]} (CSV row #{item[:row_number]})"
+    item[:fields].each do |field_name, value|
+      puts "  - #{field_name}: null -> #{format_diff_value(value)}"
+    end
+  end
+end
+
+def print_dry_run_without_remote(rows)
+  puts "Dry run enabled; Airtable was not called."
+  puts "Missing Airtable credentials; listing payload only (create vs update unknown)."
+  rows.each do |row|
+    puts "UPSERT #{row[:key_value]} (CSV row #{row[:row_number]})"
+    row[:fields].each do |field_name, value|
+      puts "  - #{field_name}: #{format_diff_value(value)}"
+    end
+  end
 end
 
 def summarize_error(error)
@@ -467,14 +678,18 @@ def run
   end
 
   field_resolution = resolve_upload_fields(headers, options[:field_filter], schema_headers)
-  payload_rows, skipped_missing_key = build_payload_rows(
+  tape_name_requested = options[:field_filter].nil? || options[:field_filter].include?("Tape Name") || options[:field_filter].include?("Content Type")
+  tape_name_allowed_by_schema = schema_headers.empty? || schema_headers.include?("Tape Name")
+  allow_derived_tape_name = tape_name_requested && tape_name_allowed_by_schema
+  payload_rows, skipped_missing_key, derive_stats = build_payload_rows(
     rows,
     options[:key_field],
     options[:include_empty],
     field_resolution[:source_target_pairs],
     options[:captured_field],
     options[:mark_captured],
-    options[:captured_value]
+    options[:captured_value],
+    allow_derived_tape_name
   )
 
   if payload_rows.empty?
@@ -500,6 +715,11 @@ def run
   puts "Mapped fields: #{field_resolution[:alias_mappings].join('; ')}" unless field_resolution[:alias_mappings].empty?
   puts "Skipped non-schema fields: #{field_resolution[:skipped_source_fields].join(', ')}" unless field_resolution[:skipped_source_fields].empty?
   puts "Upload fields: #{field_resolution[:target_fields].join(', ')}" unless field_resolution[:target_fields].empty?
+  if allow_derived_tape_name
+    puts "Tape Name source: QT Filename parser (exact filename text)"
+    puts "Tape Name filled from filename: #{derive_stats[:tape_name_derived_count]}" if derive_stats[:tape_name_derived_count] > 0
+    puts "Tape Name overwritten from filename: #{derive_stats[:tape_name_overwritten_count]}" if derive_stats[:tape_name_overwritten_count] > 0
+  end
   puts "Skipped rows with empty key: #{skipped_missing_key}" if skipped_missing_key > 0
   puts "Duplicate key rows in CSV: #{duplicate_input_rows} (last row per key wins)" if duplicate_input_rows > 0
   if options[:mark_captured]
@@ -508,39 +728,39 @@ def run
   end
   puts "Loaded env from: #{env_file_used}" if env_file_used
 
-  if options[:dry_run]
-    puts "Dry run enabled; Airtable was not called."
-    puts "Rows that would be upserted: #{deduped_rows.length}"
-    return
-  end
-
-  if options[:api_key].to_s.empty? || options[:base_id].to_s.empty? || options[:table_name].to_s.empty?
+  missing_credentials = options[:api_key].to_s.empty? || options[:base_id].to_s.empty? || options[:table_name].to_s.empty?
+  if missing_credentials
+    if options[:dry_run]
+      print_dry_run_without_remote(deduped_rows)
+      return
+    end
     raise "Missing Airtable credentials. Set AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME."
   end
 
-  record_id_by_key, duplicate_keys = fetch_existing_record_map(
+  fields_to_fetch = deduped_rows.flat_map { |row| row[:fields].keys }.uniq
+  existing_by_key, duplicate_keys = fetch_existing_record_map(
     options[:base_id],
     options[:table_name],
     options[:api_key],
-    options[:key_field]
+    options[:key_field],
+    fields_to_fetch
   )
   unless duplicate_keys.empty?
     warn "Found #{duplicate_keys.length} duplicate key(s) already in Airtable; updating the first match per key."
   end
 
-  to_update = []
-  to_create = []
-  deduped_rows.each do |row|
-    existing_id = record_id_by_key[row[:key_value]]
-    if existing_id
-      to_update << { id: existing_id, fields: row[:fields] }
-    else
-      to_create << { fields: row[:fields] }
-    end
+  plan = build_upsert_plan(deduped_rows, existing_by_key)
+  if options[:dry_run]
+    print_dry_run_plan(plan)
+    return
   end
+
+  to_update = plan[:updates].map { |item| { id: item[:id], fields: item[:fields] } }
+  to_create = plan[:creates].map { |item| { fields: item[:fields] } }
 
   puts "Will update: #{to_update.length}"
   puts "Will create: #{to_create.length}"
+  puts "Unchanged: #{plan[:unchanged].length}"
 
   endpoint = table_endpoint(options[:base_id], options[:table_name])
   created = 0
@@ -574,7 +794,7 @@ def run
   end
 
   puts "Upsert complete."
-  puts "Summary: #{updated} updated, #{created} created, #{skipped_missing_key} skipped (missing key)."
+  puts "Summary: #{updated} updated, #{created} created, #{plan[:unchanged].length} unchanged, #{skipped_missing_key} skipped (missing key)."
 end
 
 begin

@@ -649,8 +649,10 @@ function toTimestamp(value?: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function isLaunchComplete(tape: TapeRecord) {
-  return Boolean(tape.archivalFilename || tape.transferredToNas || tape.stage === "Archived");
+function isCapturedForLaunch(tape: TapeRecord) {
+  if (tape.captured || tape.capturedAt || tape.qtFilename) return true;
+  const rank = STAGE_PROGRESS_RANK[tape.stage] ?? -1;
+  return rank >= STAGE_PROGRESS_RANK.Capture;
 }
 
 function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWeightingSummary): LaunchProjection {
@@ -665,7 +667,7 @@ function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWei
       backlogRuntimeMinutes: 0,
       completedRuntimeMinutes: 0,
       throughputPerDay: 0,
-      throughputUnit: "runtime-minutes/day",
+      throughputUnit: "tapes/day",
       throughputWindowDays: 21,
       recentCompletions: 0,
       recentRuntimeMinutes: 0,
@@ -676,20 +678,29 @@ function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWei
     };
   }
 
-  const completedTapes = tapes.filter((tape) => isLaunchComplete(tape));
+  const completedTapes = tapes.filter((tape) => isCapturedForLaunch(tape));
   const completedCount = completedTapes.length;
   const backlogCount = Math.max(0, tapes.length - completedCount);
+  const capturedRuntimeValues = completedTapes
+    .map((tape) => preferredRuntimeMinutes(tape))
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const capturedKnownRuntimeMinutes = capturedRuntimeValues.reduce((sum, value) => sum + value, 0);
+  const capturedKnownRuntimeCount = capturedRuntimeValues.length;
+  const averageCapturedRuntimeMinutes =
+    capturedKnownRuntimeCount > 0
+      ? capturedKnownRuntimeMinutes / capturedKnownRuntimeCount
+      : runtimeWeighting.fallbackMinutesPerTape;
   const completedRuntimeMinutes = roundToOne(
-    completedTapes.reduce((sum, tape) => sum + (runtimeWeighting.byTapeId.get(tape.id) ?? 0), 0)
+    capturedKnownRuntimeMinutes + Math.max(0, completedCount - capturedKnownRuntimeCount) * averageCapturedRuntimeMinutes
   );
-  const backlogRuntimeMinutes = roundToOne(Math.max(0, runtimeWeighting.totalMinutes - completedRuntimeMinutes));
-  const completionEvents = completedTapes
+  const backlogRuntimeMinutes = roundToOne(Math.max(0, backlogCount * averageCapturedRuntimeMinutes));
+  const captureEvents = completedTapes
     .map((tape) => {
-      const timestamp = toTimestamp(tape.completedDate);
+      const timestamp = toTimestamp(tape.capturedAt);
       if (timestamp == null) return null;
       return {
         timestamp,
-        minutes: runtimeWeighting.byTapeId.get(tape.id) ?? runtimeWeighting.fallbackMinutesPerTape,
+        minutes: preferredRuntimeMinutes(tape) ?? averageCapturedRuntimeMinutes,
       };
     })
     .filter((event): event is { timestamp: number; minutes: number } => Boolean(event))
@@ -697,15 +708,13 @@ function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWei
 
   const throughputWindowDays = 21;
   const recentWindowStartMs = subDays(startOfDay(now), throughputWindowDays - 1).getTime();
-  const recentCompletionEvents = completionEvents.filter((event) => event.timestamp >= recentWindowStartMs);
-  const recentCompletions = recentCompletionEvents.length;
-  const recentRuntimeMinutes = roundToOne(
-    recentCompletionEvents.reduce((sum, event) => sum + event.minutes, 0)
-  );
-  const recentRuntimeThroughput = recentRuntimeMinutes / throughputWindowDays;
+  const recentCaptureEvents = captureEvents.filter((event) => event.timestamp >= recentWindowStartMs);
+  const recentCompletions = recentCaptureEvents.length;
+  const recentRuntimeMinutes = roundToOne(recentCaptureEvents.reduce((sum, event) => sum + event.minutes, 0));
+  const recentCaptureThroughput = recentCompletions / throughputWindowDays;
 
   const timelineStartCandidates = tapes
-    .map((tape) => toTimestamp(tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.completedDate))
+    .map((tape) => toTimestamp(tape.acquisitionAt ?? tape.receivedDate ?? tape.updatedTime ?? tape.capturedAt))
     .filter((timestamp): timestamp is number => typeof timestamp === "number");
   const timelineStartMs = timelineStartCandidates.length ? Math.min(...timelineStartCandidates) : null;
   const activeDays =
@@ -715,22 +724,17 @@ function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWei
           1,
           Math.floor((startOfDay(now).getTime() - startOfDay(new Date(timelineStartMs)).getTime()) / 86400000) + 1
         );
-  const historicalRuntimeThroughput = activeDays > 0 ? completedRuntimeMinutes / activeDays : 0;
   const historicalCountThroughput = activeDays > 0 ? completedCount / activeDays : 0;
 
   let throughputPerDay = 0;
-  let throughputUnit: LaunchProjection["throughputUnit"] = "runtime-minutes/day";
+  let throughputUnit: LaunchProjection["throughputUnit"] = "tapes/day";
   let source: LaunchProjection["source"] = "none";
-  if (completionEvents.length >= 3 && recentRuntimeThroughput > 0 && runtimeWeighting.coveragePercent > 0) {
-    throughputPerDay = recentRuntimeThroughput;
-    source = "completion-dates-runtime";
-  } else if (historicalRuntimeThroughput > 0 && runtimeWeighting.coveragePercent > 0) {
-    throughputPerDay = historicalRuntimeThroughput;
-    source = "historical-runtime";
+  if (captureEvents.length >= 3 && recentCaptureThroughput > 0) {
+    throughputPerDay = recentCaptureThroughput;
+    source = "capture-dates-count";
   } else if (historicalCountThroughput > 0) {
     throughputPerDay = historicalCountThroughput;
-    throughputUnit = "tapes/day";
-    source = "historical-count";
+    source = "historical-capture-count";
   }
 
   throughputPerDay = Number(throughputPerDay.toFixed(2));
@@ -744,25 +748,24 @@ function buildLaunchProjection(tapes: TapeRecord[], runtimeWeighting: RuntimeWei
     projectedLaunchAt = now.toISOString();
     estimatedDaysRemaining = 0;
   } else if (throughputPerDay > 0) {
-    const backlogValue = throughputUnit === "runtime-minutes/day" ? backlogRuntimeMinutes : backlogCount;
     status = "counting";
-    estimatedDaysRemaining = Number((backlogValue / throughputPerDay).toFixed(1));
-    projectedLaunchAt = new Date(nowMs + (backlogValue / throughputPerDay) * 86400000).toISOString();
+    estimatedDaysRemaining = Number((backlogCount / throughputPerDay).toFixed(1));
+    projectedLaunchAt = new Date(nowMs + (backlogCount / throughputPerDay) * 86400000).toISOString();
   }
 
   const completionDateCoveragePercent = completedCount
-    ? Number(((completionEvents.length / completedCount) * 100).toFixed(1))
+    ? Number(((captureEvents.length / completedCount) * 100).toFixed(1))
     : 0;
 
   let confidence: LaunchProjection["confidence"] = "low";
   if (
-    source === "completion-dates-runtime" &&
+    source === "capture-dates-count" &&
     recentCompletions >= 4 &&
     completionDateCoveragePercent >= 60 &&
-    runtimeWeighting.coveragePercent >= 60
+    completedCount >= 5
   ) {
     confidence = "high";
-  } else if (throughputPerDay > 0 && completedCount >= 5) {
+  } else if (throughputPerDay > 0 && completedCount >= 3) {
     confidence = "medium";
   }
 

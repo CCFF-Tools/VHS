@@ -21,7 +21,7 @@ Options:
       --sequence-by MODE  Row ordering in output: created or name (default: created)
       --recording-date D  Force original recording date for all rows (YYYY-MM-DD)
       --tape-name NAME    Force tape name/label for all rows
-      --content-type T    Force content type for all rows
+      --content-type T    Legacy option (ignored for Tape Name parsing)
   -h, --help              Show this help
 
 Formats:
@@ -30,7 +30,7 @@ Formats:
 
 Examples:
   ./export_quicktime_capture_csv.sh -r "/Volumes/Capture Drive/Session_2026_03_01"
-  ./export_quicktime_capture_csv.sh -r . -o capture.csv --recording-date 1994-04-13 --content-type "City Council Meeting"
+  ./export_quicktime_capture_csv.sh -r . -o capture.csv --recording-date 1994-04-13
 EOF
 }
 
@@ -125,6 +125,10 @@ if [ "$SEQUENCE_BY" != "created" ] && [ "$SEQUENCE_BY" != "name" ]; then
   exit 1
 fi
 
+if [ -n "$CONTENT_TYPE_OVERRIDE" ]; then
+  echo "Warning: --content-type is ignored for Tape Name; Tape Name is parsed from filename text." >&2
+fi
+
 csv_escape() {
   local value="$1"
   value=${value//\"/\"\"}
@@ -212,6 +216,7 @@ infer_recording_date() {
 
 infer_label_runtime() {
   local filename="$1"
+  local file_path="$2"
   local stem=""
   local -a tokens=()
   local token_count=0
@@ -222,6 +227,8 @@ infer_label_runtime() {
   local h_n=0
   local m_n=0
   local s_n=0
+  local duration_raw=""
+  local duration_sec=""
 
   stem="${filename%.*}"
   read -r -a tokens <<< "$stem"
@@ -247,6 +254,19 @@ infer_label_runtime() {
     fi
   fi
 
+  # Fallback to Finder/Spotlight metadata duration for real file runtime.
+  duration_raw="$(mdls -name kMDItemDurationSeconds -raw "$file_path" 2>/dev/null || true)"
+  if [ -n "$duration_raw" ] && [ "$duration_raw" != "(null)" ]; then
+    duration_sec="$(awk -v v="$duration_raw" 'BEGIN { if (v ~ /^[0-9]+([.][0-9]+)?$/) printf "%d", v + 0.5; }')"
+    if [ -n "$duration_sec" ] && [ "$duration_sec" -ge 0 ] 2>/dev/null; then
+      h_n=$((duration_sec / 3600))
+      m_n=$(((duration_sec % 3600) / 60))
+      s_n=$((duration_sec % 60))
+      printf '%d:%02d:%02d\tfile_metadata' "$h_n" "$m_n" "$s_n"
+      return
+    fi
+  fi
+
   printf '\tmissing'
 }
 
@@ -266,11 +286,6 @@ infer_tape_name() {
 
   if [ -n "$TAPE_NAME_OVERRIDE" ]; then
     printf '%s\tmanual' "$TAPE_NAME_OVERRIDE"
-    return
-  fi
-
-  if [ -n "$CONTENT_TYPE_OVERRIDE" ]; then
-    printf '%s\tmanual' "$CONTENT_TYPE_OVERRIDE"
     return
   fi
 
@@ -442,7 +457,7 @@ while IFS= read -r -d '' file; do
   tape_name_result="$(infer_tape_name "$filename")"
   tape_name="${tape_name_result%%$'\t'*}"
   tape_name_source="${tape_name_result#*$'\t'}"
-  label_rt_result="$(infer_label_runtime "$filename")"
+  label_rt_result="$(infer_label_runtime "$filename" "$file")"
   label_rt="${label_rt_result%%$'\t'*}"
   label_rt_source="${label_rt_result#*$'\t'}"
   city_flag="$(is_city_flag "$tape_name")"
