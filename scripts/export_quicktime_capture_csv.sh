@@ -25,8 +25,8 @@ Options:
   -h, --help              Show this help
 
 Formats:
-  airtable  -> QT Filename,📼,Tape Name,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT,Is City Council Meeting
-  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Name,Tape Name Source,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Label RT,Label RT Source,Is City Council Meeting
+  airtable  -> QT Filename,📼,Tape Name,Captured At,Captured,Capture File Path,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT,QT TRT,Is City Council Meeting
+  standard  -> File Name,Primary Identifier,File Path,Created At,Created Epoch,Timestamp Source,Series Name,Tape Name,Tape Name Source,Tape Sequence,Tapes in Sequence,Tape Span Source,Original Recording Date,Recording Date Source,Label RT,Label RT Source,QT TRT,QT TRT Source,Is City Council Meeting
 
 Examples:
   ./export_quicktime_capture_csv.sh -r "/Volumes/Capture Drive/Session_2026_03_01"
@@ -216,7 +216,6 @@ infer_recording_date() {
 
 infer_label_runtime() {
   local filename="$1"
-  local file_path="$2"
   local stem=""
   local -a tokens=()
   local token_count=0
@@ -227,8 +226,6 @@ infer_label_runtime() {
   local h_n=0
   local m_n=0
   local s_n=0
-  local duration_raw=""
-  local duration_sec=""
 
   stem="${filename%.*}"
   read -r -a tokens <<< "$stem"
@@ -254,7 +251,17 @@ infer_label_runtime() {
     fi
   fi
 
-  # Fallback to Finder/Spotlight metadata duration for real file runtime.
+  printf '\tmissing'
+}
+
+infer_qt_trt() {
+  local file_path="$1"
+  local duration_raw=""
+  local duration_sec=""
+  local h_n=0
+  local m_n=0
+  local s_n=0
+
   duration_raw="$(mdls -name kMDItemDurationSeconds -raw "$file_path" 2>/dev/null || true)"
   if [ -n "$duration_raw" ] && [ "$duration_raw" != "(null)" ]; then
     duration_sec="$(awk -v v="$duration_raw" 'BEGIN { if (v ~ /^[0-9]+([.][0-9]+)?$/) printf "%d", v + 0.5; }')"
@@ -408,9 +415,9 @@ exec 3>"$OUTPUT"
 
 if [ "$FORMAT" = "airtable" ]; then
   id_field_escaped="${ID_FIELD//\"/\"\"}"
-  printf '"QT Filename","%s","Tape Name","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Label RT","Is City Council Meeting"\n' "$id_field_escaped" >&3
+  printf '"QT Filename","%s","Tape Name","Captured At","Captured","Capture File Path","Tape Sequence","Tapes in Sequence","Original Recording Date","Label RT","QT TRT","Is City Council Meeting"\n' "$id_field_escaped" >&3
 else
-  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Name","Tape Name Source","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Label RT","Label RT Source","Is City Council Meeting"\n' >&3
+  printf '"File Name","Primary Identifier","File Path","Created At","Created Epoch","Timestamp Source","Series Name","Tape Name","Tape Name Source","Tape Sequence","Tapes in Sequence","Tape Span Source","Original Recording Date","Recording Date Source","Label RT","Label RT Source","QT TRT","QT TRT Source","Is City Council Meeting"\n' >&3
 fi
 
 FIND_ARGS=()
@@ -457,12 +464,15 @@ while IFS= read -r -d '' file; do
   tape_name_result="$(infer_tape_name "$filename")"
   tape_name="${tape_name_result%%$'\t'*}"
   tape_name_source="${tape_name_result#*$'\t'}"
-  label_rt_result="$(infer_label_runtime "$filename" "$file")"
+  label_rt_result="$(infer_label_runtime "$filename")"
   label_rt="${label_rt_result%%$'\t'*}"
   label_rt_source="${label_rt_result#*$'\t'}"
+  qt_trt_result="$(infer_qt_trt "$file")"
+  qt_trt="${qt_trt_result%%$'\t'*}"
+  qt_trt_source="${qt_trt_result#*$'\t'}"
   city_flag="$(is_city_flag "$tape_name")"
 
-  printf '%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n' \
+  printf '%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\037%s\n' \
     "$filename" \
     "$file" \
     "$created_at" \
@@ -478,6 +488,8 @@ while IFS= read -r -d '' file; do
     "$recording_source" \
     "$label_rt" \
     "$label_rt_source" \
+    "$qt_trt" \
+    "$qt_trt_source" \
     "$city_flag" \
     "$primary_id" >> "$TMP_META"
   count=$((count + 1))
@@ -495,7 +507,7 @@ else
   sort -t "$META_DELIM" -k4,4n -k1,1 "$TMP_META" > "$TMP_SORTED"
 fi
 
-while IFS="$META_DELIM" read -r filename file created_at created_epoch source series_name tape_name tape_name_source tape_sequence tapes_in_sequence tape_span_source recording_date recording_source label_rt label_rt_source city_flag primary_id; do
+while IFS="$META_DELIM" read -r filename file created_at created_epoch source series_name tape_name tape_name_source tape_sequence tapes_in_sequence tape_span_source recording_date recording_source label_rt label_rt_source qt_trt qt_trt_source city_flag primary_id; do
 
   if [ "$FORMAT" = "airtable" ]; then
     csv_escape "$filename" >&3
@@ -517,6 +529,8 @@ while IFS="$META_DELIM" read -r filename file created_at created_epoch source se
     csv_escape "$recording_date" >&3
     printf ',' >&3
     csv_escape "$label_rt" >&3
+    printf ',' >&3
+    csv_escape "$qt_trt" >&3
     printf ',' >&3
     csv_escape "$city_flag" >&3
     printf '\n' >&3
@@ -552,6 +566,10 @@ while IFS="$META_DELIM" read -r filename file created_at created_epoch source se
     csv_escape "$label_rt" >&3
     printf ',' >&3
     csv_escape "$label_rt_source" >&3
+    printf ',' >&3
+    csv_escape "$qt_trt" >&3
+    printf ',' >&3
+    csv_escape "$qt_trt_source" >&3
     printf ',' >&3
     csv_escape "$city_flag" >&3
     printf '\n' >&3

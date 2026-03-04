@@ -330,24 +330,19 @@ export function MissionBriefingContentSlide() {
             <p className="font-mono text-[clamp(1rem,0.9vw,1.34rem)] uppercase tracking-[0.14em] text-cyan-100/75">
               Mission Objectives
             </p>
-            <div className="mt-2 max-w-[84ch] space-y-3">
+            <div className="mt-2 max-w-[108ch] space-y-3">
               <p className="text-[clamp(1.2rem,1.1vw,1.82rem)] leading-relaxed text-cyan-100/90">
-                The Kermans are caretakers of municipal memory on NoCap. The mission sounds archival, but the math is
-                flight-critical: every uncaptured reel loses magnetic fidelity as Core Cascade pressure rises.
+                The Kermans serve as caretakers of municipal memory on the planet NoCap. They must preserve their
+                municipal archive from the looming core cascade pressure event. Core cascade destabilizes planetary
+                magnetic fields and accelerates analog decay. Every uncaptured reel loses magnetic fidelity as core
+                cascade pressure rises.
               </p>
-              <p className="text-[clamp(1.2rem,1.1vw,1.82rem)] leading-relaxed text-cyan-100/90">
-                <span className="font-semibold text-cyan-50">Core Cascade</span> destabilizes planetary magnetic
-                fields and accelerates analog decay. The Great{" "}
-                <span className="font-semibold text-cyan-50">Signal Fade</span> is the threshold where loss curves
-                steepen and recovery costs spike. Mission success means digitizing, verifying, and archiving civic
-                records, then departing <span className="font-semibold text-cyan-50">NoCap</span> for{" "}
-                <span className="font-semibold text-cyan-50">Meridia</span>, landing at{" "}
-                <span className="font-semibold text-cyan-50">Fluxfall Basin</span>, and scaling{" "}
-                <span className="font-semibold text-cyan-50">The Stacks</span>.
-              </p>
-              <p className="text-[clamp(1.1rem,1vw,1.68rem)] leading-relaxed text-cyan-100/82">
-                In short: fewer last-minute heroics, more disciplined checklists, and a cleaner final shot when the
-                ship lands with history intact.
+              <p className="text-[clamp(1.15rem,1.02vw,1.74rem)] leading-relaxed text-cyan-100/88">
+                The Great Signal Fade is the threshold where loss curves steepen and recovery may not be possible.
+                Mission success means digitizing, verifying, and archiving civic records, then departing NoCap for
+                Meridia, landing at Fluxfall Basin, and scaling The Stacks, a naturally shielded archive vault immune
+                to magnetic disruption. This mission won&apos;t be saved by last-minute heroics. Only disciplined
+                checklists, consistent workflows, and rigorous data management will ensure history lands intact.
               </p>
             </div>
           </div>

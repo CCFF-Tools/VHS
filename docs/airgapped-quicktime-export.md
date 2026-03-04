@@ -42,7 +42,8 @@ Default behavior:
 - Tries to infer `Original Recording Date` from filename patterns like `YYYY-MM-DD`, `YYYY_MM_DD`, or `YYYYMMDD`
 - Extracts `Tape Name` from words between recording date and `X of Y` (or end-of-name when no `X of Y`)
 - Parses `Label RT` from runtime token in filename, like `2.23.10` -> `2:23:10` (ignores date-like tokens such as `2000.10.23`)
-- If runtime token is not present at end of filename, falls back to file metadata duration (`mdls kMDItemDurationSeconds`) and writes `HH:MM:SS` to `Label RT`
+- `Label RT` is only from filename runtime token; if not present at the end, `Label RT` is blank
+- `QT TRT` is parsed from actual file duration metadata (`mdls kMDItemDurationSeconds`) when available
 - Writes Airtable-ready columns:
   - `QT Filename`
   - `📼` (Primary Identifier)
@@ -54,6 +55,7 @@ Default behavior:
   - `Tapes in Sequence`
   - `Original Recording Date`
   - `Label RT`
+  - `QT TRT`
   - `Is City Council Meeting`
 
 ## 2) Move CSV off the airgapped machine
@@ -119,7 +121,7 @@ If your Airtable field expects text/single-select, pass `--captured-value "Yes"`
 Useful options:
 - `--key-field "📼"` (default; change upsert key if needed)
 - `--fields "📼,QT Filename,Tape Name,Captured At,Tape Sequence,Tapes in Sequence,Original Recording Date"` (import only these columns)
-- `--fields "📼,QT Filename,Tape Name,Captured At,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT"` (include parsed runtime)
+- `--fields "📼,QT Filename,Tape Name,Captured At,Tape Sequence,Tapes in Sequence,Original Recording Date,Label RT,QT TRT"` (include filename label runtime + actual file runtime)
 - `--include-empty` (allow blank CSV values to clear Airtable fields)
 - `--env-file /path/to/.env.local` (explicit env file path)
 - `--schema-csv /path/to/Titled Table-Grid view.csv` (only upload fields that exist in that schema CSV)
@@ -144,6 +146,7 @@ Recommended table fields:
 - `Tapes in Sequence` (number)
 - `Original Recording Date` (date)
 - `Label RT` (text/time-style runtime, e.g. `2:23:10`)
+- `QT TRT` (actual QuickTime duration, text/time-style runtime like `2:23:10`)
 - `Tape Name` (single line text)
 - `Is City Council Meeting` (checkbox)
 
