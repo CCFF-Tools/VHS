@@ -67,6 +67,23 @@ function toDateKey(value?: string) {
   return format(new Date(parsed), "yyyy-MM-dd");
 }
 
+function toTimestamp(value?: string) {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function startOfLocalDayMs(value: number | Date) {
+  const date = value instanceof Date ? new Date(value) : new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function inferredCaptureTimestamp(tape: TapeRecord) {
+  if (!tape.captured) return null;
+  return toTimestamp(tape.capturedAt ?? tape.completedDate ?? tape.updatedTime ?? tape.acquisitionAt ?? tape.receivedDate);
+}
+
 function buildRuntimeHoursByDate({
   tapes,
   dates,
@@ -246,9 +263,12 @@ export default function PresentationPage() {
 
     const throughputWindowDays = 7;
     const captureBacklogCount = Math.max(0, data.kpis.totalTapes - data.kpis.capturedCount);
-    const recentCapturedCount = data.capturedDaily
-      .slice(-throughputWindowDays)
-      .reduce((sum, day) => sum + day.count, 0);
+    const nowStartMs = startOfLocalDayMs(new Date());
+    const recentWindowStartMs = nowStartMs - (throughputWindowDays - 1) * 86400000;
+    const recentCapturedCount = data.tapes
+      .map(inferredCaptureTimestamp)
+      .filter((timestamp): timestamp is number => timestamp != null)
+      .filter((timestamp) => timestamp >= recentWindowStartMs).length;
 
     const throughputPerDay = Number((recentCapturedCount / throughputWindowDays).toFixed(2));
     const estimatedDaysRemaining =
@@ -262,7 +282,7 @@ export default function PresentationPage() {
       backlogCount: captureBacklogCount,
       throughputPerDay,
       estimatedDaysRemaining,
-      source: `captured-at (${throughputWindowDays}d window)`,
+      source: `capture telemetry (${throughputWindowDays}d window)`,
     };
   }, [data]);
 
@@ -276,11 +296,7 @@ export default function PresentationPage() {
     }
 
     const captureStartCandidates = data.tapes
-      .map((tape) => {
-        if (!tape.capturedAt) return null;
-        const parsed = Date.parse(tape.capturedAt);
-        return Number.isFinite(parsed) ? parsed : null;
-      })
+      .map(inferredCaptureTimestamp)
       .filter((timestamp): timestamp is number => timestamp != null);
 
     if (captureStartCandidates.length === 0) {
@@ -291,8 +307,8 @@ export default function PresentationPage() {
     }
 
     const captureStartMs = Math.min(...captureStartCandidates);
-    const nowStartMs = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
-    const captureStartDayMs = new Date(new Date(captureStartMs).setHours(0, 0, 0, 0)).getTime();
+    const nowStartMs = startOfLocalDayMs(new Date());
+    const captureStartDayMs = startOfLocalDayMs(captureStartMs);
     const elapsedDays = Math.max(1, Math.floor((nowStartMs - captureStartDayMs) / 86400000) + 1);
     const throughputPerDay = Number((data.kpis.capturedCount / elapsedDays).toFixed(2));
 
@@ -305,8 +321,7 @@ export default function PresentationPage() {
   const capturedTodayCount = useMemo(() => {
     if (!data) return 0;
     const todayKey = format(new Date(), "yyyy-MM-dd");
-    const todayRow = data.capturedDaily.find((row) => row.date === todayKey);
-    return todayRow?.count ?? 0;
+    return data.tapes.filter((tape) => toDateKey(tape.acquisitionAt) === todayKey).length;
   }, [data]);
 
   const baseSlides = [
